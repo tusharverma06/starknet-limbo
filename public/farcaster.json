@@ -1,0 +1,19 @@
+{
+  "accountAssociation": {
+    "header": "YOUR_SIGNED_HEADER_HERE"
+  },
+  "frame": {
+    "version": "1",
+    "name": "Limbo Game",
+    "iconUrl": "https://yourdomain.com/icon.png",
+    "splashImageUrl": "https://yourdomain.com/splash.png",
+    "splashBackgroundColor": "#0f172a",
+    "homeUrl": "https://yourdomain.com/game",
+    "webhookUrl": "https://yourdomain.com/api/webhook"
+  },
+  "description": "Provably fair limbo game powered by Chainlink VRF",
+  "icon": "https://yourdomain.com/icon.png"
+}
+
+
+

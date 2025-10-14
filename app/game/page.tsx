@@ -20,24 +20,20 @@ export default function GamePage() {
   const [resolvedBets, setResolvedBets] = useState<ResolvedBet[]>([]);
   const [latestBet, setLatestBet] = useState<ResolvedBet | null>(null);
 
-  // Watch BetResolved events - filtered by player address at the RPC level
-  useWatchContractEvent({
+   // Watch BetResolved events - filtered by player address at the RPC level
+   useWatchContractEvent({
     address: CONTRACT_ADDRESS,
     abi: LIMBO_GAME_ABI,
-    eventName: "BetResolved",
+    eventName: 'BetResolved',
     chainId: CHAIN.id,
     // Use args to filter by indexed parameters (topic[2] = player address)
     // args: address ? { player: address } : undefined,
     onLogs(logs) {
-      console.log(
-        "📡 BetResolved event received (filtered by player):",
-        logs.length,
-        "logs"
-      );
+      console.log('📡 BetResolved event received (filtered by player):', logs.length, 'logs');
 
       logs.forEach((log) => {
         console.log(log);
-
+        
         // const { requestId, player, betAmount, targetMultiplier, limboMultiplier, win, payout, timestamp } =
         //   log.topics;
 

@@ -1,36 +1,225 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎲 Limbo Game - Provably Fair Gaming
 
-## Getting Started
+A decentralized Limbo game built with Next.js, powered by Chainlink VRF for provably fair randomness, and integrated with Farcaster Mini Apps.
 
-First, run the development server:
+## 🌟 Features
 
+- **Provably Fair**: Uses Chainlink VRF for verifiable randomness
+- **Farcaster Integration**: Works as a Farcaster Mini App
+- **Web3 Native**: Built with Wagmi and Viem
+- **Modern UI**: Beautiful interface with Framer Motion animations
+- **Real-time Updates**: Live bet tracking and event listening
+- **Responsive Design**: Works perfectly on mobile and desktop
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ installed
+- A Web3 wallet (MetaMask, Coinbase Wallet, etc.)
+- Base Sepolia testnet ETH (for testing)
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <your-repo-url>
+cd limbo-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Configure environment variables**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The `.env.local` file has been created with default values. Update it if needed:
 
-## Learn More
+```bash
+NEXT_PUBLIC_LIMBO_CONTRACT_ADDRESS=0x5712104E5B54CA2b407D6507753EaAc33C22757f
+NEXT_PUBLIC_CHAIN_ID=84532
+NEXT_PUBLIC_RPC_URL=https://sepolia.base.org
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_NAME=Limbo Game
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. **Run the development server**
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Open your browser**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-## Deploy on Vercel
+## 🎮 How to Play
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Connect Your Wallet**: Click "Connect Wallet" and approve the connection
+2. **Choose Multiplier**: Select a target multiplier (1.01x to 100x)
+3. **Set Bet Amount**: Enter your bet amount (0.001 to 1 ETH)
+4. **Place Bet**: Click "Place Bet" and confirm the transaction
+5. **Wait for VRF**: Chainlink VRF generates a random number (30-60 seconds)
+6. **Get Result**: If the result ≥ your target, you win!
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📁 Project Structure
+
+```
+limbo-app/
+├── app/                      # Next.js app directory
+│   ├── api/manifest/        # Farcaster manifest API
+│   ├── game/                # Game page
+│   ├── layout.tsx           # Root layout
+│   └── page.tsx             # Landing page
+├── components/
+│   ├── game/                # Game-specific components
+│   │   ├── GameBoard.tsx    # Main game interface
+│   │   ├── MultiplierSelector.tsx
+│   │   ├── BetControls.tsx
+│   │   ├── GameResult.tsx
+│   │   ├── RecentBets.tsx
+│   │   └── HouseStats.tsx
+│   ├── providers/           # Context providers
+│   │   ├── FarcasterProvider.tsx
+│   │   └── Web3Provider.tsx
+│   └── ui/                  # Reusable UI components
+│       ├── Button.tsx
+│       ├── Card.tsx
+│       ├── Input.tsx
+│       └── LoadingSpinner.tsx
+├── hooks/                   # Custom React hooks
+│   ├── useGameContract.ts
+│   ├── useBetEvents.ts
+│   ├── useGameState.ts
+│   └── useFarcaster.ts
+├── lib/                     # Utilities and configs
+│   ├── contract/
+│   │   ├── abi.ts
+│   │   ├── config.ts
+│   │   └── types.ts
+│   ├── utils/
+│   │   ├── cn.ts
+│   │   ├── format.ts
+│   │   └── multiplier.ts
+│   └── constants.ts
+├── store/                   # State management
+│   └── gameStore.ts
+└── public/                  # Static assets
+    └── farcaster.json       # Farcaster manifest
+```
+
+## 🔧 Tech Stack
+
+- **Framework**: Next.js 15
+- **Styling**: Tailwind CSS
+- **Web3**: Wagmi, Viem
+- **Animations**: Framer Motion
+- **State Management**: Zustand
+- **Icons**: Lucide React
+- **Farcaster**: @farcaster/frame-sdk
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run start      # Start production server
+npm run lint       # Run ESLint
+npm run type-check # Run TypeScript type checking
+```
+
+### Key Hooks
+
+- `useGameContract`: Interact with the smart contract
+- `useBetEvents`: Listen for bet events in real-time
+- `useGameState`: Manage game state with Zustand
+- `useFarcaster`: Access Farcaster SDK features
+
+## 🌐 Deployment
+
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Import the project to Vercel
+3. Add environment variables:
+   - `NEXT_PUBLIC_LIMBO_CONTRACT_ADDRESS`
+   - `NEXT_PUBLIC_CHAIN_ID`
+   - `NEXT_PUBLIC_RPC_URL`
+   - `NEXT_PUBLIC_APP_URL` (your Vercel URL)
+   - `NEXT_PUBLIC_APP_NAME`
+4. Deploy!
+
+### Farcaster Mini App Setup
+
+1. Update `public/farcaster.json` with your domain
+2. Generate account association header
+3. Submit to Farcaster directory at https://warpcast.com/~/developers
+
+## 📝 Smart Contract
+
+Contract Address: `0x5712104E5B54CA2b407D6507753EaAc33C22757f`  
+Network: Base Sepolia (ChainID: 84532)
+
+### Key Functions
+
+- `placeBet(uint256 targetMultiplier)`: Place a new bet
+- `houseBalance()`: View current house balance
+- `fundHouse()`: Add funds to the house (owner only)
+
+## 🔐 Security
+
+- All randomness is generated by Chainlink VRF
+- Smart contract is audited (add audit link here)
+- No private keys are stored client-side
+- All transactions are signed by user's wallet
+
+## 🐛 Troubleshooting
+
+### Wallet not connecting
+- Ensure you're on Base Sepolia testnet
+- Try refreshing the page
+- Check if wallet extension is enabled
+
+### VRF taking too long
+- Normal wait time is 30-60 seconds
+- Check transaction on block explorer
+- Ensure VRF subscription has LINK balance
+
+### Build errors
+- Run `npm install` to ensure all dependencies are installed
+- Clear `.next` folder: `rm -rf .next`
+- Check Node.js version (18+ required)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🔗 Links
+
+- [Farcaster Documentation](https://docs.farcaster.xyz/)
+- [Chainlink VRF](https://docs.chain.link/vrf)
+- [Wagmi Documentation](https://wagmi.sh)
+- [Base Network](https://base.org)
+
+## 💬 Support
+
+For support, join our community:
+- Farcaster: [Your Farcaster handle]
+- Twitter: [Your Twitter handle]
+- Discord: [Your Discord link]
+
+---
+
+Made with ❤️ for the Farcaster community

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { MIN_BET, MAX_BET } from '@/lib/constants';
+import { MIN_BET_USD, MAX_BET_USD } from '@/lib/constants';
 import { parseEther, formatEther } from 'viem';
+import { getEthValueFromUsd, getUsdValueFromEth } from '@/lib/utils/price';
 
 interface BetControlsProps {
   value: string;
@@ -15,6 +16,27 @@ interface BetControlsProps {
 
 export function BetControls({ value, onChange, disabled, balance }: BetControlsProps) {
   const [error, setError] = useState('');
+  const [usdBalance, setUsdBalance] = useState<number | null>(null);
+
+  // Convert balance to USD when component mounts or balance changes
+  React.useEffect(() => {
+    if (balance) {
+      const ethBalance = parseFloat(formatEther(balance));
+      if (isFinite(ethBalance) && ethBalance >= 0) {
+        getUsdValueFromEth(ethBalance).then((usdValue) => {
+          if (isFinite(usdValue) && usdValue >= 0) {
+            setUsdBalance(usdValue);
+          } else {
+            setUsdBalance(null);
+          }
+        }).catch(() => setUsdBalance(null));
+      } else {
+        setUsdBalance(null);
+      }
+    } else {
+      setUsdBalance(null);
+    }
+  }, [balance]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -26,17 +48,17 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
       return;
     }
 
-    if (num < MIN_BET) {
-      setError(`Minimum bet is ${MIN_BET} ETH`);
+    if (num < MIN_BET_USD) {
+      setError(`Minimum bet is $${MIN_BET_USD}`);
       return;
     }
 
-    if (num > MAX_BET) {
-      setError(`Maximum bet is ${MAX_BET} ETH`);
+    if (num > MAX_BET_USD) {
+      setError(`Maximum bet is $${MAX_BET_USD}`);
       return;
     }
 
-    if (balance && parseEther(val) > balance) {
+    if (usdBalance && num > usdBalance) {
       setError('Insufficient balance');
       return;
     }
@@ -45,15 +67,15 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
   };
 
   const handleQuickAmount = (multiplier: number) => {
-    const current = parseFloat(value) || MIN_BET;
-    const newAmount = Math.min(current * multiplier, MAX_BET);
+    const current = parseFloat(value) || MIN_BET_USD;
+    const newAmount = Math.min(current * multiplier, MAX_BET_USD);
     onChange(newAmount.toString());
     setError('');
   };
 
   const handleMax = () => {
-    if (balance) {
-      const maxAmount = Math.min(parseFloat(formatEther(balance)), MAX_BET);
+    if (usdBalance) {
+      const maxAmount = Math.min(usdBalance, MAX_BET_USD);
       onChange(maxAmount.toString());
       setError('');
     }
@@ -62,20 +84,27 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">
-          Bet Amount (ETH)
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-black/80 mb-2">
+            Bet Amount (USD)
+          </label>
+          {usdBalance !== null && (
+            <div className="text-sm text-gray-400 p-3 bg-gray-900 rounded-lg border border-gray-800">
+              Balance: ${usdBalance.toFixed(2)}
+            </div>
+          )}
+        </div>
         <Input
           type="number"
-          step="0.001"
-          min={MIN_BET}
-          max={MAX_BET}
+          step="0.01"
+          min={MIN_BET_USD}
+          max={MAX_BET_USD}
           value={value}
           onChange={handleChange}
           disabled={disabled}
           error={error}
-          className="text-xl font-semibold"
-          placeholder="0.01"
+          className="text-lg font-medium"
+          placeholder="1.00"
         />
       </div>
 
@@ -102,18 +131,14 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
           variant="ghost"
           size="sm"
           onClick={handleMax}
-          disabled={disabled || !balance}
+          disabled={disabled || !usdBalance}
           className="flex-1 border border-gray-700 hover:border-gray-500"
         >
           MAX
         </Button>
       </div>
 
-      {balance && (
-        <div className="text-sm text-gray-400 p-3 bg-gray-900 rounded-lg border border-gray-800">
-          Balance: {parseFloat(formatEther(balance)).toFixed(4)} ETH
-        </div>
-      )}
+     
     </div>
   );
 }

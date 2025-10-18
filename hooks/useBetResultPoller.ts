@@ -1,151 +1,234 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { usePublicClient } from 'wagmi';
-import { LIMBO_GAME_ABI } from '@/lib/contract/abi';
-import { CONTRACT_ADDRESS, CHAIN } from '@/lib/contract/config';
-import { ResolvedBet } from '@/lib/contract/types';
+import { PonderAPI, type Bet } from '@/lib/graphql/ponder';
+
+interface ResolvedBet {
+  requestId: bigint;
+  player: string;
+  amount: bigint;
+  targetMultiplier: number;
+  limboMultiplier: bigint;
+  win: boolean;
+  payout: bigint;
+  timestamp: number;
+  txHash: `0x${string}`;
+}
+
+interface UseBetResultPollerReturn {
+  latestBet: ResolvedBet | null;
+  resolvedBets: ResolvedBet[];
+  isPolling: boolean;
+  startPolling: () => void;
+  stopPolling: () => void;
+  clearLatestBet: () => void;
+  clearAll: () => void;
+}
 
 /**
- * AGGRESSIVE POLLING APPROACH - This WILL work!
- * Actively polls for bet results every 2 seconds when waiting
+ * Hook for polling bet results from Ponder GraphQL API
+ * Replaces the old contract event polling with instant results
  */
-export function useBetResultPoller(userAddress?: string) {
+export function useBetResultPoller(userAddress: string | undefined): UseBetResultPollerReturn {
   const [latestBet, setLatestBet] = useState<ResolvedBet | null>(null);
   const [resolvedBets, setResolvedBets] = useState<ResolvedBet[]>([]);
   const [isPolling, setIsPolling] = useState(false);
-  const publicClient = usePublicClient({ chainId: CHAIN.id });
-  const processedIds = useRef(new Set<string>());
-  const pollingInterval = useRef<NodeJS.Timeout | null>(null);
-  const lastCheckedBlock = useRef<bigint>(BigInt(0));
+  const [lastPollTimestamp, setLastPollTimestamp] = useState(Date.now());
+  
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const processedBetIds = useRef<Set<string>>(new Set());
 
-  // Active polling function
-  const pollForResults = useCallback(async () => {
-    if (!publicClient || !userAddress) {
-      console.log('⏸️ Polling paused - no client or address');
-      return;
-    }
+  /**
+   * Convert Ponder bet to ResolvedBet format
+   */
+  const convertPonderBet = useCallback((bet: Bet): ResolvedBet => {
+    return {
+      requestId: BigInt(bet.id), // Use bet ID as request ID
+      player: bet.player,
+      amount: BigInt(bet.betAmount),
+      targetMultiplier: Number(bet.targetMultiplier) / 100,
+      limboMultiplier: BigInt(bet.limboMultiplier),
+      win: bet.win,
+      payout: BigInt(bet.payout),
+      timestamp: bet.timestamp * 1000, // Convert to milliseconds
+      txHash: `0x${bet.id.slice(0, 64)}` as `0x${string}`, // Generate mock tx hash from ID
+    };
+  }, []);
+
+  /**
+   * Poll for new bets from Ponder
+   */
+  const pollForNewBets = useCallback(async () => {
+    if (!userAddress) return;
 
     try {
-      const currentBlock = await publicClient.getBlockNumber();
-      const fromBlock = lastCheckedBlock.current === BigInt(0)
-        ? currentBlock - BigInt(10) // Check last 10 blocks on first run
-        : lastCheckedBlock.current + BigInt(1);
+      // Get recent bets for this user
+      const recentBets = await PonderAPI.getUserBets(userAddress, 10);
+      
+      // Filter for new bets (not processed yet)
+      const newBets = recentBets.filter(
+        (bet) => 
+          !processedBetIds.current.has(bet.id) &&
+          bet.timestamp * 1000 > lastPollTimestamp
+      );
 
-      console.log('🔄 Polling for BetResolved events...', {
-        from: fromBlock.toString(),
-        to: currentBlock.toString(),
-        address: userAddress,
-      });
-
-      const logs = await publicClient.getLogs({
-        address: CONTRACT_ADDRESS,
-        event: LIMBO_GAME_ABI.find((item) => item.name === 'BetResolved' && item.type === 'event'),
-        args: { player: userAddress },
-        fromBlock,
-        toBlock: currentBlock,
-      });
-
-      console.log(`📦 Found ${logs.length} events in this poll`);
-
-      if (logs.length > 0) {
-        logs.forEach((log: any) => {
-          const { requestId, player, betAmount, targetMultiplier, limboMultiplier, win, payout, timestamp } = log.args;
-          const reqIdStr = requestId.toString();
-
-          // Skip if already processed
-          if (processedIds.current.has(reqIdStr)) {
-            console.log('⏭️ Already processed:', reqIdStr);
-            return;
-          }
-
-          processedIds.current.add(reqIdStr);
-
-          const resolved: ResolvedBet = {
-            requestId: requestId as bigint,
-            player: player as string,
-            amount: betAmount as bigint,
-            targetMultiplier: Number(targetMultiplier),
-            limboMultiplier: limboMultiplier as bigint,
-            win: win as boolean,
-            payout: payout as bigint,
-            timestamp: Number(timestamp) * 1000,
-            txHash: log.transactionHash,
-          };
-
-          console.log('🎰 NEW BET RESULT FOUND!', {
-            win: resolved.win ? '🎉 WIN' : '😢 LOSE',
-            requestId: reqIdStr,
-            limboMultiplier: Number(resolved.limboMultiplier) / 100,
-            targetMultiplier: resolved.targetMultiplier / 100,
-            payout: resolved.payout.toString(),
-          });
-
-          // Update state
-          setLatestBet(resolved);
-          setResolvedBets((prev) => [resolved, ...prev].slice(0, 50));
+      if (newBets.length > 0) {
+        console.log('🎉 New bets found from Ponder:', newBets.length);
+        
+        // Process new bets
+        const resolvedBets = newBets.map(convertPonderBet);
+        
+        // Mark as processed
+        newBets.forEach((bet) => processedBetIds.current.add(bet.id));
+        
+        // Update latest bet (most recent)
+        const latestResolvedBet = resolvedBets[0];
+        setLatestBet(latestResolvedBet);
+        
+        // Add to history
+        setResolvedBets((prev) => {
+          const newBets = resolvedBets.filter(
+            (bet) => !prev.some((existing) => existing.requestId === bet.requestId)
+          );
+          return [...newBets, ...prev].slice(0, 50); // Keep last 50
+        });
+        
+        // Update last poll timestamp
+        setLastPollTimestamp(Date.now());
+        
+        console.log('✅ Processed new bets:', {
+          count: newBets.length,
+          latest: latestResolvedBet.win ? 'WIN' : 'LOSS',
+          payout: latestResolvedBet.payout.toString(),
         });
       }
-
-      lastCheckedBlock.current = currentBlock;
     } catch (error) {
-      console.error('❌ Polling error:', error);
+      console.error('❌ Error polling for new bets:', error);
     }
-  }, [publicClient, userAddress]);
+  }, [userAddress, lastPollTimestamp, convertPonderBet]);
 
-  // Start polling when requested
+  /**
+   * Start polling for bet results
+   */
   const startPolling = useCallback(() => {
-    if (pollingInterval.current) {
-      console.log('⚠️ Already polling');
-      return;
-    }
-
-    console.log('▶️ Starting ULTRA FAST polling (every 500ms)');
+    if (isPolling || !userAddress) return;
+    
+    console.log('🔄 Starting bet result polling for:', userAddress);
     setIsPolling(true);
-
+    
     // Poll immediately
-    pollForResults();
+    pollForNewBets();
+    
+    // Set up interval polling (every 2 seconds)
+    pollingIntervalRef.current = setInterval(pollForNewBets, 2000);
+  }, [isPolling, userAddress, pollForNewBets]);
 
-    // Then poll every 500ms (twice per second) for instant results
-    pollingInterval.current = setInterval(() => {
-      pollForResults();
-    }, 500);
-  }, [pollForResults]);
-
-  // Stop polling
+  /**
+   * Stop polling
+   */
   const stopPolling = useCallback(() => {
-    if (pollingInterval.current) {
-      console.log('⏹️ Stopping polling');
-      clearInterval(pollingInterval.current);
-      pollingInterval.current = null;
-    }
+    console.log('⏹️ Stopping bet result polling');
     setIsPolling(false);
+    
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Clear latest bet result
+   */
+  const clearLatestBet = useCallback(() => {
+    setLatestBet(null);
+  }, []);
+
+  /**
+   * Clear all bet results
+   */
+  const clearAll = useCallback(() => {
+    setLatestBet(null);
+    setResolvedBets([]);
+    processedBetIds.current.clear();
+    setLastPollTimestamp(Date.now());
   }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopPolling();
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
-  }, [stopPolling]);
-
-  const clearLatestBet = useCallback(() => {
-    console.log('🧹 Clearing latest bet');
-    setLatestBet(null);
   }, []);
 
-  const clearAll = useCallback(() => {
-    console.log('🧹 Clearing all');
-    setLatestBet(null);
-    setResolvedBets([]);
-    processedIds.current.clear();
-  }, []);
+  // Reset state when user address changes (but don't auto-start polling)
+  useEffect(() => {
+    if (userAddress) {
+      // Reset state for new user
+      clearAll();
+    } else {
+      stopPolling();
+    }
+  }, [userAddress, stopPolling, clearAll]);
 
   return {
     latestBet,
     resolvedBets,
     isPolling,
-    startPolling,   // Call this when bet is placed
-    stopPolling,    // Call this when result is shown
+    startPolling,
+    stopPolling,
     clearLatestBet,
     clearAll,
+  };
+}
+
+/**
+ * Hook for instant bet result checking
+ * Checks for a specific bet result immediately after placement
+ */
+export function useInstantBetResult(userAddress: string | undefined) {
+  const [isChecking, setIsChecking] = useState(false);
+  const [result, setResult] = useState<ResolvedBet | null>(null);
+
+  const checkForResult = useCallback(async (expectedTimestamp: number) => {
+    if (!userAddress) return null;
+    
+    setIsChecking(true);
+    setResult(null);
+    
+    try {
+      // Get user's latest bet
+      const latestBet = await PonderAPI.getUserLatestBet(userAddress);
+      
+      if (latestBet && latestBet.timestamp * 1000 >= expectedTimestamp) {
+        // Convert to ResolvedBet format
+        const resolvedBet: ResolvedBet = {
+          requestId: BigInt(latestBet.id),
+          player: latestBet.player,
+          amount: BigInt(latestBet.betAmount),
+          targetMultiplier: Number(latestBet.targetMultiplier) / 100,
+          limboMultiplier: BigInt(latestBet.limboMultiplier),
+          win: latestBet.win,
+          payout: BigInt(latestBet.payout),
+          timestamp: latestBet.timestamp * 1000,
+          txHash: `0x${latestBet.id.slice(0, 64)}` as `0x${string}`,
+        };
+        
+        setResult(resolvedBet);
+        return resolvedBet;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error checking for instant result:', error);
+      return null;
+    } finally {
+      setIsChecking(false);
+    }
+  }, [userAddress]);
+
+  return {
+    result,
+    isChecking,
+    checkForResult,
   };
 }

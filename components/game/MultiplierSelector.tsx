@@ -47,11 +47,16 @@ export function MultiplierSelector({ value, onChange, disabled }: MultiplierSele
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">
+        <label className="block text-sm font-medium text-black/80 mb-2">
           Target Multiplier
         </label>
-        <div className="relative">
-          <Input
+        <div className="w-full flex flex-col items-start gap-0.5">
+
+        <div className="relative w-full flex items-center gap-1 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
+          <span className=" text-black/80 font-normal text-sm">
+            x
+          </span>
+        <Input
             type="number"
             step="0.01"
             min={MIN_MULTIPLIER}
@@ -59,26 +64,28 @@ export function MultiplierSelector({ value, onChange, disabled }: MultiplierSele
             value={inputValue}
             onChange={handleInputChange}
             disabled={disabled}
-            error={error}
-            className="text-2xl font-bold text-center"
-            placeholder="2.00"
-          />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-xl">
-            x
-          </span>
+            className="text-sm font-medium border-none  bg-transparent p-0 focus:ring-0 focus:outline-none"
+            placeholder="0.00"
+            />
         </div>
+        {error && (
+          <p className="mt-1 text-[11px] text-red-600">{error}</p>
+        )}
+            </div>
+
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">
-          Win Probability (Real-time)
+        <label className="block text-sm font-medium text-black mb-2">
+          Win Probability
         </label>
-        <div className="relative">
+        <div className="relative w-full flex items-center gap-1 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
+          <span className=" text-black/80 font-normal text-sm">%</span>
           <Input
             type="text"
-            value={stats.winChancePercent}
+            value={stats.winChancePercent.slice(0, -1)}
             disabled={true}
-            className="text-lg font-mono text-center bg-gray-900 text-white cursor-not-allowed font-bold"
+            className="text-sm font-mono   border-none p-0 bg-transparent focus:ring-0 focus:outline-none text-black cursor-not-allowed font-medium"
             readOnly
           />
         </div>

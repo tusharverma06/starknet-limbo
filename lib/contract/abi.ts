@@ -34,7 +34,7 @@ export const LIMBO_GAME_ABI = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "amount",
+        name: "betAmount",
         type: "uint256",
       },
       {
@@ -48,6 +48,12 @@ export const LIMBO_GAME_ABI = [
         internalType: "uint256",
         name: "timestamp",
         type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "clientSeed",
+        type: "bytes32",
       },
     ],
     name: "BetPlaced",
@@ -84,6 +90,12 @@ export const LIMBO_GAME_ABI = [
         indexed: false,
         internalType: "uint256",
         name: "limboMultiplier",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "vrfRandomWord",
         type: "uint256",
       },
       { indexed: false, internalType: "bool", name: "win", type: "bool" },
@@ -185,6 +197,7 @@ export const LIMBO_GAME_ABI = [
   {
     inputs: [
       { internalType: "uint256", name: "targetMultiplier", type: "uint256" },
+      { internalType: "bytes32", name: "clientSeed", type: "bytes32" },
     ],
     name: "placeBet",
     outputs: [],

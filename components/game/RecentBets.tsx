@@ -4,13 +4,40 @@ import { Card } from '@/components/ui/Card';
 import { ResolvedBet } from '@/lib/contract/types';
 import { formatETH, shortenAddress, formatTimeAgo } from '@/lib/utils/format';
 import { toDisplayMultiplier } from '@/lib/utils/multiplier';
+import { getUsdValueFromEth } from '@/lib/utils/price';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 interface RecentBetsProps {
   bets: ResolvedBet[];
 }
 
 export function RecentBets({ bets }: RecentBetsProps) {
+  const [betUsdValues, setBetUsdValues] = useState<{ [key: string]: number }>({});
+
+  // Calculate USD values for all bets
+  useEffect(() => {
+    const calculateUsdValues = async () => {
+      const usdValues: { [key: string]: number } = {};
+      
+      for (const bet of bets) {
+        try {
+          const ethAmount = parseFloat(formatETH(bet.amount));
+          const usdValue = await getUsdValueFromEth(ethAmount);
+          usdValues[`${bet.txHash}-${bet.timestamp}`] = usdValue;
+        } catch (error) {
+          console.error('Error calculating USD value for bet:', error);
+        }
+      }
+      
+      setBetUsdValues(usdValues);
+    };
+
+    if (bets.length > 0) {
+      calculateUsdValues();
+    }
+  }, [bets]);
+
   if (bets.length === 0) {
     return (
       <Card>
@@ -28,6 +55,8 @@ export function RecentBets({ bets }: RecentBetsProps) {
         {bets.map((bet, index) => {
           const resultMultiplier = toDisplayMultiplier(Number(bet.randomResult));
           const targetMultiplier = toDisplayMultiplier(bet.targetMultiplier);
+          const betKey = `${bet.txHash}-${bet.timestamp}`;
+          const usdValue = betUsdValues[betKey];
           
           return (
             <div
@@ -42,20 +71,25 @@ export function RecentBets({ bets }: RecentBetsProps) {
                 )}
                 <div>
                   <div className="text-sm font-medium text-white">
-                    {shortenAddress(bet.player)}
+                    {bet.win ? 'Win' : 'Loss'}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {formatTimeAgo(bet.timestamp)}
+                    {resultMultiplier.toFixed(2)}x / {targetMultiplier.toFixed(2)}x
                   </div>
                 </div>
               </div>
 
               <div className="text-right">
                 <div className={`text-sm font-semibold ${bet.win ? 'text-green-500' : 'text-red-500'}`}>
-                  {resultMultiplier.toFixed(2)}x / {targetMultiplier.toFixed(2)}x
+                  {bet.win ? '+' : '-'}{formatETH(bet.amount)} ETH
                 </div>
+                {usdValue && (
+                  <div className={`text-xs font-medium ${bet.win ? 'text-green-500' : 'text-red-500'}`}>
+                    {bet.win ? '+' : '-'}${usdValue.toFixed(2)} USD
+                  </div>
+                )}
                 <div className="text-xs text-slate-400">
-                  {formatETH(bet.amount)} ETH
+                  {formatTimeAgo(bet.timestamp)}
                 </div>
               </div>
             </div>

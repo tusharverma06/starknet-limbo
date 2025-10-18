@@ -6,7 +6,6 @@ import {
 import { parseEther } from "viem";
 import { LIMBO_GAME_ABI } from "@/lib/contract/abi";
 import { CONTRACT_ADDRESS, CHAIN } from "@/lib/contract/config";
-import { useState } from "react";
 import { toContractMultiplier } from "@/lib/utils/multiplier";
 
 export function useGameContract() {
@@ -45,7 +44,7 @@ export function useGameContract() {
     });
 
   const houseBalance = houseBalanceData as bigint;
-
+  console.log("🏦 House balance:", houseBalance);
   // Read: Owner
   const { data: owner } = useReadContract({
     address: CONTRACT_ADDRESS,

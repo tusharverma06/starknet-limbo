@@ -5,6 +5,10 @@ export function formatETH(wei: bigint, decimals = 4): string {
   return parseFloat(eth).toFixed(decimals);
 }
 
+export function formatUSD(amount: number, decimals = 2): string {
+  return amount.toFixed(decimals);
+}
+
 export function formatMultiplier(multiplier: number): string {
   return (multiplier / 100).toFixed(2) + 'x';
 }

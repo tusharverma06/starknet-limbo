@@ -345,7 +345,9 @@ export default function AdminPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Owner Address:</span>
-                <span className="text-white font-mono text-xs">{owner}</span>
+                <span className="text-white font-mono text-xs">
+                  {owner ? String(owner) : "Loading..."}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Your Address:</span>

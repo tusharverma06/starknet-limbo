@@ -1,8 +1,8 @@
-import { useWatchContractEvent, usePublicClient, useBlockNumber } from 'wagmi';
-import { LIMBO_GAME_ABI } from '@/lib/contract/abi';
-import { CONTRACT_ADDRESS, CHAIN } from '@/lib/contract/config';
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { ResolvedBet } from '@/lib/contract/types';
+import { useWatchContractEvent, usePublicClient, useBlockNumber } from "wagmi";
+import { LIMBO_GAME_ABI } from "@/lib/contract/abi";
+import { CONTRACT_ADDRESS, CHAIN } from "@/lib/contract/config";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { ResolvedBet } from "@/lib/contract/types";
 
 /**
  * DEBUG VERSION with extensive logging
@@ -14,11 +14,14 @@ export function useOptimizedBetEventsDebug(userAddress?: string) {
   const [latestBet, setLatestBet] = useState<ResolvedBet | null>(null);
   const processedRequestIds = useRef(new Set<string>());
   const publicClient = usePublicClient({ chainId: CHAIN.id });
-  const { data: blockNumber } = useBlockNumber({ watch: true, chainId: CHAIN.id });
+  const { data: blockNumber } = useBlockNumber({
+    watch: true,
+    chainId: CHAIN.id,
+  });
 
   // Log connection status
   useEffect(() => {
-    console.log('🔌 Hook initialized with:', {
+    console.log("🔌 Hook initialized with:", {
       userAddress,
       contractAddress: CONTRACT_ADDRESS,
       chainId: CHAIN.id,
@@ -31,24 +34,36 @@ export function useOptimizedBetEventsDebug(userAddress?: string) {
   useWatchContractEvent({
     address: CONTRACT_ADDRESS,
     abi: LIMBO_GAME_ABI,
-    eventName: 'BetResolved',
+    eventName: "BetResolved",
     chainId: CHAIN.id,
     // Use args to filter by indexed parameters (topic[2] = player address)
     args: userAddress ? { player: userAddress } : undefined,
     onLogs(logs) {
-      console.log('📡 BetResolved event received (filtered by player):', logs.length, 'logs');
-      console.log('📋 Raw logs:', logs);
+      console.log(
+        "📡 BetResolved event received (filtered by player):",
+        logs.length,
+        "logs"
+      );
+      console.log("📋 Raw logs:", logs);
 
       logs.forEach((log) => {
-        console.log('🔍 Processing log:', log);
+        console.log("🔍 Processing log:", log);
 
-        const { requestId, player, betAmount, targetMultiplier, limboMultiplier, win, payout, timestamp } =
-          log.args;
+        const {
+          requestId,
+          player,
+          betAmount,
+          targetMultiplier,
+          limboMultiplier,
+          win,
+          payout,
+          timestamp,
+        } = log.args;
 
         const reqId = requestId as bigint;
         const reqIdStr = reqId.toString();
 
-        console.log('🎰 BetResolved:', {
+        console.log("🎰 BetResolved:", {
           requestId: reqIdStr,
           player,
           betAmount: betAmount?.toString(),
@@ -63,7 +78,7 @@ export function useOptimizedBetEventsDebug(userAddress?: string) {
 
         // Prevent duplicate processing
         if (processedRequestIds.current.has(reqIdStr)) {
-          console.log('⚠️ Already processed this bet, skipping');
+          console.log("⚠️ Already processed this bet, skipping");
           return;
         }
         processedRequestIds.current.add(reqIdStr);
@@ -80,99 +95,102 @@ export function useOptimizedBetEventsDebug(userAddress?: string) {
           txHash: log.transactionHash,
         };
 
-        console.log('✅ Bet resolved! Result:', {
-          win: resolved.win ? '🎉 WIN' : '😢 LOSE',
+        console.log("✅ Bet resolved! Result:", {
+          win: resolved.win ? "🎉 WIN" : "😢 LOSE",
           limboMultiplier: Number(resolved.limboMultiplier) / 100,
           targetMultiplier: resolved.targetMultiplier / 100,
           payout: resolved.payout.toString(),
         });
 
         // Update latest bet (for immediate UI response)
-        console.log('📤 Setting latestBet state');
+        console.log("📤 Setting latestBet state");
         setLatestBet(resolved);
 
         // Add to history
         setResolvedBets((prev) => {
           const exists = prev.some((b) => b.requestId === resolved.requestId);
           if (exists) {
-            console.log('⚠️ Bet already in history, skipping');
+            console.log("⚠️ Bet already in history, skipping");
             return prev;
           }
-          console.log('📝 Adding to history');
+          console.log("📝 Adding to history");
           return [resolved, ...prev].slice(0, 50);
         });
       });
     },
     onError(error) {
-      console.error('❌ useWatchContractEvent error:', error);
+      console.error("❌ useWatchContractEvent error:", error);
     },
   });
 
   // Manual fetch of past events for debugging
-  const fetchPastEvents = useCallback(async (fromBlock?: bigint) => {
-    if (!publicClient) {
-      console.error('❌ No public client available');
-      return;
-    }
+  const fetchPastEvents = useCallback(
+    async (fromBlock?: bigint) => {
+      if (!publicClient) {
+        console.error("❌ No public client available");
+        return;
+      }
 
-    try {
-      const currentBlock = await publicClient.getBlockNumber();
-      const from = fromBlock ?? currentBlock - BigInt(100); // Last 100 blocks
+      try {
+        const currentBlock = await publicClient.getBlockNumber();
+        const from = fromBlock ?? currentBlock - BigInt(100); // Last 100 blocks
 
-      console.log('🔍 Fetching past BetResolved events:', {
-        from: from.toString(),
-        to: currentBlock.toString(),
-        address: CONTRACT_ADDRESS,
-        player: userAddress,
-      });
-
-      const logs = await publicClient.getLogs({
-        address: CONTRACT_ADDRESS,
-        event: LIMBO_GAME_ABI.find((item) => item.name === 'BetResolved'),
-        args: userAddress ? { player: userAddress } : undefined,
-        fromBlock: from,
-        toBlock: currentBlock,
-      });
-
-      console.log('📦 Found past events:', logs.length);
-      logs.forEach((log: any) => {
-        console.log('📜 Past event:', {
-          requestId: log.args.requestId?.toString(),
-          player: log.args.player,
-          win: log.args.win,
-          blockNumber: log.blockNumber?.toString(),
+        console.log("🔍 Fetching past BetResolved events:", {
+          from: from.toString(),
+          to: currentBlock.toString(),
+          address: CONTRACT_ADDRESS,
+          player: userAddress,
         });
-      });
-    } catch (error) {
-      console.error('❌ Error fetching past events:', error);
-    }
-  }, [publicClient, userAddress]);
+
+        const logs = await publicClient.getLogs({
+          address: CONTRACT_ADDRESS,
+          event: LIMBO_GAME_ABI.find((item) => item.name === "BetResolved"),
+          args: userAddress ? { player: userAddress } : undefined,
+          fromBlock: from,
+          toBlock: currentBlock,
+        });
+
+        console.log("📦 Found past events:", logs.length);
+        logs.forEach((log) => {
+          console.log("📜 Past event:", {
+            requestId: log.args.requestId?.toString(),
+            player: log.args.player,
+            win: log.args.win,
+            blockNumber: log.blockNumber?.toString(),
+          });
+        });
+      } catch (error) {
+        console.error("❌ Error fetching past events:", error);
+      }
+    },
+    [publicClient, userAddress]
+  );
 
   const clearLatestBet = useCallback(() => {
-    console.log('🧹 Clearing latest bet');
+    console.log("🧹 Clearing latest bet");
     setLatestBet(null);
   }, []);
 
   const clearHistory = useCallback(() => {
-    console.log('🧹 Clearing bet history');
+    console.log("🧹 Clearing bet history");
     setResolvedBets([]);
     processedRequestIds.current.clear();
   }, []);
 
   const clearAll = useCallback(() => {
-    console.log('🧹 Clearing all bets');
+    console.log("🧹 Clearing all bets");
     setLatestBet(null);
     setResolvedBets([]);
     processedRequestIds.current.clear();
   }, []);
 
   return {
-    latestBet,           // Most recent bet result (for immediate display)
-    resolvedBets,        // Full history of resolved bets
-    clearLatestBet,      // Clear just the latest bet
-    clearHistory,        // Clear history only
-    clearAll,            // Clear everything
-    fetchPastEvents,     // Manual fetch for debugging
-    blockNumber,         // Current block number
+    latestBet, // Most recent bet result (for immediate display)
+    resolvedBets, // Full history of resolved bets
+    clearLatestBet, // Clear just the latest bet
+    clearHistory, // Clear history only
+    clearAll, // Clear everything
+    fetchPastEvents, // Manual fetch for debugging
+    blockNumber, // Current block number
   };
 }

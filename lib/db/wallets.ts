@@ -1,4 +1,4 @@
-import { prisma, type Wallet } from './prisma';
+import { prisma } from "./prisma";
 
 /**
  * Wallet data structure (matches Prisma model)
@@ -23,14 +23,14 @@ class WalletDatabase {
     try {
       // Test connection
       await prisma.$connect();
-      console.log('✅ Prisma connected to database');
-      
+      console.log("✅ Prisma connected to database");
+
       // Run migrations if needed
       // Note: In production, run `prisma migrate deploy` instead
-      console.log('✅ Database ready');
+      console.log("✅ Database ready");
     } catch (error) {
-      console.error('❌ Failed to initialize database:', error);
-      throw new Error('Database initialization failed');
+      console.error("❌ Failed to initialize database:", error);
+      throw new Error("Database initialization failed");
     }
   }
 
@@ -49,7 +49,7 @@ class WalletDatabase {
           address,
           encryptedPrivateKey,
           createdAt: BigInt(Date.now()),
-          balance: '0',
+          balance: "0",
         },
       });
 
@@ -61,13 +61,13 @@ class WalletDatabase {
         balance: wallet.balance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
-    } catch (error: any) {
-      if (error.code === 'P2002') {
+    } catch (error) {
+      if ((error as { code?: string }).code === "P2002") {
         // Unique constraint violation
-        throw new Error('Wallet already exists for this user');
+        throw new Error("Wallet already exists for this user");
       }
-      console.error('Failed to create wallet:', error);
-      throw new Error('Failed to create wallet');
+      console.error("Failed to create wallet:", error);
+      throw new Error("Failed to create wallet");
     }
   }
 
@@ -93,7 +93,7 @@ class WalletDatabase {
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
     } catch (error) {
-      console.error('Failed to get wallet:', error);
+      console.error("Failed to get wallet:", error);
       return null;
     }
   }
@@ -120,7 +120,7 @@ class WalletDatabase {
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
     } catch (error) {
-      console.error('Failed to get wallet by address:', error);
+      console.error("Failed to get wallet by address:", error);
       return null;
     }
   }
@@ -133,7 +133,10 @@ class WalletDatabase {
     updates: Partial<WalletData>
   ): Promise<WalletData> {
     try {
-      const updateData: any = {};
+      const updateData: {
+        balance?: string;
+        lastUsed?: bigint;
+      } = {};
 
       if (updates.balance !== undefined) {
         updateData.balance = updates.balance;
@@ -156,12 +159,12 @@ class WalletDatabase {
         balance: wallet.balance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
-    } catch (error: any) {
-      if (error.code === 'P2025') {
-        throw new Error('Wallet not found');
+    } catch (error) {
+      if ((error as { code?: string }).code === "P2025") {
+        throw new Error("Wallet not found");
       }
-      console.error('Failed to update wallet:', error);
-      throw new Error('Failed to update wallet');
+      console.error("Failed to update wallet:", error);
+      throw new Error("Failed to update wallet");
     }
   }
 
@@ -188,12 +191,12 @@ class WalletDatabase {
         where: { userId },
       });
       console.log(`🗑️  Wallet deleted for user: ${userId}`);
-    } catch (error: any) {
-      if (error.code === 'P2025') {
-        throw new Error('Wallet not found');
+    } catch (error) {
+      if ((error as { code?: string }).code === "P2025") {
+        throw new Error("Wallet not found");
       }
-      console.error('Failed to delete wallet:', error);
-      throw new Error('Failed to delete wallet');
+      console.error("Failed to delete wallet:", error);
+      throw new Error("Failed to delete wallet");
     }
   }
 
@@ -203,7 +206,7 @@ class WalletDatabase {
   async getAllWallets(): Promise<WalletData[]> {
     try {
       const wallets = await prisma.wallet.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
       });
 
       return wallets.map((wallet) => ({
@@ -215,7 +218,7 @@ class WalletDatabase {
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       }));
     } catch (error) {
-      console.error('Failed to get all wallets:', error);
+      console.error("Failed to get all wallets:", error);
       return [];
     }
   }
@@ -249,12 +252,12 @@ class WalletDatabase {
         },
       });
 
-      const totalBalance = result._sum.balance || '0';
+      const totalBalance = result._sum.balance || "0";
 
       return { totalWallets, activeWallets, totalBalance };
     } catch (error) {
-      console.error('Failed to get stats:', error);
-      return { totalWallets: 0, activeWallets: 0, totalBalance: '0' };
+      console.error("Failed to get stats:", error);
+      return { totalWallets: 0, activeWallets: 0, totalBalance: "0" };
     }
   }
 
@@ -263,7 +266,7 @@ class WalletDatabase {
    */
   async close(): Promise<void> {
     await prisma.$disconnect();
-    console.log('🔒 Database connection closed');
+    console.log("🔒 Database connection closed");
   }
 
   /**
@@ -274,7 +277,7 @@ class WalletDatabase {
       await prisma.$queryRaw`SELECT 1`;
       return true;
     } catch (error) {
-      console.error('Database health check failed:', error);
+      console.error("Database health check failed:", error);
       return false;
     }
   }
@@ -285,7 +288,7 @@ class WalletDatabase {
   async getRecentWallets(limit: number = 10): Promise<WalletData[]> {
     try {
       const wallets = await prisma.wallet.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: limit,
         select: {
           userId: true,
@@ -300,13 +303,13 @@ class WalletDatabase {
       return wallets.map((wallet) => ({
         userId: wallet.userId,
         address: wallet.address,
-        encryptedPrivateKey: '', // Not returned for security
+        encryptedPrivateKey: "", // Not returned for security
         createdAt: Number(wallet.createdAt),
         balance: wallet.balance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       }));
     } catch (error) {
-      console.error('Failed to get recent wallets:', error);
+      console.error("Failed to get recent wallets:", error);
       return [];
     }
   }
@@ -320,10 +323,10 @@ class WalletDatabase {
         where: {
           address: {
             contains: searchTerm,
-            mode: 'insensitive',
+            mode: "insensitive",
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         take: 50, // Limit results
         select: {
           userId: true,
@@ -338,13 +341,13 @@ class WalletDatabase {
       return wallets.map((wallet) => ({
         userId: wallet.userId,
         address: wallet.address,
-        encryptedPrivateKey: '', // Not returned for security
+        encryptedPrivateKey: "", // Not returned for security
         createdAt: Number(wallet.createdAt),
         balance: wallet.balance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       }));
     } catch (error) {
-      console.error('Failed to search wallets:', error);
+      console.error("Failed to search wallets:", error);
       return [];
     }
   }
@@ -355,5 +358,5 @@ export const walletDb = new WalletDatabase();
 
 // Initialize database on module load
 walletDb.init().catch((error) => {
-  console.error('Failed to initialize wallet database:', error);
+  console.error("Failed to initialize wallet database:", error);
 });

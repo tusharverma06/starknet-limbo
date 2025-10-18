@@ -7,7 +7,6 @@ import { Card } from "./Card";
 import {
   Copy,
   ExternalLink,
-  Wallet,
   ChevronDown,
   CheckCircle2,
   Plus,

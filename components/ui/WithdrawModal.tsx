@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from './Button';
-import { Card } from './Card';
-import { Input } from './Input';
-import { X, ArrowUpRight, AlertTriangle } from 'lucide-react';
-import { getEthValueFromUsd, getUsdValueFromEth } from '@/lib/utils/price';
+import { useState, useEffect } from "react";
+import { Button } from "./Button";
+import { Card } from "./Card";
+import { Input } from "./Input";
+import { X, ArrowUpRight, AlertTriangle } from "lucide-react";
+import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -15,11 +15,16 @@ interface WithdrawModalProps {
   onWithdraw: (amount: string, toAddress: string) => Promise<void>;
 }
 
-export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, onWithdraw }: WithdrawModalProps) {
-  const [amount, setAmount] = useState('');
-  const [toAddress, setToAddress] = useState('');
+export function WithdrawModal({
+  isOpen,
+  onClose,
+  currentBalance,
+  onWithdraw,
+}: WithdrawModalProps) {
+  const [amount, setAmount] = useState("");
+  const [toAddress, setToAddress] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [ethAmount, setEthAmount] = useState<number | null>(null);
 
@@ -27,7 +32,9 @@ export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, 
   useEffect(() => {
     if (currentBalance) {
       const ethBalance = parseFloat(currentBalance);
-      getUsdValueFromEth(ethBalance).then(setUsdBalance).catch(() => setUsdBalance(null));
+      getUsdValueFromEth(ethBalance)
+        .then(setUsdBalance)
+        .catch(() => setUsdBalance(null));
     } else {
       setUsdBalance(null);
     }
@@ -38,13 +45,15 @@ export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, 
     if (amount && !isNaN(parseFloat(amount))) {
       const usdValue = parseFloat(amount);
       if (usdValue > 0 && isFinite(usdValue)) {
-        getEthValueFromUsd(usdValue).then((ethValue) => {
-          if (isFinite(ethValue) && ethValue > 0) {
-            setEthAmount(ethValue);
-          } else {
-            setEthAmount(null);
-          }
-        }).catch(() => setEthAmount(null));
+        getEthValueFromUsd(usdValue)
+          .then((ethValue) => {
+            if (isFinite(ethValue) && ethValue > 0) {
+              setEthAmount(ethValue);
+            } else {
+              setEthAmount(null);
+            }
+          })
+          .catch(() => setEthAmount(null));
       } else {
         setEthAmount(null);
       }
@@ -57,37 +66,37 @@ export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, 
 
   const handleWithdraw = async () => {
     if (!amount || !toAddress) {
-      setError('Please fill in all fields');
+      setError("Please fill in all fields");
       return;
     }
 
     const numAmount = parseFloat(amount);
 
     if (isNaN(numAmount) || numAmount <= 0) {
-      setError('Please enter a valid amount');
+      setError("Please enter a valid amount");
       return;
     }
 
     if (usdBalance && numAmount > usdBalance) {
-      setError('Insufficient balance');
+      setError("Insufficient balance");
       return;
     }
 
-    if (toAddress.length !== 42 || !toAddress.startsWith('0x')) {
-      setError('Please enter a valid Ethereum address');
+    if (toAddress.length !== 42 || !toAddress.startsWith("0x")) {
+      setError("Please enter a valid Ethereum address");
       return;
     }
 
-    setError('');
+    setError("");
     setIsWithdrawing(true);
 
     try {
       await onWithdraw(amount, toAddress);
-      setAmount('');
-      setToAddress('');
+      setAmount("");
+      setToAddress("");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Withdrawal failed');
+      setError(err instanceof Error ? err.message : "Withdrawal failed");
     } finally {
       setIsWithdrawing(false);
     }
@@ -108,12 +117,7 @@ export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, 
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-black">Withdraw Funds</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="p-1"
-            >
+            <Button variant="ghost" size="sm" onClick={onClose} className="p-1">
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -133,7 +137,9 @@ export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, 
 
           {/* Amount Input */}
           <div className="space-y-2 mb-4">
-            <div className="text-sm font-semibold text-black">Amount to Withdraw (USD)</div>
+            <div className="text-sm font-semibold text-black">
+              Amount to Withdraw (USD)
+            </div>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -163,7 +169,9 @@ export function WithdrawModal({ isOpen, onClose, walletAddress, currentBalance, 
 
           {/* Recipient Address */}
           <div className="space-y-2 mb-4">
-            <div className="text-sm font-semibold text-black">Recipient Address</div>
+            <div className="text-sm font-semibold text-black">
+              Recipient Address
+            </div>
             <Input
               type="text"
               placeholder="0x..."

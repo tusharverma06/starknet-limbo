@@ -1,11 +1,9 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { MULTIPLIER_PRESETS, getLimboStats } from '@/lib/utils/multiplier';
-import { MIN_MULTIPLIER, MAX_MULTIPLIER } from '@/lib/constants';
-import { cn } from '@/lib/utils/cn';
+import { useState } from "react";
+import { Input } from "@/components/ui/Input";
+import { getLimboStats } from "@/lib/utils/multiplier";
+import { MIN_MULTIPLIER, MAX_MULTIPLIER } from "@/lib/constants";
 
 interface MultiplierSelectorProps {
   value: number;
@@ -13,9 +11,13 @@ interface MultiplierSelectorProps {
   disabled?: boolean;
 }
 
-export function MultiplierSelector({ value, onChange, disabled }: MultiplierSelectorProps) {
+export function MultiplierSelector({
+  value,
+  onChange,
+  disabled,
+}: MultiplierSelectorProps) {
   const [inputValue, setInputValue] = useState(value.toString());
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -23,7 +25,7 @@ export function MultiplierSelector({ value, onChange, disabled }: MultiplierSele
 
     const num = parseFloat(val);
     if (isNaN(num)) {
-      setError('Invalid number');
+      setError("Invalid number");
       return;
     }
 
@@ -32,14 +34,8 @@ export function MultiplierSelector({ value, onChange, disabled }: MultiplierSele
       return;
     }
 
-    setError('');
+    setError("");
     onChange(num);
-  };
-
-  const handlePresetClick = (preset: number) => {
-    setInputValue(preset.toString());
-    setError('');
-    onChange(preset);
   };
 
   const stats = getLimboStats(value);
@@ -51,28 +47,22 @@ export function MultiplierSelector({ value, onChange, disabled }: MultiplierSele
           Target Multiplier
         </label>
         <div className="w-full flex flex-col items-start gap-0.5">
-
-        <div className="relative w-full flex items-center gap-1 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
-          <span className=" text-black/80 font-normal text-sm">
-            x
-          </span>
-        <Input
-            type="number"
-            step="0.01"
-            min={MIN_MULTIPLIER}
-            max={MAX_MULTIPLIER}
-            value={inputValue}
-            onChange={handleInputChange}
-            disabled={disabled}
-            className="text-sm font-medium border-none  bg-transparent p-0 focus:ring-0 focus:outline-none"
-            placeholder="0.00"
+          <div className="relative w-full flex items-center gap-1 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
+            <span className=" text-black/80 font-normal text-sm">x</span>
+            <Input
+              type="number"
+              step="0.01"
+              min={MIN_MULTIPLIER}
+              max={MAX_MULTIPLIER}
+              value={inputValue}
+              onChange={handleInputChange}
+              disabled={disabled}
+              className="text-sm font-medium border-none  bg-transparent p-0 focus:ring-0 focus:outline-none"
+              placeholder="0.00"
             />
+          </div>
+          {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
         </div>
-        {error && (
-          <p className="mt-1 text-[11px] text-red-600">{error}</p>
-        )}
-            </div>
-
       </div>
 
       <div>
@@ -111,8 +101,3 @@ export function MultiplierSelector({ value, onChange, disabled }: MultiplierSele
     </div>
   );
 }
-
-
-
-
-

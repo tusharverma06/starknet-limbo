@@ -51,7 +51,8 @@ export async function POST(req: NextRequest) {
     const privateKey = decryptPrivateKey(walletData.encryptedPrivateKey);
 
     // Create provider and wallet using Alchemy RPC
-    const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
+    const rpcUrl =
+      process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
     const provider = new JsonRpcProvider(rpcUrl);
     const wallet = new Wallet(privateKey, provider);
 
@@ -74,12 +75,15 @@ export async function POST(req: NextRequest) {
       console.log("⛽ Gas estimate:", gasEstimation.gasLimit);
       console.log("⛽ Gas price:", gasEstimation.gasPrice, "gwei");
       console.log("⛽ Total gas cost:", gasEstimation.totalCost, "ETH");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Gas estimation error:", error);
       return NextResponse.json(
         {
           error: "Failed to estimate gas",
-          message: error.message || "Could not estimate transaction cost",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Could not estimate transaction cost",
         },
         { status: 400 }
       );
@@ -130,12 +134,12 @@ export async function POST(req: NextRequest) {
       blockNumber: receipt?.blockNumber,
       newBalance: newBalance.toString(),
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Withdrawal error:", error);
     return NextResponse.json(
       {
         error: "Withdrawal failed",
-        message: error.message || "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

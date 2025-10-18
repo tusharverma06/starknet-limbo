@@ -1,9 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { JsonRpcProvider, Wallet, parseEther } from 'ethers';
-import { walletDb } from '@/lib/db/wallets';
-import { decryptPrivateKey } from '@/lib/utils/encryption';
-import { getEthValueFromUsd } from '@/lib/utils/price';
-import { CHAIN } from '@/lib/contract/config';
+import { NextRequest, NextResponse } from "next/server";
+import { walletDb } from "@/lib/db/wallets";
+import { getEthValueFromUsd } from "@/lib/utils/price";
 
 /**
  * POST /api/wallet/fund
@@ -17,7 +14,7 @@ export async function POST(req: NextRequest) {
     // Validate inputs
     if (!userId || !usdAmount) {
       return NextResponse.json(
-        { error: 'userId and usdAmount are required' },
+        { error: "userId and usdAmount are required" },
         { status: 400 }
       );
     }
@@ -26,7 +23,7 @@ export async function POST(req: NextRequest) {
     const usdAmountNum = parseFloat(usdAmount);
     if (isNaN(usdAmountNum) || usdAmountNum <= 0) {
       return NextResponse.json(
-        { error: 'Invalid USD amount' },
+        { error: "Invalid USD amount" },
         { status: 400 }
       );
     }
@@ -35,7 +32,7 @@ export async function POST(req: NextRequest) {
     const ethAmount = await getEthValueFromUsd(usdAmountNum);
     if (ethAmount <= 0) {
       return NextResponse.json(
-        { error: 'Failed to convert USD to ETH' },
+        { error: "Failed to convert USD to ETH" },
         { status: 400 }
       );
     }
@@ -43,10 +40,7 @@ export async function POST(req: NextRequest) {
     // Get wallet from database
     const walletData = await walletDb.getWallet(userId);
     if (!walletData) {
-      return NextResponse.json(
-        { error: 'Wallet not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }
 
     // Return the wallet address and ETH amount for client to send transaction
@@ -56,15 +50,14 @@ export async function POST(req: NextRequest) {
       ethAmount: ethAmount.toString(),
       usdAmount: usdAmountNum,
     });
-  } catch (error: any) {
-    console.error('Fund wallet error:', error);
+  } catch (error) {
+    console.error("Fund wallet error:", error);
     return NextResponse.json(
       {
-        error: 'Failed to process funding request',
-        message: error.message || 'Unknown error',
+        error: "Failed to process funding request",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
   }
 }
-

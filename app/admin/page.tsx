@@ -1,69 +1,70 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAccount, useBalance } from 'wagmi';
-import { parseEther, formatEther } from 'viem';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { useGameContract } from '@/hooks/useGameContract';
-import { Wallet, TrendingUp, AlertCircle, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { useState } from "react";
+import { useAccount, useBalance } from "wagmi";
+import { parseEther, formatEther } from "viem";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { useGameContract } from "@/hooks/useGameContract";
+import { Wallet, TrendingUp, AlertCircle, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
-  const { 
-    fundHouse, 
-    houseBalance, 
-    owner, 
+  const {
+    fundHouse,
+    houseBalance,
+    owner,
     refetchHouseBalance,
     isPlacingBet: isFunding,
     placeBetError: fundError,
   } = useGameContract();
 
-  const [fundAmount, setFundAmount] = useState('0.1');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [fundAmount, setFundAmount] = useState("0.1");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const isOwner = address && owner && address.toLowerCase() === owner.toLowerCase();
+  // const isOwner = address && owner && address.toLowerCase() === owner.toLowerCase();
 
   const handleFundHouse = async () => {
     if (!address || !isConnected) {
-      setErrorMessage('Please connect your wallet');
+      setErrorMessage("Please connect your wallet");
       return;
     }
 
-
     const amount = parseFloat(fundAmount);
     if (isNaN(amount) || amount <= 0) {
-      setErrorMessage('Please enter a valid amount');
+      setErrorMessage("Please enter a valid amount");
       return;
     }
 
     if (balanceData && parseEther(fundAmount) > balanceData.value) {
-      setErrorMessage('Insufficient balance');
+      setErrorMessage("Insufficient balance");
       return;
     }
 
     try {
-      setErrorMessage('');
-      setSuccessMessage('');
-      
-      console.log('💰 Funding house with:', fundAmount, 'ETH');
+      setErrorMessage("");
+      setSuccessMessage("");
+
+      console.log("💰 Funding house with:", fundAmount, "ETH");
       await fundHouse(fundAmount);
-      
+
       setSuccessMessage(`Successfully added ${fundAmount} ETH to house!`);
-      setFundAmount('0.1');
-      
+      setFundAmount("0.1");
+
       // Refresh house balance after a delay
       setTimeout(() => {
         refetchHouseBalance();
       }, 2000);
-    } catch (error: any) {
-      console.error('❌ Fund house error:', error);
-      setErrorMessage(error?.message || 'Failed to fund house');
+    } catch (error) {
+      console.error("❌ Fund house error:", error);
+      setErrorMessage(
+        error instanceof Error ? error.message : "Failed to fund house"
+      );
     }
   };
 
@@ -76,7 +77,10 @@ export default function AdminPage() {
   const handleMaxAmount = () => {
     if (balanceData) {
       // Leave some for gas
-      const maxAmount = Math.max(0, parseFloat(formatEther(balanceData.value)) - 0.001);
+      const maxAmount = Math.max(
+        0,
+        parseFloat(formatEther(balanceData.value)) - 0.001
+      );
       setFundAmount(maxAmount.toFixed(4));
     }
   };
@@ -86,8 +90,12 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
         <Card className="max-w-md w-full text-center space-y-4">
           <AlertCircle className="w-16 h-16 mx-auto text-yellow-500" />
-          <h2 className="text-2xl font-bold text-white">Wallet Not Connected</h2>
-          <p className="text-slate-400">Please connect your wallet to access the admin panel.</p>
+          <h2 className="text-2xl font-bold text-white">
+            Wallet Not Connected
+          </h2>
+          <p className="text-slate-400">
+            Please connect your wallet to access the admin panel.
+          </p>
           <Link href="/game">
             <Button variant="ghost" className="w-full">
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -99,29 +107,29 @@ export default function AdminPage() {
     );
   }
 
-//   if (!isOwner) {
-//     return (
-//       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-//         <Card className="max-w-md w-full text-center space-y-4">
-//           <AlertCircle className="w-16 h-16 mx-auto text-red-500" />
-//           <h2 className="text-2xl font-bold text-white">Access Denied</h2>
-//           <p className="text-slate-400">
-//             You are not the contract owner. Only the owner can fund the house.
-//           </p>
-//           <div className="text-xs text-slate-500 break-all">
-//             <p>Your address: {address}</p>
-//             <p>Owner address: {owner || 'Loading...'}</p>
-//           </div>
-//           <Link href="/game">
-//             <Button variant="ghost" className="w-full">
-//               <ArrowLeft className="w-4 h-4 mr-2" />
-//               Back to Game
-//             </Button>
-//           </Link>
-//         </Card>
-//       </div>
-//     );
-//   }
+  //   if (!isOwner) {
+  //     return (
+  //       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+  //         <Card className="max-w-md w-full text-center space-y-4">
+  //           <AlertCircle className="w-16 h-16 mx-auto text-red-500" />
+  //           <h2 className="text-2xl font-bold text-white">Access Denied</h2>
+  //           <p className="text-slate-400">
+  //             You are not the contract owner. Only the owner can fund the house.
+  //           </p>
+  //           <div className="text-xs text-slate-500 break-all">
+  //             <p>Your address: {address}</p>
+  //             <p>Owner address: {owner || 'Loading...'}</p>
+  //           </div>
+  //           <Link href="/game">
+  //             <Button variant="ghost" className="w-full">
+  //               <ArrowLeft className="w-4 h-4 mr-2" />
+  //               Back to Game
+  //             </Button>
+  //           </Link>
+  //         </Card>
+  //       </div>
+  //     );
+  //   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
@@ -134,7 +142,9 @@ export default function AdminPage() {
         >
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-            <p className="text-slate-400">Manage house balance and contract funds</p>
+            <p className="text-slate-400">
+              Manage house balance and contract funds
+            </p>
           </div>
           <Link href="/game">
             <Button variant="ghost">
@@ -179,7 +189,10 @@ export default function AdminPage() {
                 <div>
                   <p className="text-sm text-slate-400">Your Balance</p>
                   <p className="text-3xl font-bold text-white">
-                    {balanceData ? parseFloat(formatEther(balanceData.value)).toFixed(4) : '0.0000'} ETH
+                    {balanceData
+                      ? parseFloat(formatEther(balanceData.value)).toFixed(4)
+                      : "0.0000"}{" "}
+                    ETH
                   </p>
                 </div>
               </div>
@@ -194,7 +207,7 @@ export default function AdminPage() {
         >
           <Card glow>
             <h2 className="text-2xl font-bold text-white mb-6">Fund House</h2>
-            
+
             <div className="space-y-6">
               {/* Amount Input */}
               <div>
@@ -256,7 +269,11 @@ export default function AdminPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-300">New House Balance:</span>
                   <span className="text-xl font-bold text-blue-400">
-                    {(parseFloat(formatEther(houseBalance)) + parseFloat(fundAmount || '0')).toFixed(4)} ETH
+                    {(
+                      parseFloat(formatEther(houseBalance)) +
+                      parseFloat(fundAmount || "0")
+                    ).toFixed(4)}{" "}
+                    ETH
                   </span>
                 </div>
               </div>
@@ -287,16 +304,21 @@ export default function AdminPage() {
               <Button
                 size="lg"
                 onClick={handleFundHouse}
-                disabled={isFunding || !fundAmount || parseFloat(fundAmount) <= 0}
+                disabled={
+                  isFunding || !fundAmount || parseFloat(fundAmount) <= 0
+                }
                 isLoading={isFunding}
                 className="w-full"
               >
-                {isFunding ? 'Funding House...' : '💰 Fund House'}
+                {isFunding ? "Funding House..." : "💰 Fund House"}
               </Button>
 
               {/* Info */}
               <div className="text-sm text-slate-400 space-y-2">
-                <p>ℹ️ Funding the house increases the maximum payout available for players.</p>
+                <p>
+                  ℹ️ Funding the house increases the maximum payout available
+                  for players.
+                </p>
                 <p>🔒 Only the contract owner can fund the house.</p>
                 <p>⚠️ Make sure to keep enough ETH for gas fees.</p>
               </div>
@@ -311,7 +333,9 @@ export default function AdminPage() {
           transition={{ delay: 0.2 }}
         >
           <Card>
-            <h3 className="text-lg font-semibold text-white mb-4">Contract Information</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">
+              Contract Information
+            </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">Contract Address:</span>
@@ -338,4 +362,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

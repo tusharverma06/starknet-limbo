@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { Input } from "./Input";
-import { Copy, ExternalLink, X, ArrowDown, AlertTriangle } from "lucide-react";
+import { Copy, X, ArrowDown, AlertTriangle } from "lucide-react";
 import {
   useAccount,
   useSendTransaction,

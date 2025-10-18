@@ -33,8 +33,8 @@ export function usePonderBets(): UsePonderBetsReturn {
     try {
       const allBets = await PonderAPI.getAllBets(100);
       setBets(allBets);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch bets");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch bets");
       console.error("Failed to refresh bets:", err);
     } finally {
       setIsLoading(false);
@@ -53,8 +53,10 @@ export function usePonderBets(): UsePonderBetsReturn {
     try {
       const bets = await PonderAPI.getUserBets(address, 50);
       setUserBets(bets);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch user bets");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch user bets"
+      );
       console.error("Failed to refresh user bets:", err);
     } finally {
       setIsLoading(false);
@@ -73,8 +75,10 @@ export function usePonderBets(): UsePonderBetsReturn {
     try {
       const stats = await PonderAPI.getUserStats(address);
       setUserStats(stats);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch user stats");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch user stats"
+      );
       console.error("Failed to refresh user stats:", err);
     } finally {
       setIsLoading(false);
@@ -92,7 +96,7 @@ export function usePonderBets(): UsePonderBetsReturn {
           (bet) => bet.placedAt > lastTimestamp
         );
         return newBets;
-      } catch (err: any) {
+      } catch (err) {
         console.error("Failed to poll for new bets:", err);
         return [];
       }
@@ -195,8 +199,10 @@ export function useUserBets(address: string | null) {
 
       setBets(userBets);
       setStats(userStats);
-    } catch (err: any) {
-      setError(err.message || "Failed to fetch user data");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch user data"
+      );
       console.error("Failed to refresh user data:", err);
     } finally {
       setIsLoading(false);

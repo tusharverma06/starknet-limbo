@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/Card";
 import { formatETH } from "@/lib/utils/format";
 import { toDisplayMultiplier } from "@/lib/utils/multiplier";
 import { getUsdValueFromEth } from "@/lib/utils/price";

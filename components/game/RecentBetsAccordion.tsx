@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { formatETH } from '@/lib/utils/format';
-import { getUsdValueFromEth } from '@/lib/utils/price';
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { formatETH } from "@/lib/utils/format";
+import { getUsdValueFromEth } from "@/lib/utils/price";
 
 interface ResolvedBet {
   requestId: bigint;
@@ -23,30 +23,36 @@ interface RecentBetsAccordionProps {
 
 export function RecentBetsAccordion({ bets }: RecentBetsAccordionProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [betUsdValues, setBetUsdValues] = useState<{ [key: string]: { amount: number; payout: number } }>({});
+  const [betUsdValues, setBetUsdValues] = useState<{
+    [key: string]: { amount: number; payout: number };
+  }>({});
 
   // Calculate USD values for all bets
   useEffect(() => {
     const calculateUsdValues = async () => {
-      const usdValues: { [key: string]: { amount: number; payout: number } } = {};
-      
+      const usdValues: { [key: string]: { amount: number; payout: number } } =
+        {};
+
       for (const bet of bets) {
         try {
           const amountEth = parseFloat(formatETH(bet.amount));
           const amountUsd = await getUsdValueFromEth(amountEth);
-          
+
           let payoutUsd = 0;
           if (bet.win) {
             const payoutEth = parseFloat(formatETH(bet.payout));
             payoutUsd = await getUsdValueFromEth(payoutEth);
           }
-          
-          usdValues[bet.requestId.toString()] = { amount: amountUsd, payout: payoutUsd };
+
+          usdValues[bet.requestId.toString()] = {
+            amount: amountUsd,
+            payout: payoutUsd,
+          };
         } catch (error) {
-          console.error('Error calculating USD values for bet:', error);
+          console.error("Error calculating USD values for bet:", error);
         }
       }
-      
+
       setBetUsdValues(usdValues);
     };
 
@@ -74,12 +80,12 @@ export function RecentBetsAccordion({ bets }: RecentBetsAccordionProps) {
           <ChevronDown className="w-4 h-4 text-black" />
         )}
       </button>
-      
+
       {isOpen && (
         <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
-          {bets.slice(0, 10).map((bet, index) => {
+          {bets.slice(0, 10).map((bet) => {
             const usdValues = betUsdValues[bet.requestId.toString()];
-            
+
             return (
               <div
                 key={bet.requestId.toString()}
@@ -89,7 +95,7 @@ export function RecentBetsAccordion({ bets }: RecentBetsAccordionProps) {
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        bet.win ? 'bg-green-500' : 'bg-red-500'
+                        bet.win ? "bg-green-500" : "bg-red-500"
                       }`}
                     />
                     <span className="text-sm font-medium text-black">
@@ -106,7 +112,7 @@ export function RecentBetsAccordion({ bets }: RecentBetsAccordionProps) {
                       </div>
                     )}
                     <div className="text-xs text-gray-600">
-                      {bet.win ? `+${formatETH(bet.payout)}` : 'Lost'}
+                      {bet.win ? `+${formatETH(bet.payout)}` : "Lost"}
                     </div>
                     {usdValues && bet.win && (
                       <div className="text-xs text-green-600">

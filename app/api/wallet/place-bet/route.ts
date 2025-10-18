@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { JsonRpcProvider, Wallet, parseEther, Contract, randomBytes } from "ethers";
+import {
+  JsonRpcProvider,
+  Wallet,
+  parseEther,
+  Contract,
+  randomBytes,
+} from "ethers";
 import { walletDb } from "@/lib/db/wallets";
 import { decryptPrivateKey } from "@/lib/utils/encryption";
 import { getEthValueFromUsd } from "@/lib/utils/price";
@@ -97,7 +103,8 @@ export async function POST(req: NextRequest) {
     const privateKey = decryptPrivateKey(walletData.encryptedPrivateKey);
 
     // Create provider and wallet using Alchemy RPC
-    const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
+    const rpcUrl =
+      process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
     const provider = new JsonRpcProvider(rpcUrl);
     const wallet = new Wallet(privateKey, provider);
 
@@ -140,7 +147,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-    } catch (balanceError: any) {
+    } catch (balanceError) {
       console.error("House balance check error:", balanceError);
       // Continue anyway - let the gas estimation catch it
     }
@@ -179,7 +186,7 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-    } catch (estimateError: any) {
+    } catch (estimateError) {
       console.error("❌ Gas estimation error:", estimateError);
       console.error("📊 Failed transaction details:", {
         betAmountWei: betAmountWei.toString(),
@@ -190,7 +197,7 @@ export async function POST(req: NextRequest) {
 
       // Provide more helpful error messages
       let errorMessage = "Contract call would fail";
-      if (estimateError.message) {
+      if (estimateError instanceof Error && estimateError.message) {
         if (estimateError.message.includes("insufficient funds")) {
           errorMessage = "Insufficient funds for transaction";
         } else if (
@@ -199,8 +206,10 @@ export async function POST(req: NextRequest) {
         ) {
           errorMessage =
             "Bet rejected by contract. The bet amount is too small to cover VRF callback gas costs. Minimum bet is $1 USD.";
-        } else if (estimateError.reason) {
-          errorMessage = `Transaction would revert: ${estimateError.reason}`;
+        } else if ((estimateError as { reason?: string }).reason) {
+          errorMessage = `Transaction would revert: ${
+            (estimateError as { reason?: string }).reason
+          }`;
         }
       }
 
@@ -208,7 +217,10 @@ export async function POST(req: NextRequest) {
         {
           error: "Failed to estimate gas",
           message: errorMessage,
-          details: estimateError.message,
+          details:
+            estimateError instanceof Error
+              ? estimateError.message
+              : "Unknown error",
         },
         { status: 400 }
       );
@@ -255,7 +267,7 @@ export async function POST(req: NextRequest) {
             requestId = parsedLog.args.requestId?.toString();
             console.log("🎰 BetPlaced event found, requestId:", requestId);
           }
-        } catch (e) {
+        } catch {
           // Not a BetPlaced event, skip
         }
       }
@@ -272,12 +284,12 @@ export async function POST(req: NextRequest) {
       newBalance: newBalance.toString(),
       clientSeed: clientSeed,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Place bet error:", error);
     return NextResponse.json(
       {
         error: "Bet placement failed",
-        message: error.message || "Unknown error",
+        message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

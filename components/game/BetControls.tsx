@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { MIN_BET_USD, MAX_BET_USD } from '@/lib/constants';
-import { parseEther, formatEther } from 'viem';
-import { getEthValueFromUsd, getUsdValueFromEth } from '@/lib/utils/price';
+import React, { useState } from "react";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
+import { formatEther } from "viem";
+import { getUsdValueFromEth } from "@/lib/utils/price";
 
 interface BetControlsProps {
   value: string;
@@ -14,8 +14,13 @@ interface BetControlsProps {
   balance?: bigint;
 }
 
-export function BetControls({ value, onChange, disabled, balance }: BetControlsProps) {
-  const [error, setError] = useState('');
+export function BetControls({
+  value,
+  onChange,
+  disabled,
+  balance,
+}: BetControlsProps) {
+  const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
 
   // Convert balance to USD when component mounts or balance changes
@@ -23,13 +28,15 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
     if (balance) {
       const ethBalance = parseFloat(formatEther(balance));
       if (isFinite(ethBalance) && ethBalance >= 0) {
-        getUsdValueFromEth(ethBalance).then((usdValue) => {
-          if (isFinite(usdValue) && usdValue >= 0) {
-            setUsdBalance(usdValue);
-          } else {
-            setUsdBalance(null);
-          }
-        }).catch(() => setUsdBalance(null));
+        getUsdValueFromEth(ethBalance)
+          .then((usdValue) => {
+            if (isFinite(usdValue) && usdValue >= 0) {
+              setUsdBalance(usdValue);
+            } else {
+              setUsdBalance(null);
+            }
+          })
+          .catch(() => setUsdBalance(null));
       } else {
         setUsdBalance(null);
       }
@@ -44,7 +51,7 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
 
     const num = parseFloat(val);
     if (isNaN(num)) {
-      setError('Invalid amount');
+      setError("Invalid amount");
       return;
     }
 
@@ -59,25 +66,25 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
     }
 
     if (usdBalance && num > usdBalance) {
-      setError('Insufficient balance');
+      setError("Insufficient balance");
       return;
     }
 
-    setError('');
+    setError("");
   };
 
   const handleQuickAmount = (multiplier: number) => {
     const current = parseFloat(value) || MIN_BET_USD;
     const newAmount = Math.min(current * multiplier, MAX_BET_USD);
     onChange(newAmount.toString());
-    setError('');
+    setError("");
   };
 
   const handleMax = () => {
     if (usdBalance) {
       const maxAmount = Math.min(usdBalance, MAX_BET_USD);
       onChange(maxAmount.toString());
-      setError('');
+      setError("");
     }
   };
 
@@ -137,13 +144,6 @@ export function BetControls({ value, onChange, disabled, balance }: BetControlsP
           MAX
         </Button>
       </div>
-
-     
     </div>
   );
 }
-
-
-
-
-

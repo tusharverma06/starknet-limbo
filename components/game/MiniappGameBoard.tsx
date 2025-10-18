@@ -33,21 +33,14 @@ export function MiniappGameBoard() {
     withdraw: withdrawFromServerWallet,
   } = useServerWallet(userId);
 
-  const {
-    latestBet,
-    resolvedBets,
-    isPolling,
-    startPolling,
-    stopPolling,
-    clearLatestBet,
-  } = useBetResultPoller(wallet?.address);
+  const { latestBet, isPolling, startPolling, stopPolling, clearLatestBet } =
+    useBetResultPoller(wallet?.address);
 
   // Use the new bet result watcher for instant results
   const {
     result: watchedBetResult,
     isWaiting: isWaitingForResult,
     watchForResult,
-    cancelWatch,
   } = useBetResultWatcher();
 
   const {
@@ -56,7 +49,6 @@ export function MiniappGameBoard() {
     setBetAmount,
     setTargetMultiplier,
     lastWin,
-    lastPayout,
     setLastResult,
     reset: resetGameState,
   } = useGameState();
@@ -183,9 +175,11 @@ export function MiniappGameBoard() {
         // Fallback to polling if no requestId
         startPolling();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("❌ Place bet error:", error);
-      setBetError(error.message || "Failed to place bet");
+      setBetError(
+        error instanceof Error ? error.message : "Failed to place bet"
+      );
       setIsPlacingBet(false);
     }
     // Don't set isPlacingBet to false here - keep it true until result comes
@@ -220,14 +214,6 @@ export function MiniappGameBoard() {
       });
     }
   }, [watchedBetResult, setLastResult, targetMultiplier]);
-
-  const handleManualReset = () => {
-    console.log("🔄 Manual reset triggered");
-    stopPolling();
-    clearLatestBet();
-    resetGameState();
-    setBetError(null);
-  };
 
   const handleWithdraw = async (amount: string, toAddress: string) => {
     if (!userId) {

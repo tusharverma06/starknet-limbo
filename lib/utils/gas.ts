@@ -3,15 +3,9 @@ import {
   formatEther,
   formatUnits,
   parseEther,
-  parseUnits,
   JsonRpcProvider,
   toBeHex,
 } from "ethers";
-
-const ERC20_ABI = [
-  "function transfer(address to, uint amount) returns (bool)",
-  "function decimals() view returns (uint8)",
-];
 
 /**
  * Call eth_estimateGas using Alchemy's JSON-RPC API
@@ -67,8 +61,7 @@ export const estimateGas = async (
   provider: JsonRpcProvider,
   fromAddress: string,
   toAddress: string,
-  amount: string,
-  tokenAddress?: string
+  amount: string
 ): Promise<{
   gasLimit: string;
   gasPrice: string;
@@ -76,7 +69,9 @@ export const estimateGas = async (
 }> => {
   try {
     // Get RPC URL from provider connection info
-    const connection = (provider as any)._getConnection();
+    const connection = (
+      provider as { _getConnection: () => { url: string } }
+    )._getConnection();
     const rpcUrl = connection.url;
 
     if (!rpcUrl) {
@@ -86,11 +81,9 @@ export const estimateGas = async (
     const feeData = await provider.getFeeData();
     if (!feeData.gasPrice) throw new Error("Could not estimate gas price");
 
-    let gasEstimate: bigint;
-
     // Estimate for ETH transfer using Alchemy API
     const valueHex = toBeHex(parseEther(amount));
-    gasEstimate = await callAlchemyEstimateGas(
+    const gasEstimate = await callAlchemyEstimateGas(
       rpcUrl,
       fromAddress,
       toAddress,
@@ -116,7 +109,7 @@ export const estimateGas = async (
 export const estimateContractGas = async (
   contract: Contract,
   functionName: string,
-  args: any[],
+  args: unknown[],
   value?: bigint
 ): Promise<{
   gasLimit: bigint;
@@ -130,7 +123,9 @@ export const estimateContractGas = async (
     }
 
     // Get RPC URL from provider connection info
-    const connection = (provider as any)._getConnection();
+    const connection = (
+      provider as { _getConnection: () => { url: string } }
+    )._getConnection();
     const rpcUrl = connection.url;
 
     if (!rpcUrl) {
@@ -146,10 +141,16 @@ export const estimateContractGas = async (
 
     // Get the from address (signer address)
     const signer = contract.runner;
-    if (!signer || typeof (signer as any).getAddress !== "function") {
+    if (
+      !signer ||
+      typeof (signer as { getAddress?: () => Promise<string> }).getAddress !==
+        "function"
+    ) {
       throw new Error("Signer not available on contract");
     }
-    const fromAddress = await (signer as any).getAddress();
+    const fromAddress = await (
+      signer as { getAddress: () => Promise<string> }
+    ).getAddress();
 
     // Encode the function call
     const data = contract.interface.encodeFunctionData(functionName, args);

@@ -65,7 +65,7 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
       console.log("🔑 Wallet data:", data);
       setWallet(data);
       setBalance(data.balance);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error fetching wallet:", err);
       // Don't set error for 404 - wallet just doesn't exist yet
     } finally {
@@ -100,9 +100,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
 
       console.log("✅ Wallet created:", data.address);
       await fetchWallet();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error creating wallet:", err);
-      setError(err.message || "Failed to create wallet");
+      setError(err instanceof Error ? err.message : "Failed to create wallet");
       throw err;
     } finally {
       setIsLoading(false);
@@ -133,9 +133,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
       if (wallet) {
         setWallet({ ...wallet, balance: data.balance });
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error fetching balance:", err);
-      setError(err.message || "Failed to fetch balance");
+      setError(err instanceof Error ? err.message : "Failed to fetch balance");
     } finally {
       setIsLoading(false);
     }
@@ -175,9 +175,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         }
 
         return { txHash: data.txHash };
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error withdrawing:", err);
-        setError(err.message || "Withdrawal failed");
+        setError(err instanceof Error ? err.message : "Withdrawal failed");
         throw err;
       } finally {
         setIsLoading(false);
@@ -228,9 +228,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
           requestId: data.requestId,
           blockNumber: data.blockNumber,
         };
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error placing bet:", err);
-        setError(err.message || "Bet placement failed");
+        setError(err instanceof Error ? err.message : "Bet placement failed");
         throw err;
       } finally {
         setIsLoading(false);

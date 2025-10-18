@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Activity, TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { X, Activity, Clock, TrendingUp } from "lucide-react";
 import { useUserBets } from "@/hooks/usePonderBets";
 import { formatETH } from "@/lib/utils/format";
 import { formatDistanceToNow } from "date-fns";

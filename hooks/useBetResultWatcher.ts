@@ -141,9 +141,11 @@ export function useBetResultWatcher(): UseBetResultWatcherReturn {
             }
           }, 2000); // Poll every 2 seconds
         });
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error setting up bet result watcher:", err);
-        setError(err.message || "Failed to watch for bet result");
+        setError(
+          err instanceof Error ? err.message : "Failed to watch for bet result"
+        );
         setIsWaiting(false);
         return null;
       }

@@ -9,14 +9,14 @@ const inter = Inter({ subsets: ["latin"] });
 
 // const frame = {
 //   version: "1",
-//   imageUrl: "https://wallet-cleaner-five.vercel.app/og.png",
+//   imageUrl: "https://limbo-app.vercel.app/",
 //   button: {
 //     title: "Clean Wallet",
 //     action: {
 //       type: "launch_frame",
 //       name: "Scrap",
 //       url: "https://4da924eb35eb.ngrok-free.app/",
-//       splashImageUrl: "https://wallet-cleaner-five.vercel.app/zap.svg",
+//       splashImageUrl: "https://limbo-app.vercel.app/",
 //       splashBackgroundColor: "#0A0A0A",
 //     },
 //   },

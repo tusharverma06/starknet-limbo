@@ -8,13 +8,22 @@ interface VerificationStep {
   step: number;
   description: string;
   status: string;
-  data: any;
+  data: Record<string, unknown>;
+}
+
+interface BetData {
+  player: string;
+  betAmount: string;
+  targetMultiplier: number;
+  limboMultiplier?: number;
+  win: boolean;
+  payout: string;
 }
 
 interface VerificationResponse {
   verificationSteps: VerificationStep[];
   overallStatus: string;
-  bet?: any;
+  bet?: BetData;
   error?: string;
   note?: string;
 }

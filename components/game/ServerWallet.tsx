@@ -1,13 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { FundingModal } from '@/components/ui/FundingModal';
-import { WithdrawModal } from '@/components/ui/WithdrawModal';
-import { useServerWallet } from '@/hooks/useServerWallet';
-import { Copy, ExternalLink, Wallet, RefreshCw, Plus } from 'lucide-react';
+import { useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { FundingModal } from "@/components/ui/FundingModal";
+import { WithdrawModal } from "@/components/ui/WithdrawModal";
+import { useServerWallet } from "@/hooks/useServerWallet";
+import { Copy, ExternalLink, Wallet, RefreshCw, Plus } from "lucide-react";
 
 interface ServerWalletProps {
   userId: string | null;
@@ -46,21 +45,21 @@ export function ServerWallet({ userId, onWalletReady }: ServerWalletProps) {
         onWalletReady(wallet.address);
       }
     } catch (err) {
-      console.error('Failed to create wallet:', err);
+      console.error("Failed to create wallet:", err);
     }
   };
 
   const handleWithdraw = async (usdAmount: string, toAddress: string) => {
     try {
-await withdraw(toAddress, usdAmount);
+      await withdraw(toAddress, usdAmount);
       setShowWithdraw(false);
-      await refreshBalance(); 
+      await refreshBalance();
     } catch (err) {
-      console.error('Withdrawal failed:', err);
-      throw err; 
+      console.error("Withdrawal failed:", err);
+      throw err;
     }
   };
-  
+
   if (!userId) {
     return (
       <Card className="p-6 bg-white border border-gray-200">
@@ -73,9 +72,7 @@ await withdraw(toAddress, usdAmount);
 
   // If initial loading, show loading state
   if (isInitialLoading) {
-    return (
-      null
-    );
+    return null;
   }
 
   // If no wallet, show create button
@@ -107,14 +104,17 @@ await withdraw(toAddress, usdAmount);
             className="w-full"
             size="lg"
           >
-            {isLoading ? 'Creating Wallet...' : 'Create Wallet'}
+            {isLoading ? "Creating Wallet..." : "Create Wallet"}
           </Button>
 
           <div className="text-xs text-gray-500 space-y-1">
             <p>• Your wallet will be created and secured on our servers</p>
             <p>• Private keys are encrypted and never exposed</p>
             <p>• You can fund and withdraw anytime</p>
-            <p>• After creating, use "Fund Wallet" to add ETH for playing</p>
+            <p>
+              • After creating, use &ldquo;Fund Wallet&rdquo; to add ETH for
+              playing
+            </p>
           </div>
         </div>
       </Card>
@@ -141,9 +141,7 @@ await withdraw(toAddress, usdAmount);
           onClick={refreshBalance}
           disabled={isLoading}
         >
-          <RefreshCw
-            className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`}
-          />
+          <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
         </Button>
       </div>
 
@@ -151,7 +149,7 @@ await withdraw(toAddress, usdAmount);
       <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
         <div className="text-sm text-gray-600 mb-1">Balance</div>
         <div className="text-3xl font-bold text-black">
-          {balanceInUsd !== null ? `$${balanceInUsd.toFixed(2)}` : '$0.00'}
+          {balanceInUsd !== null ? `$${balanceInUsd.toFixed(2)}` : "$0.00"}
         </div>
         {balanceInEth && (
           <div className="text-sm text-gray-500">
@@ -167,11 +165,7 @@ await withdraw(toAddress, usdAmount);
           <code className="flex-1 p-3 bg-gray-50 rounded-lg text-sm text-gray-800 overflow-hidden text-ellipsis border border-gray-200">
             {wallet.address}
           </code>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleCopyAddress}
-          >
+          <Button variant="ghost" size="sm" onClick={handleCopyAddress}>
             <Copy className="w-4 h-4" />
             {copied && (
               <span className="ml-2 text-xs text-green-600">Copied!</span>
@@ -189,7 +183,7 @@ await withdraw(toAddress, usdAmount);
           <p>1. Copy your wallet address above</p>
           <p>2. Send Base Sepolia ETH from any wallet</p>
           <p>
-            3. Need testnet ETH?{' '}
+            3. Need testnet ETH?{" "}
             <a
               href="https://www.alchemy.com/faucets/base-sepolia"
               target="_blank"
@@ -220,7 +214,9 @@ await withdraw(toAddress, usdAmount);
             className="flex-1"
             size="sm"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -246,7 +242,7 @@ await withdraw(toAddress, usdAmount);
         isOpen={showFunding}
         onClose={() => setShowFunding(false)}
         walletAddress={wallet.address}
-        currentBalance={balanceInEth || '0'}
+        currentBalance={balanceInEth || "0"}
         userId={userId}
       />
 
@@ -255,10 +251,9 @@ await withdraw(toAddress, usdAmount);
         isOpen={showWithdraw}
         onClose={() => setShowWithdraw(false)}
         walletAddress={wallet.address}
-        currentBalance={balanceInEth || '0'}
+        currentBalance={balanceInEth || "0"}
         onWithdraw={handleWithdraw}
       />
     </Card>
   );
 }
-

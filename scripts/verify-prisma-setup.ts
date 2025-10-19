@@ -4,7 +4,7 @@
  */
 
 import { prisma } from "../lib/db/prisma";
-import { User, Wallet, WalletTransaction } from "@prisma/client";
+import { User, Wallet, WalletTransaction } from "@/lib/generated/prisma-client";
 
 async function verifyPrismaSetup() {
   console.log("🔍 Verifying Prisma setup...\n");
@@ -132,4 +132,3 @@ async function verifyPrismaSetup() {
 
 // Run verification
 verifyPrismaSetup();
-

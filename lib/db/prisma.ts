@@ -11,4 +11,4 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 // Export types for use in other files
-export type { Wallet } from "@prisma/client";
+export type { Wallet } from "@/lib/generated/prisma-client";

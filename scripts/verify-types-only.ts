@@ -3,7 +3,12 @@
  * Run with: npx tsc --noEmit scripts/verify-types-only.ts
  */
 
-import { User, Wallet, WalletTransaction, PrismaClient } from "@prisma/client";
+import {
+  User,
+  Wallet,
+  WalletTransaction,
+  PrismaClient,
+} from "@/lib/generated/prisma-client";
 
 // This will fail at compile time if types don't exist
 const userExample: User = {
@@ -51,4 +56,3 @@ console.log("✅ All Prisma types are correctly defined!");
 console.log("✅ User type:", Object.keys(userExample));
 console.log("✅ Wallet type:", Object.keys(walletExample));
 console.log("✅ WalletTransaction type:", Object.keys(txExample));
-

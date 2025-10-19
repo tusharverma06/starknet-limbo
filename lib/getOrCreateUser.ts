@@ -1,5 +1,5 @@
 import { Address } from "viem";
-import { User } from "@prisma/client";
+import { User } from "@/lib/generated/prisma-client";
 import { prisma } from "./db/prisma";
 
 export const getNeyNarWalletAddress = async (

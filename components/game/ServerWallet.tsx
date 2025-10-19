@@ -221,7 +221,7 @@ export function ServerWallet({ userId, onWalletReady }: ServerWalletProps) {
           </Button>
         </div>
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => setShowWithdraw(true)}
           className="w-full"
           size="sm"

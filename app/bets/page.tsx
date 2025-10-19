@@ -22,8 +22,8 @@ export default function BetsPage() {
   const { bets, isLoading, error, refreshBets } = usePonderBets();
   const [searchAddress, setSearchAddress] = useState("");
   const [filterWin, setFilterWin] = useState<"all" | "win" | "loss">("all");
-  const [sortBy, setSortBy] = useState<"timestamp" | "betAmount" | "payout">(
-    "timestamp"
+  const [sortBy, setSortBy] = useState<"placedAt" | "betAmount" | "payout">(
+    "placedAt"
   );
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
@@ -41,25 +41,25 @@ export default function BetsPage() {
       return true;
     })
     .sort((a, b) => {
-      let aValue: number | string;
-      let bValue: number | string;
+      let aValue: number | bigint;
+      let bValue: number | bigint;
 
       switch (sortBy) {
-        case "timestamp":
-          aValue = a.timestamp;
-          bValue = b.timestamp;
+        case "placedAt":
+          aValue = a.placedAt;
+          bValue = b.placedAt;
           break;
         case "betAmount":
           aValue = BigInt(a.betAmount);
           bValue = BigInt(b.betAmount);
           break;
         case "payout":
-          aValue = BigInt(a.payout);
-          bValue = BigInt(b.payout);
+          aValue = BigInt(a.payout || "0");
+          bValue = BigInt(b.payout || "0");
           break;
         default:
-          aValue = a.timestamp;
-          bValue = b.timestamp;
+          aValue = a.placedAt;
+          bValue = b.placedAt;
       }
 
       if (sortOrder === "desc") {
@@ -76,13 +76,13 @@ export default function BetsPage() {
     BigInt(0)
   );
   const totalPayout = bets.reduce(
-    (sum, bet) => sum + BigInt(bet.payout),
+    (sum, bet) => sum + BigInt(bet.payout || "0"),
     BigInt(0)
   );
   const winCount = bets.filter((bet) => bet.win).length;
   const winRate = totalBets > 0 ? (winCount / totalBets) * 100 : 0;
 
-  const handleSort = (field: "timestamp" | "betAmount" | "payout") => {
+  const handleSort = (field: "placedAt" | "betAmount" | "payout") => {
     if (sortBy === field) {
       setSortOrder(sortOrder === "desc" ? "asc" : "desc");
     } else {
@@ -106,7 +106,7 @@ export default function BetsPage() {
             </p>
           </div>
           <Link href="/game">
-            <Button variant="outline">← Back to Game</Button>
+            <Button variant="ghost">← Back to Game</Button>
           </Link>
         </div>
 
@@ -187,21 +187,21 @@ export default function BetsPage() {
 
             <div className="flex gap-2">
               <Button
-                variant={filterWin === "all" ? "default" : "outline"}
+                variant={filterWin === "all" ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setFilterWin("all")}
               >
                 All
               </Button>
               <Button
-                variant={filterWin === "win" ? "default" : "outline"}
+                variant={filterWin === "win" ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setFilterWin("win")}
               >
                 Wins
               </Button>
               <Button
-                variant={filterWin === "loss" ? "default" : "outline"}
+                variant={filterWin === "loss" ? "primary" : "ghost"}
                 size="sm"
                 onClick={() => setFilterWin("loss")}
               >
@@ -210,7 +210,7 @@ export default function BetsPage() {
             </div>
 
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={refreshBets}
               disabled={isLoading}
@@ -252,10 +252,10 @@ export default function BetsPage() {
                   </th>
                   <th
                     className="text-left p-4 text-slate-300 font-medium cursor-pointer hover:text-white"
-                    onClick={() => handleSort("timestamp")}
+                    onClick={() => handleSort("placedAt")}
                   >
                     Time{" "}
-                    {sortBy === "timestamp" &&
+                    {sortBy === "placedAt" &&
                       (sortOrder === "desc" ? "↓" : "↑")}
                   </th>
                 </tr>
@@ -303,12 +303,12 @@ export default function BetsPage() {
                       </div>
                     </td>
                     <td className="p-4 text-white font-medium">
-                      {formatETH(BigInt(bet.payout))} ETH
+                      {formatETH(BigInt(bet.payout || "0"))} ETH
                     </td>
                     <td className="p-4 text-slate-400 text-sm">
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {formatDistanceToNow(new Date(bet.timestamp * 1000), {
+                        {formatDistanceToNow(new Date(bet.placedAt * 1000), {
                           addSuffix: true,
                         })}
                       </div>

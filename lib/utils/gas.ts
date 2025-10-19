@@ -149,7 +149,7 @@ export const estimateContractGas = async (
       throw new Error("Signer not available on contract");
     }
     const fromAddress = await (
-      signer as { getAddress: () => Promise<string> }
+      signer as unknown as { getAddress: () => Promise<string> }
     ).getAddress();
 
     // Encode the function call

@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { PonderAPI, type Bet } from '@/lib/graphql/ponder';
+import { useState, useEffect, useRef, useCallback } from "react";
+import { PonderAPI, type Bet } from "@/lib/graphql/ponder";
 
 interface ResolvedBet {
   requestId: bigint;
@@ -27,12 +27,14 @@ interface UseBetResultPollerReturn {
  * Hook for polling bet results from Ponder GraphQL API
  * Replaces the old contract event polling with instant results
  */
-export function useBetResultPoller(userAddress: string | undefined): UseBetResultPollerReturn {
+export function useBetResultPoller(
+  userAddress: string | undefined
+): UseBetResultPollerReturn {
   const [latestBet, setLatestBet] = useState<ResolvedBet | null>(null);
   const [resolvedBets, setResolvedBets] = useState<ResolvedBet[]>([]);
   const [isPolling, setIsPolling] = useState(false);
   const [lastPollTimestamp, setLastPollTimestamp] = useState(Date.now());
-  
+
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const processedBetIds = useRef<Set<string>>(new Set());
 
@@ -45,10 +47,10 @@ export function useBetResultPoller(userAddress: string | undefined): UseBetResul
       player: bet.player,
       amount: BigInt(bet.betAmount),
       targetMultiplier: Number(bet.targetMultiplier) / 100,
-      limboMultiplier: BigInt(bet.limboMultiplier),
-      win: bet.win,
-      payout: BigInt(bet.payout),
-      timestamp: bet.timestamp * 1000, // Convert to milliseconds
+      limboMultiplier: BigInt(bet.limboMultiplier || "0"),
+      win: bet.win || false,
+      payout: BigInt(bet.payout || "0"),
+      timestamp: bet.placedAt * 1000, // Convert to milliseconds
       txHash: `0x${bet.id.slice(0, 64)}` as `0x${string}`, // Generate mock tx hash from ID
     };
   }, []);
@@ -62,46 +64,47 @@ export function useBetResultPoller(userAddress: string | undefined): UseBetResul
     try {
       // Get recent bets for this user
       const recentBets = await PonderAPI.getUserBets(userAddress, 10);
-      
+
       // Filter for new bets (not processed yet)
       const newBets = recentBets.filter(
-        (bet) => 
+        (bet) =>
           !processedBetIds.current.has(bet.id) &&
-          bet.timestamp * 1000 > lastPollTimestamp
+          bet.placedAt * 1000 > lastPollTimestamp
       );
 
       if (newBets.length > 0) {
-        console.log('🎉 New bets found from Ponder:', newBets.length);
-        
+        console.log("🎉 New bets found from Ponder:", newBets.length);
+
         // Process new bets
         const resolvedBets = newBets.map(convertPonderBet);
-        
+
         // Mark as processed
         newBets.forEach((bet) => processedBetIds.current.add(bet.id));
-        
+
         // Update latest bet (most recent)
         const latestResolvedBet = resolvedBets[0];
         setLatestBet(latestResolvedBet);
-        
+
         // Add to history
         setResolvedBets((prev) => {
           const newBets = resolvedBets.filter(
-            (bet) => !prev.some((existing) => existing.requestId === bet.requestId)
+            (bet) =>
+              !prev.some((existing) => existing.requestId === bet.requestId)
           );
           return [...newBets, ...prev].slice(0, 50); // Keep last 50
         });
-        
+
         // Update last poll timestamp
         setLastPollTimestamp(Date.now());
-        
-        console.log('✅ Processed new bets:', {
+
+        console.log("✅ Processed new bets:", {
           count: newBets.length,
-          latest: latestResolvedBet.win ? 'WIN' : 'LOSS',
+          latest: latestResolvedBet.win ? "WIN" : "LOSS",
           payout: latestResolvedBet.payout.toString(),
         });
       }
     } catch (error) {
-      console.error('❌ Error polling for new bets:', error);
+      console.error("❌ Error polling for new bets:", error);
     }
   }, [userAddress, lastPollTimestamp, convertPonderBet]);
 
@@ -110,13 +113,13 @@ export function useBetResultPoller(userAddress: string | undefined): UseBetResul
    */
   const startPolling = useCallback(() => {
     if (isPolling || !userAddress) return;
-    
-    console.log('🔄 Starting bet result polling for:', userAddress);
+
+    console.log("🔄 Starting bet result polling for:", userAddress);
     setIsPolling(true);
-    
+
     // Poll immediately
     pollForNewBets();
-    
+
     // Set up interval polling (every 2 seconds)
     pollingIntervalRef.current = setInterval(pollForNewBets, 2000);
   }, [isPolling, userAddress, pollForNewBets]);
@@ -125,9 +128,9 @@ export function useBetResultPoller(userAddress: string | undefined): UseBetResul
    * Stop polling
    */
   const stopPolling = useCallback(() => {
-    console.log('⏹️ Stopping bet result polling');
+    console.log("⏹️ Stopping bet result polling");
     setIsPolling(false);
-    
+
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
@@ -189,42 +192,45 @@ export function useInstantBetResult(userAddress: string | undefined) {
   const [isChecking, setIsChecking] = useState(false);
   const [result, setResult] = useState<ResolvedBet | null>(null);
 
-  const checkForResult = useCallback(async (expectedTimestamp: number) => {
-    if (!userAddress) return null;
-    
-    setIsChecking(true);
-    setResult(null);
-    
-    try {
-      // Get user's latest bet
-      const latestBet = await PonderAPI.getUserLatestBet(userAddress);
-      
-      if (latestBet && latestBet.timestamp * 1000 >= expectedTimestamp) {
-        // Convert to ResolvedBet format
-        const resolvedBet: ResolvedBet = {
-          requestId: BigInt(latestBet.id),
-          player: latestBet.player,
-          amount: BigInt(latestBet.betAmount),
-          targetMultiplier: Number(latestBet.targetMultiplier) / 100,
-          limboMultiplier: BigInt(latestBet.limboMultiplier),
-          win: latestBet.win,
-          payout: BigInt(latestBet.payout),
-          timestamp: latestBet.timestamp * 1000,
-          txHash: `0x${latestBet.id.slice(0, 64)}` as `0x${string}`,
-        };
-        
-        setResult(resolvedBet);
-        return resolvedBet;
+  const checkForResult = useCallback(
+    async (expectedTimestamp: number) => {
+      if (!userAddress) return null;
+
+      setIsChecking(true);
+      setResult(null);
+
+      try {
+        // Get user's latest bet
+        const latestBet = await PonderAPI.getUserLatestBet(userAddress);
+
+        if (latestBet && latestBet.placedAt * 1000 >= expectedTimestamp) {
+          // Convert to ResolvedBet format
+          const resolvedBet: ResolvedBet = {
+            requestId: BigInt(latestBet.id),
+            player: latestBet.player,
+            amount: BigInt(latestBet.betAmount),
+            targetMultiplier: Number(latestBet.targetMultiplier) / 100,
+            limboMultiplier: BigInt(latestBet.limboMultiplier || "0"),
+            win: latestBet.win || false,
+            payout: BigInt(latestBet.payout || "0"),
+            timestamp: latestBet.placedAt * 1000,
+            txHash: `0x${latestBet.id.slice(0, 64)}` as `0x${string}`,
+          };
+
+          setResult(resolvedBet);
+          return resolvedBet;
+        }
+
+        return null;
+      } catch (error) {
+        console.error("Error checking for instant result:", error);
+        return null;
+      } finally {
+        setIsChecking(false);
       }
-      
-      return null;
-    } catch (error) {
-      console.error('Error checking for instant result:', error);
-      return null;
-    } finally {
-      setIsChecking(false);
-    }
-  }, [userAddress]);
+    },
+    [userAddress]
+  );
 
   return {
     result,

@@ -1,8 +1,8 @@
-import { useWatchContractEvent } from 'wagmi';
-import { LIMBO_GAME_ABI } from '@/lib/contract/abi';
-import { CONTRACT_ADDRESS, CHAIN } from '@/lib/contract/config';
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { PendingBet, ResolvedBet } from '@/lib/contract/types';
+import { useWatchContractEvent } from "wagmi";
+import { LIMBO_GAME_ABI } from "@/lib/contract/abi";
+import { CONTRACT_ADDRESS, CHAIN } from "@/lib/contract/config";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { PendingBet, ResolvedBet } from "@/lib/contract/types";
 
 const PENDING_BET_TIMEOUT = 5 * 60 * 1000; // 5 minutes timeout for stale bets
 
@@ -16,9 +16,13 @@ export function useBetEvents(userAddress?: string) {
     const interval = setInterval(() => {
       const now = Date.now();
       setPendingBets((prev) => {
-        const filtered = prev.filter((bet) => now - bet.timestamp < PENDING_BET_TIMEOUT);
+        const filtered = prev.filter(
+          (bet) => now - bet.timestamp < PENDING_BET_TIMEOUT
+        );
         if (filtered.length !== prev.length) {
-          console.log(`🧹 Cleaned up ${prev.length - filtered.length} stale pending bets`);
+          console.log(
+            `🧹 Cleaned up ${prev.length - filtered.length} stale pending bets`
+          );
         }
         return filtered;
       });
@@ -31,13 +35,23 @@ export function useBetEvents(userAddress?: string) {
   useWatchContractEvent({
     address: CONTRACT_ADDRESS,
     abi: LIMBO_GAME_ABI,
-    eventName: 'BetPlaced',
+    eventName: "BetPlaced",
     chainId: CHAIN.id,
     onLogs(logs) {
-      console.log('📡 BetPlaced event received:', logs.length, 'logs');
+      console.log("📡 BetPlaced event received:", logs.length, "logs");
       logs.forEach((log) => {
-        const { requestId, player, amount, targetMultiplier, timestamp } = log.args;
-        console.log('🎲 BetPlaced:', {
+        const { requestId, player, amount, targetMultiplier, timestamp } = (
+          log as unknown as {
+            args: {
+              requestId: bigint;
+              player: string;
+              amount: bigint;
+              targetMultiplier: number;
+              timestamp: number;
+            };
+          }
+        ).args;
+        console.log("🎲 BetPlaced:", {
           requestId: requestId?.toString(),
           player,
           amount: amount?.toString(),
@@ -46,8 +60,11 @@ export function useBetEvents(userAddress?: string) {
         });
 
         // Filter by user if address provided
-        if (userAddress && player?.toLowerCase() !== userAddress.toLowerCase()) {
-          console.log('⏭️ Skipping bet from other player');
+        if (
+          userAddress &&
+          player?.toLowerCase() !== userAddress.toLowerCase()
+        ) {
+          console.log("⏭️ Skipping bet from other player");
           return;
         }
 
@@ -56,7 +73,7 @@ export function useBetEvents(userAddress?: string) {
 
         // Check if already processed (duplicate prevention)
         if (processedRequestIds.current.has(`placed-${reqIdStr}`)) {
-          console.log('⚠️ BetPlaced already processed, skipping');
+          console.log("⚠️ BetPlaced already processed, skipping");
           return;
         }
         processedRequestIds.current.add(`placed-${reqIdStr}`);
@@ -67,10 +84,10 @@ export function useBetEvents(userAddress?: string) {
           amount: amount as bigint,
           targetMultiplier: Number(targetMultiplier),
           timestamp: Number(timestamp) * 1000, // Convert to milliseconds
-          txHash: log.transactionHash,
+          txHash: log.transactionHash || "",
         };
 
-        console.log('✅ Adding pending bet:', {
+        console.log("✅ Adding pending bet:", {
           ...bet,
           requestId: bet.requestId.toString(),
           amount: bet.amount.toString(),
@@ -80,7 +97,7 @@ export function useBetEvents(userAddress?: string) {
           // Check for duplicates by requestId
           const exists = prev.some((b) => b.requestId === bet.requestId);
           if (exists) {
-            console.log('⚠️ Bet with this requestId already pending, skipping');
+            console.log("⚠️ Bet with this requestId already pending, skipping");
             return prev;
           }
           return [bet, ...prev].slice(0, 10);
@@ -93,14 +110,35 @@ export function useBetEvents(userAddress?: string) {
   useWatchContractEvent({
     address: CONTRACT_ADDRESS,
     abi: LIMBO_GAME_ABI,
-    eventName: 'BetResolved',
+    eventName: "BetResolved",
     chainId: CHAIN.id,
     onLogs(logs) {
-      console.log('📡 BetResolved event received:', logs.length, 'logs');
+      console.log("📡 BetResolved event received:", logs.length, "logs");
       logs.forEach((log) => {
-        const { requestId, player, betAmount, targetMultiplier, limboMultiplier, win, payout, timestamp } =
-          log.args;
-        console.log('🎰 BetResolved:', {
+        const {
+          requestId,
+          player,
+          betAmount,
+          targetMultiplier,
+          limboMultiplier,
+          win,
+          payout,
+          timestamp,
+        } = (
+          log as unknown as {
+            args: {
+              requestId: bigint;
+              player: string;
+              betAmount: bigint;
+              targetMultiplier: bigint;
+              limboMultiplier: bigint;
+              win: boolean;
+              payout: bigint;
+              timestamp: number;
+            };
+          }
+        ).args;
+        console.log("🎰 BetResolved:", {
           requestId: requestId?.toString(),
           player,
           betAmount: betAmount?.toString(),
@@ -111,8 +149,11 @@ export function useBetEvents(userAddress?: string) {
         });
 
         // Filter by user if address provided
-        if (userAddress && player?.toLowerCase() !== userAddress.toLowerCase()) {
-          console.log('⏭️ Skipping resolved bet from other player');
+        if (
+          userAddress &&
+          player?.toLowerCase() !== userAddress.toLowerCase()
+        ) {
+          console.log("⏭️ Skipping resolved bet from other player");
           return;
         }
 
@@ -121,7 +162,7 @@ export function useBetEvents(userAddress?: string) {
 
         // Prevent duplicate processing
         if (processedRequestIds.current.has(`resolved-${reqIdStr}`)) {
-          console.log('⚠️ BetResolved already processed, skipping');
+          console.log("⚠️ BetResolved already processed, skipping");
           return;
         }
         processedRequestIds.current.add(`resolved-${reqIdStr}`);
@@ -135,10 +176,10 @@ export function useBetEvents(userAddress?: string) {
           win: win as boolean,
           payout: payout as bigint,
           timestamp: Number(timestamp) * 1000, // Convert to milliseconds
-          txHash: log.transactionHash,
+          txHash: log.transactionHash || "",
         };
 
-        console.log('✅ Adding resolved bet:', {
+        console.log("✅ Adding resolved bet:", {
           ...resolved,
           requestId: resolved.requestId.toString(),
           amount: resolved.amount.toString(),
@@ -150,7 +191,9 @@ export function useBetEvents(userAddress?: string) {
           // Check for duplicates by requestId
           const exists = prev.some((b) => b.requestId === resolved.requestId);
           if (exists) {
-            console.log('⚠️ Bet with this requestId already resolved, skipping');
+            console.log(
+              "⚠️ Bet with this requestId already resolved, skipping"
+            );
             return prev;
           }
           return [resolved, ...prev].slice(0, 50);
@@ -162,7 +205,9 @@ export function useBetEvents(userAddress?: string) {
           if (remaining.length !== prev.length) {
             console.log(`🗑️ Removed pending bet with requestId: ${reqIdStr}`);
           } else {
-            console.warn(`⚠️ No matching pending bet found for requestId: ${reqIdStr}`);
+            console.warn(
+              `⚠️ No matching pending bet found for requestId: ${reqIdStr}`
+            );
           }
           return remaining;
         });
@@ -171,14 +216,14 @@ export function useBetEvents(userAddress?: string) {
   });
 
   const clearBets = useCallback(() => {
-    console.log('🧹 Clearing all bets');
+    console.log("🧹 Clearing all bets");
     setPendingBets([]);
     setResolvedBets([]);
     processedRequestIds.current.clear();
   }, []);
 
   const clearPendingBets = useCallback(() => {
-    console.log('🧹 Clearing all pending bets (manual reset)');
+    console.log("🧹 Clearing all pending bets (manual reset)");
     setPendingBets([]);
   }, []);
 

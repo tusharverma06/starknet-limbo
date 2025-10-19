@@ -49,14 +49,13 @@ export function FarcasterProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const load = async () => {
       if (await sdk.isInMiniApp()) {
-        // Set loading to true when SDK starts loading
-        setContext(sdk.context);
-
         // Wait for SDK to be ready
         sdk.actions.ready();
 
         setIsSDKLoaded(true);
         const context = await sdk.context;
+        setContext(context);
+
         // Get user info if authenticated
         if (context.user) {
           setUser(context.user);

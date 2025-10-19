@@ -20,7 +20,7 @@ interface FundingModalProps {
   onClose: () => void;
   walletAddress: string;
   currentBalance: string;
-  userId?: string;
+  userId?: string | null;
 }
 
 export function FundingModal({

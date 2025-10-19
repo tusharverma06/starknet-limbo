@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { GAME_STATES } from '@/lib/constants';
+import { create } from "zustand";
+import { GAME_STATES } from "@/lib/constants";
 
 interface GameState {
   state: keyof typeof GAME_STATES;
@@ -16,8 +16,8 @@ interface GameState {
 }
 
 export const useGameState = create<GameState>((set) => ({
-  state: 'idle',
-  betAmount: '0.01',
+  state: "IDLE",
+  betAmount: "0.01",
   targetMultiplier: 2.0,
   lastWin: null,
   lastPayout: null,
@@ -26,9 +26,10 @@ export const useGameState = create<GameState>((set) => ({
   setBetAmount: (betAmount) => set({ betAmount }),
   setTargetMultiplier: (targetMultiplier) => set({ targetMultiplier }),
   setLastResult: (win, payout) => set({ lastWin: win, lastPayout: payout }),
-  reset: () => set({
-    state: 'idle',
-    lastWin: null,
-    lastPayout: null
-  }),
+  reset: () =>
+    set({
+      state: "IDLE",
+      lastWin: null,
+      lastPayout: null,
+    }),
 }));

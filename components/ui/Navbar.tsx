@@ -24,7 +24,7 @@ interface NavbarProps {
   onActivityClick?: () => void;
   walletBalance?: string;
   onWithdraw?: (amount: string, toAddress: string) => Promise<void>;
-  userId?: string;
+  userId?: string | null;
 }
 
 export function Navbar({

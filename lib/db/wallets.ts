@@ -246,13 +246,18 @@ class WalletDatabase {
       });
 
       // Total balance (sum of all wallet balances)
-      const result = await prisma.wallet.aggregate({
-        _sum: {
+      // Since balance is stored as String, we need to fetch and sum manually
+      const allWallets = await prisma.wallet.findMany({
+        select: {
           balance: true,
         },
       });
 
-      const totalBalance = result._sum.balance || "0";
+      const totalBalance = allWallets
+        .reduce((sum, wallet) => {
+          return sum + BigInt(wallet.balance || "0");
+        }, BigInt(0))
+        .toString();
 
       return { totalWallets, activeWallets, totalBalance };
     } catch (error) {

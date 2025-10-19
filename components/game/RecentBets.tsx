@@ -54,7 +54,7 @@ export function RecentBets({ bets }: RecentBetsProps) {
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {bets.map((bet, index) => {
           const resultMultiplier = toDisplayMultiplier(
-            Number(bet.randomResult)
+            Number(bet.limboMultiplier)
           );
           const targetMultiplier = toDisplayMultiplier(bet.targetMultiplier);
           const betKey = `${bet.txHash}-${bet.timestamp}`;

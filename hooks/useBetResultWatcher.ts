@@ -100,7 +100,7 @@ export function useBetResultWatcher(): UseBetResultWatcherReturn {
               const filter = contract.filters.BetResolved(requestId);
               const events = await contract.queryFilter(
                 filter,
-                startBlockRef.current,
+                startBlockRef.current || undefined,
                 "latest"
               );
 
@@ -108,7 +108,21 @@ export function useBetResultWatcher(): UseBetResultWatcherReturn {
                 console.log("✅ Found BetResolved event!", events[0]);
 
                 const event = events[0];
-                const args = event.args;
+                const args = (
+                  event as unknown as {
+                    args: [
+                      bigint,
+                      string,
+                      bigint,
+                      bigint,
+                      bigint,
+                      bigint,
+                      boolean,
+                      bigint,
+                      bigint
+                    ];
+                  }
+                ).args;
 
                 const betResult: BetResult = {
                   requestId: args[0],

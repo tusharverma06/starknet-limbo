@@ -16,7 +16,6 @@ import { useGameState } from "@/hooks/useGameState";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { Dice6, Loader2 } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
-import { formatEther } from "ethers";
 import Image from "next/image";
 
 export function MiniappGameBoard() {
@@ -199,7 +198,7 @@ export function MiniappGameBoard() {
 
       // Convert to expected format
       const win = watchedBetResult.win;
-      const payout = parseFloat(formatEther(watchedBetResult.payout));
+      const payout = watchedBetResult.payout;
       const multiplier = Number(watchedBetResult.limboMultiplier) / 100;
 
       setLastResult(win, payout);

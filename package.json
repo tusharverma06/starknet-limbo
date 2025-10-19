@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
+    "postinstall": "prisma generate",
     "db:setup": "bash scripts/setup-database.sh",
     "setup-prisma": "bash scripts/setup-prisma.sh",
     "db:migrate": "prisma migrate dev",

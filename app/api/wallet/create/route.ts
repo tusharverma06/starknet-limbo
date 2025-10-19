@@ -20,11 +20,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log('📝 Creating wallet for Farcaster FID:', userId);
+
     // Get or create user in database (userId is Farcaster FID)
-    const user = await getOrCreateUser(userId);
-    if (!user) {
+    let user;
+    try {
+      user = await getOrCreateUser(userId);
+      if (!user) {
+        console.error('❌ getOrCreateUser returned null for FID:', userId);
+        return NextResponse.json(
+          { error: 'Failed to get or create user. Please check your Farcaster account.' },
+          { status: 500 }
+        );
+      }
+      console.log('✅ User retrieved/created:', user.id, user.farcaster_username);
+    } catch (userError) {
+      console.error('❌ Error in getOrCreateUser:', userError);
       return NextResponse.json(
-        { error: 'Failed to get or create user' },
+        {
+          error: 'Failed to fetch user from Farcaster',
+          details: userError instanceof Error ? userError.message : 'Unknown error'
+        },
         { status: 500 }
       );
     }
@@ -42,21 +58,32 @@ export async function POST(req: NextRequest) {
     }
 
     // Create a new random wallet
+    console.log('🔐 Generating new wallet...');
     const wallet = Wallet.createRandom();
     const address = wallet.address;
     const privateKey = wallet.privateKey;
+    console.log('✅ Wallet generated:', address);
 
     // Encrypt the private key
+    console.log('🔒 Encrypting private key...');
     const encryptedPrivateKey = encryptPrivateKey(privateKey);
+    console.log('✅ Private key encrypted');
 
     // Store in database (use database user ID, not Farcaster FID)
-    const walletData = await walletDb.createWallet(
-      user.id,
-      address,
-      encryptedPrivateKey
-    );
-
-    console.log('✅ Created wallet for user:', userId, '(DB ID:', user.id, ') address:', address);
+    console.log('💾 Storing wallet in database for user ID:', user.id);
+    let walletData;
+    try {
+      walletData = await walletDb.createWallet(
+        user.id,
+        address,
+        encryptedPrivateKey
+      );
+      console.log('✅ Wallet stored in database');
+      console.log('✅ Created wallet for user:', userId, '(DB ID:', user.id, ') address:', address);
+    } catch (dbError) {
+      console.error('❌ Database error when creating wallet:', dbError);
+      throw dbError;
+    }
 
     return NextResponse.json({
       success: true,
@@ -64,9 +91,16 @@ export async function POST(req: NextRequest) {
       createdAt: walletData.createdAt,
     });
   } catch (error) {
-    console.error('Wallet creation error:', error);
+    console.error('❌ Wallet creation error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('Error details:', { message: errorMessage, stack: errorStack });
+
     return NextResponse.json(
-      { error: 'Failed to create wallet' },
+      {
+        error: 'Failed to create wallet',
+        details: errorMessage
+      },
       { status: 500 }
     );
   }

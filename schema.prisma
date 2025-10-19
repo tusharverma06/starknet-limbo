@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Define database connection via the `DATABASE_URL` env var
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_PRISMA_DATABASE_URL")
+}
+
+// Define custom output path for generated Prisma Client
+generator client {
+  provider = "prisma-client-js"
+  output   = "lib/generated/prisma-client"
+}
+        
+// User model to store Farcaster identity details
+model User {
+  id                 String   @id @default(cuid())
+  farcaster_id       String   @unique @db.VarChar(255)
+  farcaster_username String   @db.VarChar(255)
+  farcaster_pfp      String?  @db.Text
+  wallet_address     String?  @db.VarChar(42)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  wallet Wallet?
+
+  @@index([farcaster_id])
+  @@map("users")
+}
+
+// Server-side wallet management (separate from Ponder's onchain data)
+model Wallet {
+  // Primary identifier (Farcaster FID or other user ID)
+  userId String @id @map("user_id") @db.VarChar(255)
+
+  // Ethereum wallet address
+  address String @unique @db.VarChar(42)
+
+  // Encrypted private key (AES-256-GCM encrypted)
+  encryptedPrivateKey String @map("encrypted_private_key") @db.Text
+
+  // Unix timestamp (milliseconds) when wallet was created
+  createdAt BigInt @map("created_at")
+
+  // Cached balance in wei (as string to handle big numbers)
+  balance String @default("0") @db.VarChar(78)
+
+  // Unix timestamp (milliseconds) of last transaction
+  lastUsed BigInt? @map("last_used")
+
+  // Timestamp fields for database management
+  createdAtTimestamp DateTime @default(now()) @map("created_at_timestamp")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([address])
+  @@index([lastUsed])
+  @@index([createdAt])
+  @@map("wallets")
+}
+
+// NOTE: Ponder manages these tables automatically:
+// - account (onchain accounts)
+// - transfer_event (transfer events)
+// - allowance (token allowances)
+// - approval_event (approval events)
+// - user (onchain user stats)
+// - bet (betting events)
+//
+// We only manage the Wallet table for server-side wallet encryption
+// All betting data comes from Ponder's GraphQL API
+
+// Optional: Transaction history model
+// Uncomment to track transaction history
+model WalletTransaction {
+  id          Int       @id @default(autoincrement())
+  userId      String    @map("user_id") @db.VarChar(255)
+  txHash      String    @map("tx_hash") @db.VarChar(66)
+  txType      String    @map("tx_type") @db.VarChar(50) // 'bet', 'withdraw', 'deposit'
+  amount      String    @db.VarChar(78)
+  status      String    @db.VarChar(20) // 'pending', 'confirmed', 'failed'
+  blockNumber BigInt?   @map("block_number")
+  gasUsed     String?   @map("gas_used") @db.VarChar(78)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  confirmedAt DateTime? @map("confirmed_at")
+
+  wallet Wallet @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([txHash])
+  @@index([createdAt])
+  @@map("wallet_transactions")
+}

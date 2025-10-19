@@ -1,0 +1,1 @@
+- i dont want no guides or md or setup files . stick to providing solutioon by making changes in code

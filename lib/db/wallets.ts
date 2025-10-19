@@ -4,7 +4,7 @@ import { prisma } from "./prisma";
  * Wallet data structure (matches Prisma model)
  */
 export interface WalletData {
-  userId: string; // Farcaster FID or other user identifier
+  userId: string; // References User.id (must create User first via getOrCreateUser)
   address: string; // Ethereum address (0x...)
   encryptedPrivateKey: string; // Encrypted private key
   createdAt: number; // Timestamp
@@ -36,6 +36,9 @@ class WalletDatabase {
 
   /**
    * Create a new wallet for a user
+   * @param userId - Must be a valid User.id (create User first via getOrCreateUser)
+   * @param address - Ethereum wallet address
+   * @param encryptedPrivateKey - AES-256-GCM encrypted private key
    */
   async createWallet(
     userId: string,

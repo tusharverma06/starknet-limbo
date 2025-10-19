@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Wallet } from 'ethers';
 import { encryptPrivateKey } from '@/lib/utils/encryption';
 import { walletDb } from '@/lib/db/wallets';
+import { getOrCreateUser } from '@/lib/getOrCreateUser';
 
 /**
  * POST /api/wallet/create
@@ -19,8 +20,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if wallet already exists
-    const existingWallet = await walletDb.getWallet(userId);
+    // Get or create user in database (userId is Farcaster FID)
+    const user = await getOrCreateUser(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Failed to get or create user' },
+        { status: 500 }
+      );
+    }
+
+    // Check if wallet already exists (use database user ID)
+    const existingWallet = await walletDb.getWallet(user.id);
     if (existingWallet) {
       return NextResponse.json(
         {
@@ -39,14 +49,14 @@ export async function POST(req: NextRequest) {
     // Encrypt the private key
     const encryptedPrivateKey = encryptPrivateKey(privateKey);
 
-    // Store in database
+    // Store in database (use database user ID, not Farcaster FID)
     const walletData = await walletDb.createWallet(
-      userId,
+      user.id,
       address,
       encryptedPrivateKey
     );
 
-    console.log('✅ Created wallet for user:', userId, 'address:', address);
+    console.log('✅ Created wallet for user:', userId, '(DB ID:', user.id, ') address:', address);
 
     return NextResponse.json({
       success: true,
@@ -77,7 +87,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const wallet = await walletDb.getWallet(userId);
+    // Get user from database (userId is Farcaster FID)
+    const user = await getOrCreateUser(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Failed to get or create user' },
+        { status: 500 }
+      );
+    }
+
+    const wallet = await walletDb.getWallet(user.id);
 
     if (!wallet) {
       return NextResponse.json(

@@ -5,6 +5,7 @@ import { decryptPrivateKey } from "@/lib/utils/encryption";
 import { getEthValueFromUsd } from "@/lib/utils/price";
 import { CHAIN } from "@/lib/contract/config";
 import { estimateGas } from "@/lib/utils/gas";
+import { getOrCreateUser } from "@/lib/getOrCreateUser";
 
 /**
  * POST /api/wallet/withdraw
@@ -41,8 +42,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get user from database (userId is Farcaster FID)
+    const user = await getOrCreateUser(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Failed to get or create user' },
+        { status: 500 }
+      );
+    }
+
     // Get wallet from database
-    const walletData = await walletDb.getWallet(userId);
+    const walletData = await walletDb.getWallet(user.id);
     if (!walletData) {
       return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }
@@ -117,11 +127,11 @@ export async function POST(req: NextRequest) {
     const receipt = await tx.wait();
 
     // Update last used timestamp
-    await walletDb.updateLastUsed(userId);
+    await walletDb.updateLastUsed(user.id);
 
     // Update balance
     const newBalance = await provider.getBalance(wallet.address);
-    await walletDb.updateBalance(userId, newBalance.toString());
+    await walletDb.updateBalance(user.id, newBalance.toString());
 
     console.log("✅ Withdrawal confirmed:", receipt?.hash);
 

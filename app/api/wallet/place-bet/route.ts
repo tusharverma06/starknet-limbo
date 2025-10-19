@@ -14,6 +14,7 @@ import { LIMBO_GAME_ABI } from "@/lib/contract/abi";
 import { toContractMultiplier } from "@/lib/utils/multiplier";
 import { MIN_BET_USD } from "@/lib/constants";
 import { estimateContractGas } from "@/lib/utils/gas";
+import { getOrCreateUser } from "@/lib/getOrCreateUser";
 
 /**
  * POST /api/wallet/place-bet
@@ -90,8 +91,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get user from database (userId is Farcaster FID)
+    const user = await getOrCreateUser(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Failed to get or create user' },
+        { status: 500 }
+      );
+    }
+
     // Get wallet from database
-    const walletData = await walletDb.getWallet(userId);
+    const walletData = await walletDb.getWallet(user.id);
     if (!walletData) {
       return NextResponse.json(
         { error: "Wallet not found. Please create a wallet first." },
@@ -246,11 +256,11 @@ export async function POST(req: NextRequest) {
     console.log("🎲 Receipt:", receipt.logs);
 
     // Update last used timestamp
-    await walletDb.updateLastUsed(userId);
+    await walletDb.updateLastUsed(user.id);
 
     // Update balance
     const newBalance = await provider.getBalance(wallet.address);
-    await walletDb.updateBalance(userId, newBalance.toString());
+    await walletDb.updateBalance(user.id, newBalance.toString());
 
     console.log("✅ Bet confirmed:", receipt?.hash);
 

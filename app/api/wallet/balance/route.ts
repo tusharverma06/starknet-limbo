@@ -3,6 +3,7 @@ import { JsonRpcProvider, formatEther } from 'ethers';
 import { walletDb } from '@/lib/db/wallets';
 import { getUsdValueFromEth } from '@/lib/utils/price';
 import { CHAIN } from '@/lib/contract/config';
+import { getOrCreateUser } from '@/lib/getOrCreateUser';
 
 /**
  * GET /api/wallet/balance?userId=xxx
@@ -19,7 +20,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const wallet = await walletDb.getWallet(userId);
+    // Get user from database (userId is Farcaster FID)
+    const user = await getOrCreateUser(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Failed to get or create user' },
+        { status: 500 }
+      );
+    }
+
+    const wallet = await walletDb.getWallet(user.id);
 
     if (!wallet) {
       return NextResponse.json(
@@ -34,7 +44,7 @@ export async function GET(req: NextRequest) {
     const balance = await provider.getBalance(wallet.address);
 
     // Update cached balance
-    await walletDb.updateBalance(userId, balance.toString());
+    await walletDb.updateBalance(user.id, balance.toString());
 
     // Convert to USD
     const ethBalance = parseFloat(formatEther(balance));

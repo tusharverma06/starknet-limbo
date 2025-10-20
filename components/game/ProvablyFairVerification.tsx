@@ -5,11 +5,49 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Copy, ExternalLink, Check } from "lucide-react";
 
+interface SignatureData {
+  r: string;
+  s: string;
+  v: number;
+}
+
+interface EventData {
+  requestId?: string;
+  player?: string;
+  betAmount?: string;
+  targetMultiplier?: number;
+  [key: string]: string | number | boolean | undefined;
+}
+
+interface StepData {
+  description?: string;
+  signature?: SignatureData;
+  eventData?: EventData;
+  transactionHash?: string;
+  vrfRequestTxHash?: string;
+  vrfFulfillTxHash?: string;
+  fulfillmentTxHash?: string;
+  blockNumber?: number;
+  matches?: boolean;
+  verified?: boolean;
+  formula?: string;
+  proofOfRandomness?: string;
+  randomWord?: string;
+  clientSeed?: string;
+  [key: string]:
+    | string
+    | number
+    | boolean
+    | SignatureData
+    | EventData
+    | undefined;
+}
+
 interface VerificationStep {
   step: number;
   description: string;
   status: string | "loading";
-  data: Record<string, unknown>;
+  data: StepData;
 }
 
 interface BetData {
@@ -32,6 +70,27 @@ interface VerificationResponse {
 interface ProvablyFairVerificationProps {
   initialRequestId?: string;
 }
+
+// Helper function to safely convert unknown values to string
+const safeToString = (value: unknown): string => {
+  if (value === null || value === undefined) return "N/A";
+  return String(value);
+};
+
+// Helper function to check if a value is a transaction hash field
+const isTransactionHashField = (key: string): boolean => {
+  return [
+    "transactionHash",
+    "vrfRequestTxHash",
+    "vrfFulfillTxHash",
+    "fulfillmentTxHash",
+  ].includes(key);
+};
+
+// Helper function to check if a field should be excluded from display
+const isExcludedField = (key: string): boolean => {
+  return ["description", "signature", "eventData"].includes(key);
+};
 
 export function ProvablyFairVerification({
   initialRequestId = "",
@@ -58,12 +117,43 @@ export function ProvablyFairVerification({
     try {
       // Initialize with loading state for all steps
       const loadingSteps: VerificationStep[] = [
-        { step: 1, description: "Verify bet placement transaction on blockchain", status: "loading", data: {} },
-        { step: 2, description: "Verify BetPlaced event was emitted correctly", status: "loading", data: {} },
-        { step: 3, description: "Verify Chainlink VRF provided randomness", status: "loading", data: {} },
-        { step: 4, description: "Check that the bet's payout is correct", status: "loading", data: {} },
-        { step: 5, description: "Check that the bet's settlement values are correct", status: "loading", data: {} },
-        { step: 6, description: "Check that the settlement values match the on-chain transaction", status: "loading", data: {} },
+        {
+          step: 1,
+          description: "Verify bet placement transaction on blockchain",
+          status: "loading",
+          data: {},
+        },
+        {
+          step: 2,
+          description: "Verify BetPlaced event was emitted correctly",
+          status: "loading",
+          data: {},
+        },
+        {
+          step: 3,
+          description: "Verify Chainlink VRF provided randomness",
+          status: "loading",
+          data: {},
+        },
+        {
+          step: 4,
+          description: "Check that the bet's payout is correct",
+          status: "loading",
+          data: {},
+        },
+        {
+          step: 5,
+          description: "Check that the bet's settlement values are correct",
+          status: "loading",
+          data: {},
+        },
+        {
+          step: 6,
+          description:
+            "Check that the settlement values match the on-chain transaction",
+          status: "loading",
+          data: {},
+        },
       ];
 
       setVerification({
@@ -119,8 +209,8 @@ export function ProvablyFairVerification({
       </h1>
 
       <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
-        Verify this bet to ensure transparency and fairness. The system will check
-        the VRF randomness and validate the bet outcome.
+        Verify this bet to ensure transparency and fairness. The system will
+        check the VRF randomness and validate the bet outcome.
       </p>
 
       <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
@@ -198,11 +288,13 @@ export function ProvablyFairVerification({
       {verification && (
         <div className="space-y-4 sm:space-y-6">
           {/* Overall Status */}
-          <div className={`p-3 sm:p-4 rounded-lg border ${
-            verification.overallStatus.includes('✅')
-              ? 'bg-green-50 border-green-300'
-              : 'bg-gray-50 border-gray-300'
-          }`}>
+          <div
+            className={`p-3 sm:p-4 rounded-lg border ${
+              verification.overallStatus.includes("✅")
+                ? "bg-green-50 border-green-300"
+                : "bg-gray-50 border-gray-300"
+            }`}
+          >
             <h2 className="text-lg sm:text-xl font-semibold text-black mb-3">
               {verification.overallStatus}
             </h2>
@@ -210,7 +302,9 @@ export function ProvablyFairVerification({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div className="space-y-2">
                   <div>
-                    <span className="text-gray-600 text-xs">Player Address</span>
+                    <span className="text-gray-600 text-xs">
+                      Player Address
+                    </span>
                     <p className="font-mono text-xs text-gray-900 break-all">
                       {verification.bet.player}
                     </p>
@@ -218,29 +312,45 @@ export function ProvablyFairVerification({
                   <div>
                     <span className="text-gray-600 text-xs">Bet Amount</span>
                     <p className="font-semibold text-purple-600">
-                      {(Number(verification.bet.betAmount) / 1e18).toFixed(6)} ETH
+                      {(Number(verification.bet.betAmount) / 1e18).toFixed(6)}{" "}
+                      ETH
                     </p>
-                    <p className="text-xs text-gray-500 font-mono">{verification.bet.betAmount} wei</p>
+                    <p className="text-xs text-gray-500 font-mono">
+                      {verification.bet.betAmount} wei
+                    </p>
                   </div>
                   <div>
-                    <span className="text-gray-600 text-xs">Target Multiplier</span>
+                    <span className="text-gray-600 text-xs">
+                      Target Multiplier
+                    </span>
                     <p className="font-semibold text-orange-600">
-                      {(Number(verification.bet.targetMultiplier) / 100).toFixed(2)}x
+                      {(
+                        Number(verification.bet.targetMultiplier) / 100
+                      ).toFixed(2)}
+                      x
                     </p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div>
-                    <span className="text-gray-600 text-xs">Limbo Multiplier</span>
+                    <span className="text-gray-600 text-xs">
+                      Limbo Multiplier
+                    </span>
                     <p className="font-semibold text-orange-600">
                       {verification.bet.limboMultiplier
-                        ? (Number(verification.bet.limboMultiplier) / 100).toFixed(2) + "x"
+                        ? (
+                            Number(verification.bet.limboMultiplier) / 100
+                          ).toFixed(2) + "x"
                         : "N/A"}
                     </p>
                   </div>
                   <div>
                     <span className="text-gray-600 text-xs">Result</span>
-                    <p className={`font-bold text-lg ${verification.bet.win ? "text-green-600" : "text-red-600"}`}>
+                    <p
+                      className={`font-bold text-lg ${
+                        verification.bet.win ? "text-green-600" : "text-red-600"
+                      }`}
+                    >
                       {verification.bet.win ? "🎉 WIN" : "❌ LOSS"}
                     </p>
                   </div>
@@ -248,11 +358,15 @@ export function ProvablyFairVerification({
                     <span className="text-gray-600 text-xs">Payout</span>
                     <p className="font-semibold text-green-600">
                       {verification.bet.payout
-                        ? `${(Number(verification.bet.payout) / 1e18).toFixed(6)} ETH`
+                        ? `${(Number(verification.bet.payout) / 1e18).toFixed(
+                            6
+                          )} ETH`
                         : "0 ETH"}
                     </p>
                     {verification.bet.payout && (
-                      <p className="text-xs text-gray-500 font-mono">{verification.bet.payout} wei</p>
+                      <p className="text-xs text-gray-500 font-mono">
+                        {verification.bet.payout} wei
+                      </p>
                     )}
                   </div>
                 </div>
@@ -263,7 +377,9 @@ export function ProvablyFairVerification({
           {/* Verification Steps */}
           <div className="border border-gray-300 rounded-lg overflow-hidden bg-white">
             <div className="bg-gray-100 px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-300">
-              <h3 className="font-semibold text-black text-sm sm:text-base">Verification Steps</h3>
+              <h3 className="font-semibold text-black text-sm sm:text-base">
+                Verification Steps
+              </h3>
             </div>
             <div className="divide-y divide-gray-200">
               {verification.verificationSteps.map((step) => (
@@ -277,178 +393,287 @@ export function ProvablyFairVerification({
                         <details className="mt-2">
                           <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-800 flex items-center gap-1">
                             <span>View cryptographic proof</span>
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            <svg
+                              className="w-3 h-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
                             </svg>
                           </summary>
                           <div className="mt-2 text-xs text-gray-700 space-y-3 ml-4 p-3 bg-gray-50 rounded border border-gray-200">
-                            {/* Description */}
-                            {step.data.description && typeof step.data.description === 'string' ? (
+                            {step.data.description && (
                               <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
-                                <span className="font-medium">ℹ️ What happened: </span>
+                                <span className="font-medium">
+                                  ℹ️ What happened:{" "}
+                                </span>
                                 {step.data.description}
                               </div>
-                            ) : null}
+                            )}
 
-                            {/* Signature proof */}
-                            {step.data.signature && typeof step.data.signature === 'object' && (
+                            {step.data.signature && (
                               <div className="border-l-2 border-green-500 pl-3 space-y-2">
                                 <div className="font-semibold text-green-700 flex items-center gap-1">
                                   🔐 Transaction Signature (Cryptographic Proof)
                                 </div>
                                 <div className="text-xs text-gray-600 mb-2 space-y-2">
-                                  <p>This ECDSA signature proves the transaction was signed by the custodial wallet&apos;s private key.</p>
+                                  <p>
+                                    This ECDSA signature proves the transaction
+                                    was signed by the custodial wallet&apos;s
+                                    private key.
+                                  </p>
                                   <div className="bg-blue-50 border border-blue-200 rounded p-2 space-y-1">
-                                    <p className="font-medium text-blue-900">📚 What is RSV?</p>
-                                    <p><span className="font-semibold">R:</span> First part of the signature - a point on the elliptic curve derived from the random nonce used during signing</p>
-                                    <p><span className="font-semibold">S:</span> Second part of the signature - proves knowledge of the private key without revealing it</p>
-                                    <p><span className="font-semibold">V:</span> Recovery ID (27 or 28) - helps recover the public key from the signature, enabling address verification</p>
-                                    <p className="text-blue-700 font-medium mt-1">Together, these three values cryptographically prove that only the holder of the private key could have created this transaction.</p>
+                                    <p className="font-medium text-blue-900">
+                                      📚 What is RSV?
+                                    </p>
+                                    <p>
+                                      <span className="font-semibold">R:</span>{" "}
+                                      First part of the signature - a point on
+                                      the elliptic curve derived from the random
+                                      nonce used during signing
+                                    </p>
+                                    <p>
+                                      <span className="font-semibold">S:</span>{" "}
+                                      Second part of the signature - proves
+                                      knowledge of the private key without
+                                      revealing it
+                                    </p>
+                                    <p>
+                                      <span className="font-semibold">V:</span>{" "}
+                                      Recovery ID (27 or 28) - helps recover the
+                                      public key from the signature, enabling
+                                      address verification
+                                    </p>
+                                    <p className="text-blue-700 font-medium mt-1">
+                                      Together, these three values
+                                      cryptographically prove that only the
+                                      holder of the private key could have
+                                      created this transaction.
+                                    </p>
                                   </div>
                                 </div>
-                                {Object.entries(step.data.signature as Record<string, unknown>).map(([sigKey, sigValue]) => (
-                                  <div key={sigKey} className="flex flex-col gap-1 bg-white p-2 rounded border border-gray-200">
-                                    <span className="font-medium text-gray-700 uppercase">{sigKey}:</span>
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-mono text-xs text-green-600 break-all flex-1">
-                                        {String(sigValue)}
+                                {Object.entries(step.data.signature).map(
+                                  ([sigKey, sigValue]) => (
+                                    <div
+                                      key={sigKey}
+                                      className="flex flex-col gap-1 bg-white p-2 rounded border border-gray-200"
+                                    >
+                                      <span className="font-medium text-gray-700 uppercase">
+                                        {sigKey}:
                                       </span>
-                                      <button
-                                        onClick={() => copyToClipboard(String(sigValue), `sig-${sigKey}`)}
-                                        className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
-                                        title={`Copy ${sigKey}`}
-                                      >
-                                        {copiedText === `sig-${sigKey}` ? (
-                                          <Check className="w-3 h-3 text-green-600" />
-                                        ) : (
-                                          <Copy className="w-3 h-3 text-gray-600" />
-                                        )}
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Event data */}
-                            {step.data.eventData && typeof step.data.eventData === 'object' && (
-                              <div className="border-l-2 border-purple-500 pl-3 space-y-2">
-                                <div className="font-semibold text-purple-700 flex items-center gap-1">
-                                  📡 Smart Contract Event Emitted
-                                </div>
-                                <div className="text-xs text-gray-600 mb-2">
-                                  The smart contract emitted this event on-chain with the following data:
-                                </div>
-                                {Object.entries(step.data.eventData as Record<string, unknown>).map(([eventKey, eventValue]) => (
-                                  <div key={eventKey} className="flex flex-col gap-1 bg-white p-2 rounded border border-gray-200">
-                                    <span className="font-medium text-gray-700 capitalize">
-                                      {eventKey.replace(/([A-Z])/g, ' $1').trim()}:
-                                    </span>
-                                    <span className="font-mono text-xs text-purple-600 break-all">
-                                      {eventValue != null ? String(eventValue) : 'N/A'}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Other technical details */}
-                            {Object.entries(step.data).filter(([key]) =>
-                              key !== 'description' && key !== 'signature' && key !== 'eventData'
-                            ).map(([key, value]) => {
-                              // Format the value based on its type and content
-                              let formattedValue = String(value);
-                              let valueClass = "text-gray-900";
-                              let isSpecialField = false;
-
-                              if (typeof value === "boolean") {
-                                formattedValue = value ? "✅ Yes" : "❌ No";
-                                valueClass = value ? "text-green-600" : "text-red-600";
-                              } else if (key === "transactionHash" || key === "vrfRequestTxHash" || key === "vrfFulfillTxHash" || key === "fulfillmentTxHash") {
-                                // Format transaction hashes - will be handled specially below
-                                const hash = String(value);
-                                formattedValue = hash;
-                                valueClass = "font-mono text-blue-600 text-xs";
-                                isSpecialField = true;
-                              } else if (key.toLowerCase().includes("amount") || key.toLowerCase().includes("payout")) {
-                                // Format amounts in wei to ETH
-                                try {
-                                  const wei = BigInt(value);
-                                  const eth = Number(wei) / 1e18;
-                                  if (eth < 0.0001) {
-                                    formattedValue = `${value} wei`;
-                                  } else {
-                                    formattedValue = `${eth.toFixed(6)} ETH (${value} wei)`;
-                                  }
-                                  valueClass = "font-mono text-purple-600";
-                                } catch {
-                                  formattedValue = String(value);
-                                }
-                              } else if (key.toLowerCase().includes("multiplier")) {
-                                // Keep multiplier as is but highlight
-                                valueClass = "font-semibold text-orange-600";
-                              } else if (key === "blockNumber") {
-                                valueClass = "font-mono text-indigo-600";
-                              } else if (key.toLowerCase() === "matches" || key.toLowerCase() === "verified") {
-                                formattedValue = value ? "✅ Yes" : "❌ No";
-                                valueClass = value ? "text-green-600 font-semibold" : "text-red-600 font-semibold";
-                              } else if (key === "formula" || key === "proofOfRandomness") {
-                                valueClass = "font-mono text-indigo-600 bg-indigo-50 p-1 rounded";
-                              } else if (key === "randomWord" || key === "clientSeed") {
-                                valueClass = "font-mono text-orange-600";
-                                isSpecialField = true;
-                              }
-
-                              // Special handling for transaction hashes
-                              if (key === "transactionHash" || key === "vrfRequestTxHash" || key === "vrfFulfillTxHash" || key === "fulfillmentTxHash") {
-                                const hash = String(value);
-                                return (
-                                  <div key={key} className="flex flex-col gap-1">
-                                    <span className="font-medium text-gray-600 capitalize text-xs">
-                                      {key.replace(/([A-Z])/g, ' $1').trim()}:
-                                    </span>
-                                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-gray-200">
-                                      <span className="font-mono text-xs text-blue-600 break-all flex-1">
-                                        {hash}
-                                      </span>
-                                      <div className="flex gap-1 flex-shrink-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-mono text-xs text-green-600 break-all flex-1">
+                                          {String(sigValue)}
+                                        </span>
                                         <button
-                                          onClick={() => copyToClipboard(hash, `hash-${key}`)}
-                                          className="p-1 hover:bg-gray-100 rounded"
-                                          title="Copy hash"
+                                          onClick={() =>
+                                            copyToClipboard(
+                                              String(sigValue),
+                                              `sig-${sigKey}`
+                                            )
+                                          }
+                                          className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
+                                          title={`Copy ${sigKey}`}
                                         >
-                                          {copiedText === `hash-${key}` ? (
+                                          {copiedText === `sig-${sigKey}` ? (
                                             <Check className="w-3 h-3 text-green-600" />
                                           ) : (
                                             <Copy className="w-3 h-3 text-gray-600" />
                                           )}
                                         </button>
-                                        <a
-                                          href={`https://sepolia.basescan.org/tx/${hash}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="p-1 hover:bg-gray-100 rounded"
-                                          title="View on BaseScan"
-                                        >
-                                          <ExternalLink className="w-3 h-3 text-blue-600" />
-                                        </a>
                                       </div>
                                     </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+
+                            {/* Event data */}
+                            {step.data.eventData && (
+                              <div className="border-l-2 border-purple-500 pl-3 space-y-2">
+                                <div className="font-semibold text-purple-700 flex items-center gap-1">
+                                  📡 Smart Contract Event Emitted
+                                </div>
+                                <div className="text-xs text-gray-600 mb-2">
+                                  The smart contract emitted this event on-chain
+                                  with the following data:
+                                </div>
+                                {Object.entries(step.data.eventData).map(
+                                  ([eventKey, eventValue]) => (
+                                    <div
+                                      key={eventKey}
+                                      className="flex flex-col gap-1 bg-white p-2 rounded border border-gray-200"
+                                    >
+                                      <span className="font-medium text-gray-700 capitalize">
+                                        {eventKey
+                                          .replace(/([A-Z])/g, " $1")
+                                          .trim()}
+                                        :
+                                      </span>
+                                      <span className="font-mono text-xs text-purple-600 break-all">
+                                        {eventValue != null
+                                          ? String(eventValue)
+                                          : "N/A"}
+                                      </span>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+
+                            {/* Other technical details */}
+                            {Object.entries(step.data)
+                              .filter(([key]) => !isExcludedField(key))
+                              .map(([key, value]) => {
+                                // Skip complex objects that have already been rendered
+                                if (
+                                  typeof value === "object" &&
+                                  value !== null
+                                ) {
+                                  return null;
+                                }
+
+                                // Format the value based on its type and content
+                                let formattedValue = safeToString(value);
+                                let valueClass = "text-gray-900";
+                                let isSpecialField = false;
+
+                                if (typeof value === "boolean") {
+                                  formattedValue = value ? "✅ Yes" : "❌ No";
+                                  valueClass = value
+                                    ? "text-green-600"
+                                    : "text-red-600";
+                                } else if (isTransactionHashField(key)) {
+                                  // Format transaction hashes - will be handled specially below
+                                  formattedValue = safeToString(value);
+                                  valueClass =
+                                    "font-mono text-blue-600 text-xs";
+                                  isSpecialField = true;
+                                } else if (
+                                  key.toLowerCase().includes("amount") ||
+                                  key.toLowerCase().includes("payout")
+                                ) {
+                                  // Format amounts in wei to ETH
+                                  try {
+                                    const valueStr = safeToString(value);
+                                    const wei = BigInt(valueStr);
+                                    const eth = Number(wei) / 1e18;
+                                    if (eth < 0.0001) {
+                                      formattedValue = `${valueStr} wei`;
+                                    } else {
+                                      formattedValue = `${eth.toFixed(
+                                        6
+                                      )} ETH (${valueStr} wei)`;
+                                    }
+                                    valueClass = "font-mono text-purple-600";
+                                  } catch {
+                                    formattedValue = safeToString(value);
+                                  }
+                                } else if (
+                                  key.toLowerCase().includes("multiplier")
+                                ) {
+                                  // Keep multiplier as is but highlight
+                                  valueClass = "font-semibold text-orange-600";
+                                } else if (key === "blockNumber") {
+                                  valueClass = "font-mono text-indigo-600";
+                                } else if (
+                                  key.toLowerCase() === "matches" ||
+                                  key.toLowerCase() === "verified"
+                                ) {
+                                  formattedValue = value ? "✅ Yes" : "❌ No";
+                                  valueClass = value
+                                    ? "text-green-600 font-semibold"
+                                    : "text-red-600 font-semibold";
+                                } else if (
+                                  key === "formula" ||
+                                  key === "proofOfRandomness"
+                                ) {
+                                  valueClass =
+                                    "font-mono text-indigo-600 bg-indigo-50 p-1 rounded";
+                                } else if (
+                                  key === "randomWord" ||
+                                  key === "clientSeed"
+                                ) {
+                                  valueClass = "font-mono text-orange-600";
+                                  isSpecialField = true;
+                                }
+
+                                // Special handling for transaction hashes
+                                if (
+                                  isTransactionHashField(key) &&
+                                  typeof value === "string"
+                                ) {
+                                  const hash = value;
+                                  return (
+                                    <div
+                                      key={key}
+                                      className="flex flex-col gap-1"
+                                    >
+                                      <span className="font-medium text-gray-600 capitalize text-xs">
+                                        {key.replace(/([A-Z])/g, " $1").trim()}:
+                                      </span>
+                                      <div className="flex items-center gap-2 bg-white p-2 rounded border border-gray-200">
+                                        <span className="font-mono text-xs text-blue-600 break-all flex-1">
+                                          {hash}
+                                        </span>
+                                        <div className="flex gap-1 flex-shrink-0">
+                                          <button
+                                            onClick={() =>
+                                              copyToClipboard(
+                                                hash,
+                                                `hash-${key}`
+                                              )
+                                            }
+                                            className="p-1 hover:bg-gray-100 rounded"
+                                            title="Copy hash"
+                                          >
+                                            {copiedText === `hash-${key}` ? (
+                                              <Check className="w-3 h-3 text-green-600" />
+                                            ) : (
+                                              <Copy className="w-3 h-3 text-gray-600" />
+                                            )}
+                                          </button>
+                                          <a
+                                            href={`https://sepolia.basescan.org/tx/${hash}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-1 hover:bg-gray-100 rounded"
+                                            title="View on BaseScan"
+                                          >
+                                            <ExternalLink className="w-3 h-3 text-blue-600" />
+                                          </a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+
+                                return (
+                                  <div
+                                    key={key}
+                                    className="flex flex-col gap-1"
+                                  >
+                                    <span className="font-medium text-gray-600 capitalize text-xs">
+                                      {key.replace(/([A-Z])/g, " $1").trim()}:
+                                    </span>
+                                    <span
+                                      className={`${valueClass} ${
+                                        isSpecialField
+                                          ? "break-all"
+                                          : "break-words"
+                                      }`}
+                                    >
+                                      {formattedValue}
+                                    </span>
                                   </div>
                                 );
-                              }
-
-                              return (
-                                <div key={key} className="flex flex-col gap-1">
-                                  <span className="font-medium text-gray-600 capitalize text-xs">
-                                    {key.replace(/([A-Z])/g, ' $1').trim()}:
-                                  </span>
-                                  <span className={`${valueClass} ${isSpecialField ? 'break-all' : 'break-words'}`}>
-                                    {formattedValue}
-                                  </span>
-                                </div>
-                              );
-                            })}
+                              })}
                           </div>
                         </details>
                       )}

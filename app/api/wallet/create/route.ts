@@ -3,6 +3,7 @@ import { Wallet } from 'ethers';
 import { encryptPrivateKey } from '@/lib/utils/encryption';
 import { walletDb } from '@/lib/db/wallets';
 import { getOrCreateUser } from '@/lib/getOrCreateUser';
+import { prisma } from '@/lib/db/prisma';
 
 /**
  * POST /api/wallet/create
@@ -79,6 +80,14 @@ export async function POST(req: NextRequest) {
         encryptedPrivateKey
       );
       console.log('✅ Wallet stored in database');
+
+      // Update user with server wallet address
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { server_wallet_address: address }
+      });
+      console.log('✅ Updated user with server wallet address');
+
       console.log('✅ Created wallet for user:', userId, '(DB ID:', user.id, ') address:', address);
     } catch (dbError) {
       console.error('❌ Database error when creating wallet:', dbError);

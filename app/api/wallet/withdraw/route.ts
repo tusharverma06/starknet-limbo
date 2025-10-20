@@ -6,6 +6,7 @@ import { getEthValueFromUsd } from "@/lib/utils/price";
 import { CHAIN } from "@/lib/contract/config";
 import { estimateGas } from "@/lib/utils/gas";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
+import { prisma } from "@/lib/db/prisma";
 
 /**
  * POST /api/wallet/withdraw
@@ -123,8 +124,32 @@ export async function POST(req: NextRequest) {
 
     console.log("📤 Withdrawal transaction sent:", tx.hash);
 
+    // Record pending transaction
+    await prisma.walletTransaction.create({
+      data: {
+        userId: user.id,
+        txHash: tx.hash,
+        txType: 'withdraw',
+        amount: withdrawAmount.toString(),
+        status: 'pending',
+      }
+    });
+    console.log("📝 Withdrawal transaction recorded");
+
     // Wait for confirmation
     const receipt = await tx.wait();
+
+    // Update transaction status
+    await prisma.walletTransaction.updateMany({
+      where: { txHash: tx.hash },
+      data: {
+        status: 'confirmed',
+        blockNumber: BigInt(receipt?.blockNumber || 0),
+        gasUsed: receipt?.gasUsed?.toString() || '0',
+        confirmedAt: new Date(),
+      }
+    });
+    console.log("✅ Withdrawal confirmed in database");
 
     // Update last used timestamp
     await walletDb.updateLastUsed(user.id);

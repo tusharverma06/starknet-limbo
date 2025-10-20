@@ -14,17 +14,19 @@ generator client {
 
 // User model to store Farcaster identity details
 model User {
-  id                 String   @id @default(cuid())
-  farcaster_id       String   @unique @db.VarChar(255)
-  farcaster_username String   @db.VarChar(255)
-  farcaster_pfp      String?  @db.Text
-  wallet_address     String?  @db.VarChar(42)
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(cuid())
+  farcaster_id          String   @unique @db.VarChar(255)
+  farcaster_username    String   @db.VarChar(255)
+  farcaster_pfp         String?  @db.Text
+  wallet_address        String?  @db.VarChar(42) // Farcaster connected wallet
+  server_wallet_address String?  @db.VarChar(42) // Server-side wallet address
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   wallet Wallet?
 
   @@index([farcaster_id])
+  @@index([server_wallet_address])
   @@map("users")
 }
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Navbar } from "@/components/ui/Navbar";
 import { ActivityDrawer } from "@/components/ui/ActivityDrawer";
+import { FundingModal } from "@/components/ui/FundingModal";
 import { MultiplierSelector } from "./MultiplierSelector";
 import { GameResult } from "./GameResult";
 import { ServerWallet } from "./ServerWallet";
@@ -56,18 +57,22 @@ export function MiniappGameBoard() {
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [betError, setBetError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
+  const [currentBetResult, setCurrentBetResult] = useState<any>(null);
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
+  const [showFundingModal, setShowFundingModal] = useState(false);
   const [potentialPayoutUsd, setPotentialPayoutUsd] = useState<number | null>(
     null
   );
 
-  // Handle bet resolution
+  // Handle bet resolution from polling
   useEffect(() => {
     if (latestBet) {
-      console.log("🎉 RESULT FOUND!", latestBet);
+      console.log("🎉 RESULT FOUND from polling!", latestBet);
       stopPolling();
+      setCurrentBetResult(latestBet);
       setLastResult(latestBet.win, latestBet.payout);
       setShowResult(true);
+      setIsPlacingBet(false);
     }
   }, [latestBet, setLastResult, stopPolling]);
 
@@ -144,6 +149,22 @@ export function MiniappGameBoard() {
     setAmountError("");
   };
 
+  const handlePrimaryAction = async () => {
+    // If no wallet, this will be "Create Wallet" - handled by ServerWallet component
+    if (!wallet) {
+      return;
+    }
+
+    // If wallet exists but no balance, open funding modal
+    if (wallet && (!balanceInUsd || balanceInUsd === 0)) {
+      setShowFundingModal(true);
+      return;
+    }
+
+    // Otherwise, place bet
+    await handlePlaceBet();
+  };
+
   const handlePlaceBet = async () => {
     if (!wallet || !userId) {
       console.warn("⚠️ No wallet found");
@@ -186,6 +207,7 @@ export function MiniappGameBoard() {
 
   const handleResultClose = () => {
     setShowResult(false);
+    setCurrentBetResult(null);
     clearLatestBet();
     resetGameState();
     setIsPlacingBet(false);
@@ -196,23 +218,23 @@ export function MiniappGameBoard() {
     if (watchedBetResult) {
       console.log("🎉 Bet result received from watcher!", watchedBetResult);
 
-      // Convert to expected format
-      const win = watchedBetResult.win;
-      const payout = watchedBetResult.payout;
-      const multiplier = Number(watchedBetResult.limboMultiplier) / 100;
+      // Convert to expected format matching latestBet structure
+      const betResult = {
+        win: watchedBetResult.win,
+        payout: watchedBetResult.payout,
+        amount: betAmount,
+        targetMultiplier: targetMultiplier,
+        limboMultiplier: Number(watchedBetResult.limboMultiplier) / 100,
+      };
 
-      setLastResult(win, payout);
+      setCurrentBetResult(betResult);
+      setLastResult(betResult.win, betResult.payout);
       setShowResult(true);
       setIsPlacingBet(false);
 
-      console.log("🎲 Result:", {
-        win,
-        payout,
-        multiplier,
-        targetMultiplier,
-      });
+      console.log("🎲 Result:", betResult);
     }
-  }, [watchedBetResult, setLastResult, targetMultiplier]);
+  }, [watchedBetResult, setLastResult, targetMultiplier, betAmount]);
 
   const handleWithdraw = async (amount: string, toAddress: string) => {
     if (!userId) {
@@ -232,8 +254,16 @@ export function MiniappGameBoard() {
     isPlacingBet ||
     isWaitingForResult ||
     isPolling ||
-    !wallet ||
     isWalletLoading;
+
+  const getButtonText = () => {
+    if (isPolling) return "Getting Result...";
+    if (isWaitingForResult) return "Waiting for VRF...";
+    if (isPlacingBet) return "Placing Bet...";
+    if (!wallet) return "Create Wallet";
+    if (!balanceInUsd || balanceInUsd === 0) return "Fund Wallet";
+    return "Place Bet";
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -259,22 +289,21 @@ export function MiniappGameBoard() {
           </h1>
         </motion.div>
 
-        {/* Server Wallet Component - Show if no wallet exists or initial loading */}
-        {(!wallet || isInitialLoading) && (
+        {/* Server Wallet Component - Only show if no wallet and still loading */}
+        {!wallet && isInitialLoading && (
           <div className="p-4">
             <ServerWallet userId={userId} />
           </div>
         )}
 
-        {/* Main Game Content */}
+        {/* Main Game Content - Always show */}
         <div className="flex-1 p-4 space-y-6">
-          {/* Game Controls */}
-          {wallet && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
-            >
+          {/* Game Controls - Always visible */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
               {/* Bet Amount Input */}
               <div>
                 <div className="w-full flex items-center justify-between mb-2">
@@ -340,30 +369,18 @@ export function MiniappGameBoard() {
 
               <Button
                 size="lg"
-                onClick={handlePlaceBet}
+                onClick={handlePrimaryAction}
                 disabled={
                   isDisabled ||
-                  !!amountError ||
-                  parseFloat(betAmount || "0") === 0
+                  (wallet && balanceInUsd && balanceInUsd > 0 && (!!amountError || parseFloat(betAmount || "0") === 0))
                 }
                 isLoading={isPlacingBet || isWaitingForResult}
                 className="w-full text-sm h-10 mb-2 font-medium"
               >
-                {isPolling ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Getting Result...
-                  </>
-                ) : isWaitingForResult ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Waiting for VRF...
-                  </>
-                ) : isPlacingBet ? (
-                  "Placing Bet..."
-                ) : (
-                  " Place Bet"
+                {(isPolling || isWaitingForResult || isPlacingBet) && (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 )}
+                {getButtonText()}
               </Button>
               <div className="w-full border-t border-gray-200 pt-2 flex items-center justify-between ">
                 <span className="text-sm text-gray-500 font-medium">
@@ -381,20 +398,26 @@ export function MiniappGameBoard() {
                   {betError}
                 </div>
               )}
+
+              {/* Show Create Wallet prompt if no wallet */}
+              {!wallet && !isInitialLoading && (
+                <div className="text-sm text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <ServerWallet userId={userId} />
+                </div>
+              )}
             </motion.div>
-          )}
         </div>
       </div>
 
       {/* Game Result Modal */}
       <AnimatePresence>
-        {showResult && lastWin !== null && latestBet && (
+        {showResult && lastWin !== null && currentBetResult && (
           <GameResult
-            win={latestBet.win}
-            amount={latestBet.amount}
-            targetMultiplier={latestBet.targetMultiplier}
-            randomResult={latestBet.limboMultiplier}
-            payout={latestBet.payout}
+            win={currentBetResult.win}
+            amount={currentBetResult.amount}
+            targetMultiplier={currentBetResult.targetMultiplier}
+            randomResult={currentBetResult.limboMultiplier}
+            payout={currentBetResult.payout}
             onClose={handleResultClose}
           />
         )}
@@ -405,7 +428,19 @@ export function MiniappGameBoard() {
         isOpen={isActivityDrawerOpen}
         onClose={() => setIsActivityDrawerOpen(false)}
         userAddress={wallet?.address || null}
+        userId={userId}
       />
+
+      {/* Funding Modal */}
+      {wallet && (
+        <FundingModal
+          isOpen={showFundingModal}
+          onClose={() => setShowFundingModal(false)}
+          walletAddress={wallet.address}
+          currentBalance={balanceInEth || "0"}
+          userId={userId}
+        />
+      )}
     </div>
   );
 }

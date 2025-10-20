@@ -1088,6 +1088,7 @@ export namespace Prisma {
     farcaster_username: string | null
     farcaster_pfp: string | null
     wallet_address: string | null
+    server_wallet_address: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1098,6 +1099,7 @@ export namespace Prisma {
     farcaster_username: string | null
     farcaster_pfp: string | null
     wallet_address: string | null
+    server_wallet_address: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1108,6 +1110,7 @@ export namespace Prisma {
     farcaster_username: number
     farcaster_pfp: number
     wallet_address: number
+    server_wallet_address: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1120,6 +1123,7 @@ export namespace Prisma {
     farcaster_username?: true
     farcaster_pfp?: true
     wallet_address?: true
+    server_wallet_address?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1130,6 +1134,7 @@ export namespace Prisma {
     farcaster_username?: true
     farcaster_pfp?: true
     wallet_address?: true
+    server_wallet_address?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1140,6 +1145,7 @@ export namespace Prisma {
     farcaster_username?: true
     farcaster_pfp?: true
     wallet_address?: true
+    server_wallet_address?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1223,6 +1229,7 @@ export namespace Prisma {
     farcaster_username: string
     farcaster_pfp: string | null
     wallet_address: string | null
+    server_wallet_address: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1250,6 +1257,7 @@ export namespace Prisma {
     farcaster_username?: boolean
     farcaster_pfp?: boolean
     wallet_address?: boolean
+    server_wallet_address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     wallet?: boolean | User$walletArgs<ExtArgs>
@@ -1261,6 +1269,7 @@ export namespace Prisma {
     farcaster_username?: boolean
     farcaster_pfp?: boolean
     wallet_address?: boolean
+    server_wallet_address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1271,6 +1280,7 @@ export namespace Prisma {
     farcaster_username?: boolean
     farcaster_pfp?: boolean
     wallet_address?: boolean
+    server_wallet_address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1281,11 +1291,12 @@ export namespace Prisma {
     farcaster_username?: boolean
     farcaster_pfp?: boolean
     wallet_address?: boolean
+    server_wallet_address?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "farcaster_id" | "farcaster_username" | "farcaster_pfp" | "wallet_address" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "farcaster_id" | "farcaster_username" | "farcaster_pfp" | "wallet_address" | "server_wallet_address" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     wallet?: boolean | User$walletArgs<ExtArgs>
   }
@@ -1303,6 +1314,7 @@ export namespace Prisma {
       farcaster_username: string
       farcaster_pfp: string | null
       wallet_address: string | null
+      server_wallet_address: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -1734,6 +1746,7 @@ export namespace Prisma {
     readonly farcaster_username: FieldRef<"User", 'String'>
     readonly farcaster_pfp: FieldRef<"User", 'String'>
     readonly wallet_address: FieldRef<"User", 'String'>
+    readonly server_wallet_address: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -4507,6 +4520,7 @@ export namespace Prisma {
     farcaster_username: 'farcaster_username',
     farcaster_pfp: 'farcaster_pfp',
     wallet_address: 'wallet_address',
+    server_wallet_address: 'server_wallet_address',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -4655,6 +4669,7 @@ export namespace Prisma {
     farcaster_username?: StringFilter<"User"> | string
     farcaster_pfp?: StringNullableFilter<"User"> | string | null
     wallet_address?: StringNullableFilter<"User"> | string | null
+    server_wallet_address?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
@@ -4666,6 +4681,7 @@ export namespace Prisma {
     farcaster_username?: SortOrder
     farcaster_pfp?: SortOrderInput | SortOrder
     wallet_address?: SortOrderInput | SortOrder
+    server_wallet_address?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     wallet?: WalletOrderByWithRelationInput
@@ -4680,6 +4696,7 @@ export namespace Prisma {
     farcaster_username?: StringFilter<"User"> | string
     farcaster_pfp?: StringNullableFilter<"User"> | string | null
     wallet_address?: StringNullableFilter<"User"> | string | null
+    server_wallet_address?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
@@ -4691,6 +4708,7 @@ export namespace Prisma {
     farcaster_username?: SortOrder
     farcaster_pfp?: SortOrderInput | SortOrder
     wallet_address?: SortOrderInput | SortOrder
+    server_wallet_address?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -4707,6 +4725,7 @@ export namespace Prisma {
     farcaster_username?: StringWithAggregatesFilter<"User"> | string
     farcaster_pfp?: StringNullableWithAggregatesFilter<"User"> | string | null
     wallet_address?: StringNullableWithAggregatesFilter<"User"> | string | null
+    server_wallet_address?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -4874,6 +4893,7 @@ export namespace Prisma {
     farcaster_username: string
     farcaster_pfp?: string | null
     wallet_address?: string | null
+    server_wallet_address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     wallet?: WalletCreateNestedOneWithoutUserInput
@@ -4885,6 +4905,7 @@ export namespace Prisma {
     farcaster_username: string
     farcaster_pfp?: string | null
     wallet_address?: string | null
+    server_wallet_address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
@@ -4896,6 +4917,7 @@ export namespace Prisma {
     farcaster_username?: StringFieldUpdateOperationsInput | string
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     wallet?: WalletUpdateOneWithoutUserNestedInput
@@ -4907,6 +4929,7 @@ export namespace Prisma {
     farcaster_username?: StringFieldUpdateOperationsInput | string
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
@@ -4918,6 +4941,7 @@ export namespace Prisma {
     farcaster_username: string
     farcaster_pfp?: string | null
     wallet_address?: string | null
+    server_wallet_address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4928,6 +4952,7 @@ export namespace Prisma {
     farcaster_username?: StringFieldUpdateOperationsInput | string
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4938,6 +4963,7 @@ export namespace Prisma {
     farcaster_username?: StringFieldUpdateOperationsInput | string
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5166,6 +5192,7 @@ export namespace Prisma {
     farcaster_username?: SortOrder
     farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
+    server_wallet_address?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -5176,6 +5203,7 @@ export namespace Prisma {
     farcaster_username?: SortOrder
     farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
+    server_wallet_address?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -5186,6 +5214,7 @@ export namespace Prisma {
     farcaster_username?: SortOrder
     farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
+    server_wallet_address?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -5892,6 +5921,7 @@ export namespace Prisma {
     farcaster_username: string
     farcaster_pfp?: string | null
     wallet_address?: string | null
+    server_wallet_address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5902,6 +5932,7 @@ export namespace Prisma {
     farcaster_username: string
     farcaster_pfp?: string | null
     wallet_address?: string | null
+    server_wallet_address?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -5961,6 +5992,7 @@ export namespace Prisma {
     farcaster_username?: StringFieldUpdateOperationsInput | string
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5971,6 +6003,7 @@ export namespace Prisma {
     farcaster_username?: StringFieldUpdateOperationsInput | string
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

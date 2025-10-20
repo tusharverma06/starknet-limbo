@@ -1,19 +1,18 @@
 {
   "accountAssociation": {
-    "header": "YOUR_SIGNED_HEADER_HERE"
+    "header": "eyJmaWQiOjM4ODQxNiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDUyYzk5ZjU2NEQ4MDQxODQ3NzFGYzI5Q2U0MTI3ODdmMjg0YWRjOGEifQ",
+    "payload": "eyJkb21haW4iOiJsaW1iby1hcHAudmVyY2VsLmFwcCJ9",
+    "signature": "45HwwPRWMEKr3BTytWO49dHQOsHtQHgPIOy8mA0OHRFFSyKHCKnd4TalOtF+mdvhZFLYsKFzhwMJ6nIzIxU1pRs="
   },
   "frame": {
     "version": "1",
-    "name": "Limbo Game",
-    "iconUrl": "https://yourdomain.com/icon.png",
-    "splashImageUrl": "https://yourdomain.com/splash.png",
-    "splashBackgroundColor": "#0f172a",
-    "homeUrl": "https://yourdomain.com/game",
-    "webhookUrl": "https://yourdomain.com/api/webhook"
-  },
-  "description": "Provably fair limbo game powered by Chainlink VRF",
-  "icon": "https://yourdomain.com/icon.png"
+    "name": "Limbo",
+    "iconUrl": "https://limbo-app.vercel.app/icon.png",
+    "homeUrl": "https://limbo-app.vercel.app",
+    "imageUrl": "https://limbo-app.vercel.app/image.png",
+    "buttonTitle": "Play!",
+    "splashImageUrl": "https://limbo-app.vercel.app/splash.png",
+    "splashBackgroundColor": "#eeccff",
+    "webhookUrl": "https://limbo-app.vercel.app/api/webhook"
+  }
 }
-
-
-

@@ -283,12 +283,12 @@ export function ProvablyFairVerification({
                           </summary>
                           <div className="mt-2 text-xs text-gray-700 space-y-3 ml-4 p-3 bg-gray-50 rounded border border-gray-200">
                             {/* Description */}
-                            {step.data.description && (
+                            {step.data.description && typeof step.data.description === 'string' ? (
                               <div className="p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-800">
                                 <span className="font-medium">ℹ️ What happened: </span>
-                                {String(step.data.description)}
+                                {step.data.description}
                               </div>
-                            )}
+                            ) : null}
 
                             {/* Signature proof */}
                             {step.data.signature && typeof step.data.signature === 'object' && (
@@ -345,7 +345,7 @@ export function ProvablyFairVerification({
                                       {eventKey.replace(/([A-Z])/g, ' $1').trim()}:
                                     </span>
                                     <span className="font-mono text-xs text-purple-600 break-all">
-                                      {String(eventValue)}
+                                      {eventValue != null ? String(eventValue) : 'N/A'}
                                     </span>
                                   </div>
                                 ))}

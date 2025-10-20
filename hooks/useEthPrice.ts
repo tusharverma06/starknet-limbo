@@ -48,3 +48,4 @@ export function useEthPrice() {
   return { ethPrice, isLoading, error };
 }
 
+

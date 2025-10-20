@@ -106,13 +106,13 @@ export async function POST(req: NextRequest) {
         const decoded = decodeEventLog({
           abi: LIMBO_GAME_ABI,
           data: log.data,
-          topics: log.topics,
+          topics: [...log.topics] as [`0x${string}`, ...`0x${string}`[]],
         });
         if (decoded.eventName === "BetPlaced") {
           betPlacedEvent = decoded;
           break;
         }
-      } catch (e) {
+      } catch {
         // Not the event we're looking for
       }
     }
@@ -122,35 +122,39 @@ export async function POST(req: NextRequest) {
       description: "Verify BetPlaced event was emitted correctly",
       status: betPlacedEvent ? "✅" : "❌",
       data: {
-        description: "The smart contract emitted a BetPlaced event with the bet details",
+        description:
+          "The smart contract emitted a BetPlaced event with the bet details",
         eventName: "BetPlaced",
-        eventData: betPlacedEvent ? {
-          player: betPlacedEvent.args.player,
-          requestId: betPlacedEvent.args.requestId?.toString(),
-          betAmount: betPlacedEvent.args.betAmount?.toString(),
-          targetMultiplier: betPlacedEvent.args.targetMultiplier?.toString(),
-        } : null,
+        eventData: betPlacedEvent
+          ? {
+              player: betPlacedEvent.args?.[0] as string,
+              requestId: betPlacedEvent.args?.[1]?.toString(),
+              betAmount: betPlacedEvent.args?.[2]?.toString(),
+              targetMultiplier: betPlacedEvent.args?.[3]?.toString(),
+            }
+          : null,
         eventSignature: "BetPlaced(address,uint256,uint256,uint256,bytes32)",
-        logIndex: betPlacedEvent ? placeBetReceipt.logs.findIndex(l =>
-          l.topics[0] === betPlacedEvent.topics?.[0]
-        ) : null,
+        logIndex: betPlacedEvent
+          ? placeBetReceipt.logs.findIndex(
+              (l) => l.topics[0] === betPlacedEvent?.args?.[0]
+            )
+          : undefined,
       },
     });
 
     // Step 3: Verify VRF randomness fulfillment
-    let betResolvedEvent = null;
     for (const log of vrfTx.logs) {
       try {
         const decoded = decodeEventLog({
           abi: LIMBO_GAME_ABI,
           data: log.data,
-          topics: log.topics,
+          topics: [...log.topics] as [`0x${string}`, ...`0x${string}`[]],
         });
         if (decoded.eventName === "BetResolved") {
-          betResolvedEvent = decoded;
+          // Event found, VRF fulfilled
           break;
         }
-      } catch (e) {
+      } catch {
         // Not the event we're looking for
       }
     }
@@ -160,14 +164,16 @@ export async function POST(req: NextRequest) {
       description: "Verify Chainlink VRF provided randomness",
       status: "✅",
       data: {
-        description: "Chainlink VRF oracle fulfilled the randomness request on-chain",
+        description:
+          "Chainlink VRF oracle fulfilled the randomness request on-chain",
         vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
         randomWord: bet.vrfRandomWord,
         requestId: bet.id,
         fulfillmentTxHash: bet.vrfFulfillTxHash,
         blockNumber: vrfTx.blockNumber.toString(),
         clientSeed: bet.clientSeed,
-        proofOfRandomness: "VRF proof verified on-chain by Chainlink coordinator",
+        proofOfRandomness:
+          "VRF proof verified on-chain by Chainlink coordinator",
       },
     });
 

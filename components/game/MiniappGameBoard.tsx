@@ -19,6 +19,18 @@ import { Dice6, Loader2 } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
 
+/**
+ * Combined bet result type used in the game board
+ * Matches the GameResult component's expected props
+ */
+interface BetResultDisplay {
+  win: boolean;
+  payout: bigint;
+  amount: bigint;
+  targetMultiplier: number;
+  limboMultiplier: bigint;
+}
+
 export function MiniappGameBoard() {
   const { user } = useFarcaster();
   const userId = user?.fid?.toString() || null;
@@ -57,7 +69,8 @@ export function MiniappGameBoard() {
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [betError, setBetError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
-  const [currentBetResult, setCurrentBetResult] = useState<any>(null);
+  const [currentBetResult, setCurrentBetResult] =
+    useState<BetResultDisplay | null>(null);
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [potentialPayoutUsd, setPotentialPayoutUsd] = useState<number | null>(
@@ -69,7 +82,17 @@ export function MiniappGameBoard() {
     if (latestBet) {
       console.log("🎉 RESULT FOUND from polling!", latestBet);
       stopPolling();
-      setCurrentBetResult(latestBet);
+
+      // Convert ResolvedBet to BetResultDisplay
+      const betResult: BetResultDisplay = {
+        win: latestBet.win,
+        payout: latestBet.payout,
+        amount: latestBet.amount,
+        targetMultiplier: latestBet.targetMultiplier,
+        limboMultiplier: latestBet.limboMultiplier,
+      };
+
+      setCurrentBetResult(betResult);
       setLastResult(latestBet.win, latestBet.payout);
       setShowResult(true);
       setIsPlacingBet(false);
@@ -218,13 +241,13 @@ export function MiniappGameBoard() {
     if (watchedBetResult) {
       console.log("🎉 Bet result received from watcher!", watchedBetResult);
 
-      // Convert to expected format matching latestBet structure
-      const betResult = {
+      // Convert BetResult to BetResultDisplay
+      const betResult: BetResultDisplay = {
         win: watchedBetResult.win,
         payout: watchedBetResult.payout,
-        amount: betAmount,
-        targetMultiplier: targetMultiplier,
-        limboMultiplier: Number(watchedBetResult.limboMultiplier) / 100,
+        amount: watchedBetResult.betAmount,
+        targetMultiplier: Number(watchedBetResult.targetMultiplier) / 100,
+        limboMultiplier: watchedBetResult.limboMultiplier,
       };
 
       setCurrentBetResult(betResult);
@@ -234,7 +257,7 @@ export function MiniappGameBoard() {
 
       console.log("🎲 Result:", betResult);
     }
-  }, [watchedBetResult, setLastResult, targetMultiplier, betAmount]);
+  }, [watchedBetResult, setLastResult]);
 
   const handleWithdraw = async (amount: string, toAddress: string) => {
     if (!userId) {
@@ -251,10 +274,7 @@ export function MiniappGameBoard() {
   };
 
   const isDisabled =
-    isPlacingBet ||
-    isWaitingForResult ||
-    isPolling ||
-    isWalletLoading;
+    isPlacingBet || isWaitingForResult || isPolling || isWalletLoading;
 
   const getButtonText = () => {
     if (isPolling) return "Getting Result...";
@@ -304,108 +324,113 @@ export function MiniappGameBoard() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
           >
-              {/* Bet Amount Input */}
-              <div>
-                <div className="w-full flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-black ">
-                    Bet Amount
-                  </label>
+            {/* Bet Amount Input */}
+            <div>
+              <div className="w-full flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-black ">
+                  Bet Amount
+                </label>
 
-                  <div className="text-center">
-                    {/* <span className="text-sm text-gray-600">Balance: </span> */}
-                    <span className="text-sm font-semibold text-black">
-                      {balanceInUsd ? `$${balanceInUsd.toFixed(2)}` : "$0.00"}
-                    </span>
-                  </div>
+                <div className="text-center">
+                  {/* <span className="text-sm text-gray-600">Balance: </span> */}
+                  <span className="text-sm font-semibold text-black">
+                    {balanceInUsd ? `$${balanceInUsd.toFixed(2)}` : "$0.00"}
+                  </span>
                 </div>
-                <div>
-                  <div className="relative flex items-center gap-0.5 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
-                    <span className="text-sm text-black/80 font-normal">$</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      min={MIN_BET_USD}
-                      max={MAX_BET_USD}
-                      value={betAmount}
-                      onChange={handleBetAmountChange}
+              </div>
+              <div>
+                <div className="relative flex items-center gap-0.5 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
+                  <span className="text-sm text-black/80 font-normal">$</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={MIN_BET_USD}
+                    max={MAX_BET_USD}
+                    value={betAmount}
+                    onChange={handleBetAmountChange}
+                    disabled={isDisabled}
+                    className="text-sm p-0 font-medium border-none bg-transparent focus:ring-0 focus:outline-none"
+                    placeholder=""
+                  />
+                  <Image
+                    src="/ethereum.webp"
+                    alt="ETH"
+                    width={20}
+                    height={20}
+                  />
+
+                  {[
+                    { label: "/2", multiplier: 0.5 },
+                    { label: "2x", multiplier: 2 },
+                    { label: "Max", multiplier: -1 },
+                  ].map((item, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleQuickAmount(item.multiplier)}
                       disabled={isDisabled}
-                      className="text-sm p-0 font-medium border-none bg-transparent focus:ring-0 focus:outline-none"
-                      placeholder=""
-                    />
-                    <Image
-                      src="/ethereum.webp"
-                      alt="ETH"
-                      width={20}
-                      height={20}
-                    />
-
-                    {[
-                      { label: "/2", multiplier: 0.5 },
-                      { label: "2x", multiplier: 2 },
-                      { label: "Max", multiplier: -1 },
-                    ].map((item, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => handleQuickAmount(item.multiplier)}
-                        disabled={isDisabled}
-                        className="text-xs text-black/80 min-w-[30px] min-h-[30px] flex items-center px-1.5 py-0.5 justify-center bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
+                      className="text-xs text-black/80 min-w-[30px] min-h-[30px] flex items-center px-1.5 py-0.5 justify-center bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
+            </div>
 
-              {/* Multiplier Selector */}
-              <div>
-                <MultiplierSelector
-                  value={targetMultiplier}
-                  onChange={setTargetMultiplier}
-                  disabled={isDisabled}
-                />
-              </div>
+            {/* Multiplier Selector */}
+            <div>
+              <MultiplierSelector
+                value={targetMultiplier}
+                onChange={setTargetMultiplier}
+                disabled={isDisabled}
+              />
+            </div>
 
-              <Button
-                size="lg"
-                onClick={handlePrimaryAction}
-                disabled={
-                  isDisabled ||
-                  (wallet && balanceInUsd && balanceInUsd > 0 && (!!amountError || parseFloat(betAmount || "0") === 0))
-                }
-                isLoading={isPlacingBet || isWaitingForResult}
-                className="w-full text-sm h-10 mb-2 font-medium"
-              >
-                {(isPolling || isWaitingForResult || isPlacingBet) && (
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                )}
-                {getButtonText()}
-              </Button>
-              <div className="w-full border-t border-gray-200 pt-2 flex items-center justify-between ">
-                <span className="text-sm text-gray-500 font-medium">
-                  Potential Payout:{" "}
-                </span>
-                <span className="text-sm font-semibold text-black">
-                  {potentialPayoutUsd
-                    ? `$${potentialPayoutUsd.toFixed(2)}`
-                    : "$0.00"}
-                </span>
-              </div>
-
-              {betError && (
-                <div className="text-sm text-red-600 text-center p-3 bg-red-50 border border-red-200 rounded-lg">
-                  {betError}
-                </div>
+            <Button
+              size="lg"
+              onClick={handlePrimaryAction}
+              disabled={
+                isDisabled ||
+                Boolean(
+                  wallet &&
+                    balanceInUsd &&
+                    balanceInUsd > 0 &&
+                    (!!amountError || parseFloat(betAmount || "0") === 0)
+                )
+              }
+              isLoading={isPlacingBet || isWaitingForResult}
+              className="w-full text-sm h-10 mb-2 font-medium"
+            >
+              {(isPolling || isWaitingForResult || isPlacingBet) && (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
               )}
+              {getButtonText()}
+            </Button>
+            <div className="w-full border-t border-gray-200 pt-2 flex items-center justify-between ">
+              <span className="text-sm text-gray-500 font-medium">
+                Potential Payout:{" "}
+              </span>
+              <span className="text-sm font-semibold text-black">
+                {potentialPayoutUsd
+                  ? `$${potentialPayoutUsd.toFixed(2)}`
+                  : "$0.00"}
+              </span>
+            </div>
 
-              {/* Show Create Wallet prompt if no wallet */}
-              {!wallet && !isInitialLoading && (
-                <div className="text-sm text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <ServerWallet userId={userId} />
-                </div>
-              )}
-            </motion.div>
+            {betError && (
+              <div className="text-sm text-red-600 text-center p-3 bg-red-50 border border-red-200 rounded-lg">
+                {betError}
+              </div>
+            )}
+
+            {/* Show Create Wallet prompt if no wallet */}
+            {!wallet && !isInitialLoading && (
+              <div className="text-sm text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <ServerWallet userId={userId} />
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
 

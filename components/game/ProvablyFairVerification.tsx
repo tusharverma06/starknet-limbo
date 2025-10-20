@@ -3,11 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Copy, ExternalLink, Check } from "lucide-react";
 
 interface VerificationStep {
   step: number;
   description: string;
-  status: string;
+  status: string | "loading";
   data: Record<string, unknown>;
 }
 
@@ -30,12 +31,10 @@ interface VerificationResponse {
 
 interface ProvablyFairVerificationProps {
   initialRequestId?: string;
-  onClose?: () => void;
 }
 
 export function ProvablyFairVerification({
   initialRequestId = "",
-  onClose
 }: ProvablyFairVerificationProps = {}) {
   const [requestId, setRequestId] = useState(initialRequestId);
   const [verification, setVerification] = useState<VerificationResponse | null>(
@@ -43,6 +42,8 @@ export function ProvablyFairVerification({
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [copiedText, setCopiedText] = useState<string | null>(null);
+  const [manualVerify, setManualVerify] = useState(!initialRequestId);
 
   const handleVerify = useCallback(async () => {
     if (!requestId.trim()) {
@@ -55,6 +56,21 @@ export function ProvablyFairVerification({
     setVerification(null);
 
     try {
+      // Initialize with loading state for all steps
+      const loadingSteps: VerificationStep[] = [
+        { step: 1, description: "Verify bet placement transaction on blockchain", status: "loading", data: {} },
+        { step: 2, description: "Verify BetPlaced event was emitted correctly", status: "loading", data: {} },
+        { step: 3, description: "Verify Chainlink VRF provided randomness", status: "loading", data: {} },
+        { step: 4, description: "Check that the bet's payout is correct", status: "loading", data: {} },
+        { step: 5, description: "Check that the bet's settlement values are correct", status: "loading", data: {} },
+        { step: 6, description: "Check that the settlement values match the on-chain transaction", status: "loading", data: {} },
+      ];
+
+      setVerification({
+        verificationSteps: loadingSteps,
+        overallStatus: "⏳ Verifying...",
+      });
+
       const response = await fetch("/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,23 +86,31 @@ export function ProvablyFairVerification({
         if (data.note) {
           setError(`${data.error}: ${data.note}`);
         }
+        setVerification(null);
       } else {
         setVerification(data);
       }
     } catch (error) {
       console.error("Verification failed:", error);
       setError("Failed to verify bet. Please try again.");
+      setVerification(null);
     } finally {
       setLoading(false);
     }
   }, [requestId]);
 
-  // Auto-verify if initialRequestId is provided
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedText(label);
+    setTimeout(() => setCopiedText(null), 2000);
+  };
+
+  // Auto-verify if initialRequestId is provided and not in manual mode
   useEffect(() => {
-    if (initialRequestId && initialRequestId.trim()) {
+    if (initialRequestId && initialRequestId.trim() && !manualVerify) {
       handleVerify();
     }
-  }, [initialRequestId, handleVerify]);
+  }, [initialRequestId, handleVerify, manualVerify]);
 
   return (
     <div className="w-full mx-auto p-4 sm:p-6 bg-white">
@@ -101,36 +125,59 @@ export function ProvablyFairVerification({
 
       <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Request ID (Bet ID):
-          </label>
-          <Input
-            placeholder="Enter request ID (e.g., 0x...)"
-            value={requestId}
-            onChange={(e) => setRequestId(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleVerify();
-              }
-            }}
-            className="w-full"
-            disabled={!!initialRequestId}
-          />
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Request ID (Bet ID):
+            </label>
+            {initialRequestId && (
+              <button
+                onClick={() => setManualVerify(!manualVerify)}
+                className="text-xs text-blue-600 hover:text-blue-800"
+              >
+                {manualVerify ? "Auto-verify" : "Manual input"}
+              </button>
+            )}
+          </div>
+          <div className="relative">
+            <Input
+              placeholder="Enter request ID (e.g., 0x...)"
+              value={requestId}
+              onChange={(e) => setRequestId(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleVerify();
+                }
+              }}
+              className="w-full pr-10"
+              disabled={!!initialRequestId && !manualVerify}
+            />
+            {requestId && (
+              <button
+                onClick={() => copyToClipboard(requestId, "betId")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 hover:bg-gray-100 rounded"
+                title="Copy Bet ID"
+              >
+                {copiedText === "betId" ? (
+                  <Check className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Copy className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            )}
+          </div>
           <p className="text-xs text-gray-500 mt-1">
             The request ID uniquely identifies this bet on the blockchain
           </p>
         </div>
 
-        {!initialRequestId && (
-          <Button
-            onClick={handleVerify}
-            disabled={!requestId.trim() || loading}
-            className="w-full"
-            isLoading={loading}
-          >
-            {loading ? "Verifying..." : "Verify Bet"}
-          </Button>
-        )}
+        <Button
+          onClick={handleVerify}
+          disabled={!requestId.trim() || loading}
+          className="w-full"
+          isLoading={loading}
+        >
+          {loading ? "Verifying..." : "Verify Bet"}
+        </Button>
       </div>
 
       {error && (
@@ -249,15 +296,35 @@ export function ProvablyFairVerification({
                                 <div className="font-semibold text-green-700 flex items-center gap-1">
                                   🔐 Transaction Signature (Cryptographic Proof)
                                 </div>
-                                <div className="text-xs text-gray-600 mb-2">
-                                  This ECDSA signature proves the transaction was signed by the custodial wallet's private key:
+                                <div className="text-xs text-gray-600 mb-2 space-y-2">
+                                  <p>This ECDSA signature proves the transaction was signed by the custodial wallet&apos;s private key.</p>
+                                  <div className="bg-blue-50 border border-blue-200 rounded p-2 space-y-1">
+                                    <p className="font-medium text-blue-900">📚 What is RSV?</p>
+                                    <p><span className="font-semibold">R:</span> First part of the signature - a point on the elliptic curve derived from the random nonce used during signing</p>
+                                    <p><span className="font-semibold">S:</span> Second part of the signature - proves knowledge of the private key without revealing it</p>
+                                    <p><span className="font-semibold">V:</span> Recovery ID (27 or 28) - helps recover the public key from the signature, enabling address verification</p>
+                                    <p className="text-blue-700 font-medium mt-1">Together, these three values cryptographically prove that only the holder of the private key could have created this transaction.</p>
+                                  </div>
                                 </div>
                                 {Object.entries(step.data.signature as Record<string, unknown>).map(([sigKey, sigValue]) => (
                                   <div key={sigKey} className="flex flex-col gap-1 bg-white p-2 rounded border border-gray-200">
                                     <span className="font-medium text-gray-700 uppercase">{sigKey}:</span>
-                                    <span className="font-mono text-xs text-green-600 break-all">
-                                      {String(sigValue)}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-mono text-xs text-green-600 break-all flex-1">
+                                        {String(sigValue)}
+                                      </span>
+                                      <button
+                                        onClick={() => copyToClipboard(String(sigValue), `sig-${sigKey}`)}
+                                        className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
+                                        title={`Copy ${sigKey}`}
+                                      >
+                                        {copiedText === `sig-${sigKey}` ? (
+                                          <Check className="w-3 h-3 text-green-600" />
+                                        ) : (
+                                          <Copy className="w-3 h-3 text-gray-600" />
+                                        )}
+                                      </button>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -298,7 +365,7 @@ export function ProvablyFairVerification({
                                 formattedValue = value ? "✅ Yes" : "❌ No";
                                 valueClass = value ? "text-green-600" : "text-red-600";
                               } else if (key === "transactionHash" || key === "vrfRequestTxHash" || key === "vrfFulfillTxHash" || key === "fulfillmentTxHash") {
-                                // Format transaction hashes
+                                // Format transaction hashes - will be handled specially below
                                 const hash = String(value);
                                 formattedValue = hash;
                                 valueClass = "font-mono text-blue-600 text-xs";
@@ -332,6 +399,45 @@ export function ProvablyFairVerification({
                                 isSpecialField = true;
                               }
 
+                              // Special handling for transaction hashes
+                              if (key === "transactionHash" || key === "vrfRequestTxHash" || key === "vrfFulfillTxHash" || key === "fulfillmentTxHash") {
+                                const hash = String(value);
+                                return (
+                                  <div key={key} className="flex flex-col gap-1">
+                                    <span className="font-medium text-gray-600 capitalize text-xs">
+                                      {key.replace(/([A-Z])/g, ' $1').trim()}:
+                                    </span>
+                                    <div className="flex items-center gap-2 bg-white p-2 rounded border border-gray-200">
+                                      <span className="font-mono text-xs text-blue-600 break-all flex-1">
+                                        {hash}
+                                      </span>
+                                      <div className="flex gap-1 flex-shrink-0">
+                                        <button
+                                          onClick={() => copyToClipboard(hash, `hash-${key}`)}
+                                          className="p-1 hover:bg-gray-100 rounded"
+                                          title="Copy hash"
+                                        >
+                                          {copiedText === `hash-${key}` ? (
+                                            <Check className="w-3 h-3 text-green-600" />
+                                          ) : (
+                                            <Copy className="w-3 h-3 text-gray-600" />
+                                          )}
+                                        </button>
+                                        <a
+                                          href={`https://sepolia.basescan.org/tx/${hash}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="p-1 hover:bg-gray-100 rounded"
+                                          title="View on BaseScan"
+                                        >
+                                          <ExternalLink className="w-3 h-3 text-blue-600" />
+                                        </a>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
                               return (
                                 <div key={key} className="flex flex-col gap-1">
                                   <span className="font-medium text-gray-600 capitalize text-xs">
@@ -348,7 +454,11 @@ export function ProvablyFairVerification({
                       )}
                     </div>
                     <div className="ml-2 sm:ml-4 text-xl sm:text-2xl flex-shrink-0">
-                      {step.status}
+                      {step.status === "loading" ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      ) : (
+                        step.status
+                      )}
                     </div>
                   </div>
                 </div>

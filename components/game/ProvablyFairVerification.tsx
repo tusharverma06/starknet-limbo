@@ -69,6 +69,7 @@ interface VerificationResponse {
 
 interface ProvablyFairVerificationProps {
   initialRequestId?: string;
+  onClose?: () => void;
 }
 
 // Helper function to safely convert unknown values to string

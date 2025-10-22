@@ -178,12 +178,6 @@ export function MiniappGameBoard() {
       return;
     }
 
-    // If wallet exists but no balance, open funding modal
-    if (wallet && (!balanceInUsd || balanceInUsd === 0)) {
-      setShowFundingModal(true);
-      return;
-    }
-
     // Otherwise, place bet
     await handlePlaceBet();
   };
@@ -281,9 +275,39 @@ export function MiniappGameBoard() {
     if (isWaitingForResult) return "Waiting for VRF...";
     if (isPlacingBet) return "Placing Bet...";
     if (!wallet) return "Create Wallet";
-    if (!balanceInUsd || balanceInUsd === 0) return "Fund Wallet";
     return "Place Bet";
   };
+
+  // Show loading state while wallet is being initialized
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-md mx-auto flex flex-col min-h-screen">
+          {/* Navbar with pulse animation */}
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
+            </div>
+          </div>
+
+          {/* Centered Loading State */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse mx-auto" />
+              <div className="space-y-2">
+                <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mx-auto" />
+                <div className="h-3 w-24 bg-gray-100 rounded animate-pulse mx-auto" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -309,14 +333,7 @@ export function MiniappGameBoard() {
           </h1>
         </motion.div>
 
-        {/* Server Wallet Component - Only show if no wallet and still loading */}
-        {!wallet && isInitialLoading && (
-          <div className="p-4">
-            <ServerWallet userId={userId} />
-          </div>
-        )}
-
-        {/* Main Game Content - Always show */}
+        {/* Main Game Content */}
         <div className="flex-1 p-4 space-y-6">
           {/* Game Controls - Always visible */}
           <motion.div
@@ -392,6 +409,7 @@ export function MiniappGameBoard() {
               onClick={handlePrimaryAction}
               disabled={
                 isDisabled ||
+                !wallet ||
                 Boolean(
                   wallet &&
                     balanceInUsd &&
@@ -425,11 +443,30 @@ export function MiniappGameBoard() {
             )}
 
             {/* Show Create Wallet prompt if no wallet */}
-            {!wallet && !isInitialLoading && (
+            {!wallet && (
               <div className="text-sm text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <ServerWallet userId={userId} />
               </div>
             )}
+
+            {/* Show funding option if balance is zero */}
+            {wallet &&
+              balanceInUsd !== null &&
+              balanceInUsd !== undefined &&
+              balanceInUsd === 0 && (
+                <div className="text-sm text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 mb-2">
+                    Your wallet needs funds to place bets
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowFundingModal(true)}
+                    className="w-full"
+                  >
+                    Fund Wallet
+                  </Button>
+                </div>
+              )}
           </motion.div>
         </div>
       </div>

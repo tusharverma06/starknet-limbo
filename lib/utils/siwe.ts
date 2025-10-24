@@ -1,4 +1,5 @@
 import { CHAIN } from "@/lib/constants";
+import { verifyMessage } from "ethers";
 
 /**
  * Create a SIWE (Sign-In with Ethereum) message for authorizing custodial wallet
@@ -38,7 +39,6 @@ export function verifySiweSignature(
   expectedAddress: string
 ): boolean {
   try {
-    const { verifyMessage } = require("ethers");
     const recoveredAddress = verifyMessage(message, signature);
     return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
   } catch (error) {

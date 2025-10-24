@@ -1,21 +1,11 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { formatETH } from "@/lib/utils/format";
 import { toDisplayMultiplier } from "@/lib/utils/multiplier";
 import { getUsdValueFromEth } from "@/lib/utils/price";
-import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ChevronDown,
-  ChevronUp,
-  Shield,
-  Copy,
-  Check,
-  Loader2,
-} from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 interface GameResultProps {
   win: boolean;
@@ -25,12 +15,6 @@ interface GameResultProps {
   payout?: bigint; // Actual payout from contract event (optional for backward compatibility)
   onClose: () => void;
   betId?: string; // Bet ID for provably fair verification
-  onVerify?: (betId: string) => void; // Callback to open verification modal
-}
-
-interface QuickVerificationData {
-  serverSeedHash: string;
-  verified: boolean;
 }
 
 export function GameResult({
@@ -40,16 +24,9 @@ export function GameResult({
   randomResult,
   payout: contractPayout,
   onClose,
-  betId,
-  onVerify,
 }: GameResultProps) {
   const [payoutUsd, setPayoutUsd] = useState<number | null>(null);
   const [amountUsd, setAmountUsd] = useState<number | null>(null);
-  const [showProofDetails, setShowProofDetails] = useState(false);
-  const [verificationData, setVerificationData] =
-    useState<QuickVerificationData | null>(null);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [copiedHash, setCopiedHash] = useState(false);
 
   // Convert contract format to display format
   const resultMultiplier = toDisplayMultiplier(Number(randomResult));
@@ -61,37 +38,6 @@ export function GameResult({
       : win
       ? (amount * randomResult) / BigInt(100)
       : BigInt(0);
-
-  // Fetch quick verification data
-  useEffect(() => {
-    const fetchVerification = async () => {
-      if (!betId) return;
-
-      setIsVerifying(true);
-      try {
-        const response = await fetch("/api/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ betId }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setVerificationData({
-            serverSeedHash: data.provablyFair?.serverSeedHash || "",
-            verified: data.valid,
-          });
-        }
-      } catch (error) {
-        console.error("Quick verification failed:", error);
-      } finally {
-        // Add a small delay to show the verification animation
-        setTimeout(() => setIsVerifying(false), 800);
-      }
-    };
-
-    fetchVerification();
-  }, [betId]);
 
   // Calculate USD values
   useEffect(() => {
@@ -113,17 +59,6 @@ export function GameResult({
 
     calculateUsdValues();
   }, [amount, payout, win]);
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedHash(true);
-    setTimeout(() => setCopiedHash(false), 2000);
-  };
-
-  const truncateHash = (hash: string) => {
-    if (!hash) return "";
-    return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
-  };
 
   return (
     <motion.div
@@ -217,14 +152,15 @@ export function GameResult({
                 }`}
                 style={{ fontFamily: "var(--font-lilita-one)" }}
               >
-                {win ? "+" : "-"}${win
+                {win ? "+" : "-"}$
+                {win
                   ? payoutUsd! < 0.01
                     ? payoutUsd!.toFixed(4)
                     : payoutUsd!.toFixed(2)
                   : amountUsd! < 0.01
-                    ? amountUsd!.toFixed(4)
-                    : amountUsd!.toFixed(2)
-                } USD
+                  ? amountUsd!.toFixed(4)
+                  : amountUsd!.toFixed(2)}{" "}
+                USD
               </div>
             )}
           </div>

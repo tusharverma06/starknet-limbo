@@ -63,7 +63,7 @@ export async function withHouseWallet<T>(
       process.env.NEXT_PUBLIC_RPC_URL ||
       `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
-    if (!rpcUrl || rpcUrl.includes('undefined')) {
+    if (!rpcUrl || rpcUrl.includes("undefined")) {
       throw new Error("RPC URL not configured");
     }
 
@@ -120,7 +120,7 @@ export async function sendFromHouseWallet(
       throw new Error("Invalid recipient address");
     }
 
-    if (amount <= 0n) {
+    if (amount <= BigInt(0)) {
       throw new Error("Amount must be greater than 0");
     }
 
@@ -129,7 +129,7 @@ export async function sendFromHouseWallet(
       to,
       value: amount,
       // Add reasonable gas settings
-      gasLimit: 21000n,
+      gasLimit: 21000,
     });
 
     // Return only the transaction hash (safe to log)
@@ -172,7 +172,7 @@ export async function sendToHouseWallet(
       process.env.NEXT_PUBLIC_RPC_URL ||
       `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
-    if (!rpcUrl || rpcUrl.includes('undefined')) {
+    if (!rpcUrl || rpcUrl.includes("undefined")) {
       throw new Error("RPC URL not configured");
     }
 
@@ -185,7 +185,7 @@ export async function sendToHouseWallet(
     const houseWalletAddress = getHouseWalletAddress();
 
     // Validate inputs
-    if (amount <= 0n) {
+    if (amount <= BigInt(0)) {
       throw new Error("Amount must be greater than 0");
     }
 
@@ -199,7 +199,7 @@ export async function sendToHouseWallet(
     const tx = await userWallet.sendTransaction({
       to: houseWalletAddress,
       value: amount,
-      gasLimit: 21000n,
+      gasLimit: 21000,
     });
 
     console.log("✅ Bet sent to house wallet:", tx.hash);

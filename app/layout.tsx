@@ -9,23 +9,23 @@ const inter = Inter({ subsets: ["latin"] });
 const lilitaOne = Lilita_One({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-lilita-one"
+  variable: "--font-lilita-one",
 });
 
-// const frame = {
-//   version: "1",
-//   imageUrl: "https://limbo-app.vercel.app/",
-//   button: {
-//     title: "Clean Wallet",
-//     action: {
-//       type: "launch_frame",
-//       name: "Scrap",
-//       url: "https://4da924eb35eb.ngrok-free.app/",
-//       splashImageUrl: "https://limbo-app.vercel.app/",
-//       splashBackgroundColor: "#0A0A0A",
-//     },
-//   },
-// };
+const frame = {
+  version: "1",
+  imageUrl: "https://limbo-app.vercel.app/",
+  button: {
+    title: "Play!",
+    action: {
+      type: "launch_frame",
+      name: "Based Limbo",
+      url: "https://limbo-app.vercel.app/",
+      splashImageUrl: "https://limbo-app.vercel.app/mountain-bg.png",
+      splashBackgroundColor: "#eeccff",
+    },
+  },
+};
 
 export const metadata: Metadata = {
   title: "Limbo Game - Provably Fair",
@@ -35,9 +35,9 @@ export const metadata: Metadata = {
     description: "Provably fair limbo game powered by Chainlink VRF",
     images: [`${process.env.NEXT_PUBLIC_APP_URL}/splash.png`],
   },
-  // other: {
-  //   "fc:miniapp": JSON.stringify(frame),
-  // },
+  other: {
+    "fc:miniapp": JSON.stringify(frame),
+  },
 };
 
 export default function RootLayout({

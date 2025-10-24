@@ -2,24 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Navbar } from "@/components/ui/Navbar";
 import { ActivityDrawer } from "@/components/ui/ActivityDrawer";
 import { FundingModal } from "@/components/ui/FundingModal";
 import { WithdrawModal } from "@/components/ui/WithdrawModal";
-import { MultiplierSelector } from "./MultiplierSelector";
-import { GameResult } from "./GameResult";
-import { ServerWallet } from "./ServerWallet";
 import { VerificationModal } from "./VerificationModal";
-import { SiweAuthButton } from "@/components/auth/SiweAuthButton";
 import { useServerWallet } from "@/hooks/useServerWallet";
 import { useBetResultPoller } from "@/hooks/useBetResultPoller";
 import { useBetResultWatcher } from "@/hooks/useBetResultWatcher";
 import { useGameState } from "@/hooks/useGameState";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { useQuickAuth } from "@/hooks/useQuickAuth";
-import { Dice6, Loader2, Lock, Info } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -54,12 +47,11 @@ export function MiniappGameBoard() {
     isAuthenticated,
     custodialWallet,
     isLoading: isAuthLoading,
-    error: authError,
     signIn,
     signOut,
   } = useQuickAuth();
 
-  const { latestBet, isPolling, startPolling, stopPolling, clearLatestBet } =
+  const { latestBet, isPolling, startPolling, stopPolling } =
     useBetResultPoller(wallet?.address);
 
   // Use the new bet result watcher for instant results
@@ -74,22 +66,15 @@ export function MiniappGameBoard() {
     targetMultiplier,
     setBetAmount,
     setTargetMultiplier,
-    lastWin,
     setLastResult,
-    reset: resetGameState,
   } = useGameState();
 
-  const [showResult, setShowResult] = useState(false);
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [betError, setBetError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
-  const [currentBetResult, setCurrentBetResult] =
-    useState<BetResultDisplay | null>(null);
-  const [currentBetId, setCurrentBetId] = useState<string | null>(null);
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  const [verificationBetId, setVerificationBetId] = useState<string>("");
   const [potentialPayoutUsd, setPotentialPayoutUsd] = useState<number | null>(
     null
   );
@@ -124,15 +109,6 @@ export function MiniappGameBoard() {
       console.log("🎉 RESULT FOUND from polling!", latestBet);
       stopPolling();
 
-      // Convert ResolvedBet to BetResultDisplay
-      const betResult: BetResultDisplay = {
-        win: latestBet.win,
-        payout: latestBet.payout,
-        amount: latestBet.amount,
-        targetMultiplier: latestBet.targetMultiplier,
-        limboMultiplier: latestBet.limboMultiplier,
-      };
-
       // Show animated result multiplier in mountain bg
       const displayMultiplier = Number(latestBet.limboMultiplier) / 100;
       setResultMultiplierValue(displayMultiplier);
@@ -144,9 +120,7 @@ export function MiniappGameBoard() {
         setShowResultMultiplier(false);
       }, 3000);
 
-      setCurrentBetResult(betResult);
       setLastResult(latestBet.win, latestBet.payout);
-      setShowResult(true);
       setIsPlacingBet(false);
     }
   }, [latestBet, setLastResult, stopPolling]);
@@ -170,34 +144,6 @@ export function MiniappGameBoard() {
 
     calculatePotentialPayoutUsd();
   }, [betAmount, targetMultiplier]);
-
-  const handleBetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setBetAmount(val);
-
-    const num = parseFloat(val);
-    if (isNaN(num)) {
-      setAmountError("Invalid amount");
-      return;
-    }
-
-    if (num < MIN_BET_USD) {
-      setAmountError(`Minimum bet is $${MIN_BET_USD}`);
-      return;
-    }
-
-    if (num > MAX_BET_USD) {
-      setAmountError(`Maximum bet is $${MAX_BET_USD}`);
-      return;
-    }
-
-    if (balanceInUsd && num > balanceInUsd) {
-      setAmountError("Insufficient balance");
-      return;
-    }
-
-    setAmountError("");
-  };
 
   const handleQuickAmount = (multiplier: number) => {
     const current = parseFloat(betAmount) || MIN_BET_USD;
@@ -278,10 +224,7 @@ export function MiniappGameBoard() {
           setShowResultMultiplier(false);
         }, 3000);
 
-        setCurrentBetResult(betResult);
-        setCurrentBetId(result.betId || null);
         setLastResult(betResult.win, betResult.payout);
-        setShowResult(true);
         setIsPlacingBet(false);
       } else {
         // Legacy on-chain betting flow (if still needed)
@@ -300,21 +243,6 @@ export function MiniappGameBoard() {
       );
       setIsPlacingBet(false);
     }
-  };
-
-  const handleResultClose = () => {
-    setShowResult(false);
-    setCurrentBetResult(null);
-    setCurrentBetId(null);
-    clearLatestBet();
-    resetGameState();
-    setIsPlacingBet(false);
-  };
-
-  const handleOpenVerification = (betId: string) => {
-    setVerificationBetId(betId);
-    setShowVerificationModal(true);
-    setShowResult(false); // Close game result modal if open
   };
 
   // Handle watched bet result (instant result from event watching)
@@ -342,9 +270,7 @@ export function MiniappGameBoard() {
         setShowResultMultiplier(false);
       }, 3000);
 
-      setCurrentBetResult(betResult);
       setLastResult(betResult.win, betResult.payout);
-      setShowResult(true);
       setIsPlacingBet(false);
 
       console.log("🎲 Result:", betResult);
@@ -470,7 +396,6 @@ export function MiniappGameBoard() {
                 {({
                   account,
                   chain,
-                  openAccountModal,
                   openChainModal,
                   openConnectModal,
                   authenticationStatus,
@@ -1024,13 +949,6 @@ export function MiniappGameBoard() {
           />
         )}
       </AnimatePresence> */}
-
-      {/* Verification Modal */}
-      <VerificationModal
-        isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-        initialBetId={verificationBetId}
-      />
 
       {/* Activity Drawer */}
       <ActivityDrawer

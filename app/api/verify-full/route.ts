@@ -11,7 +11,6 @@ import {
   getSimulatedMultiplier,
   calculateSettlementDelta,
   extractTxBalanceDelta,
-  verifyBalanceDeltas,
 } from "@/lib/utils/verification";
 import { sha256 } from "@/lib/utils/provablyFair";
 

@@ -44,18 +44,6 @@ const STEP_EXPLANATIONS: Record<number, string> = {
   6: "✅ Your payout matches exactly what you should receive",
 };
 
-const FAIRNESS_EXPLANATION = `Our provably fair system ensures complete transparency and prevents any manipulation of game results. Here's how it works:
-
-1. 🔒 Commitment Phase: Before your bet, our server generates a random seed and publishes its cryptographic hash (commitment). This locks in the outcome.
-
-2. 🎲 Play Phase: You place your bet. The outcome is already determined by the committed seed, but remains hidden.
-
-3. 🔓 Reveal Phase: After the bet is resolved, we reveal the original seed.
-
-4. ✅ Verify Phase: Anyone can verify that SHA256(revealed seed) matches the committed hash, proving we couldn't have changed the outcome after your bet.
-
-This system makes it mathematically impossible for us to cheat, and you can verify it yourself!`;
-
 export function VerificationModal({
   isOpen,
   onClose,
@@ -73,6 +61,7 @@ export function VerificationModal({
     if (isOpen && initialBetId && !verification) {
       handleVerify();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialBetId]);
 
   const handleVerify = async () => {
@@ -148,7 +137,10 @@ export function VerificationModal({
           <div className="px-6 py-4 border-b-2 border-black flex items-center justify-between bg-white">
             <div className="flex items-center gap-3">
               <Shield className="w-6 h-6 text-black" />
-              <h2 className="text-xl font-bold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+              <h2
+                className="text-xl font-bold text-black"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
                 Verify Bet Fairness
               </h2>
             </div>
@@ -164,7 +156,10 @@ export function VerificationModal({
           <div className="flex-1 overflow-y-auto p-6">
             {/* Input Section */}
             <div className="mb-6">
-              <label className="block text-sm font-semibold text-black mb-2" style={{ fontFamily: "var(--font-lilita-one)" }}>
+              <label
+                className="block text-sm font-semibold text-black mb-2"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
                 Enter Bet ID:
               </label>
               <div className="flex gap-2">
@@ -206,7 +201,10 @@ export function VerificationModal({
               >
                 <AlertCircle className="w-5 h-5 text-black flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+                  <p
+                    className="text-sm font-semibold text-black"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
                     Verification Error
                   </p>
                   <p className="text-sm text-black mt-1">{error}</p>
@@ -239,9 +237,7 @@ export function VerificationModal({
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.1 }}
                   className={`p-5 rounded-xl border-2 border-black shadow-[0px_2px_0px_0px_#000000] flex items-center gap-4 ${
-                    verification.valid
-                      ? "bg-green-100"
-                      : "bg-red-100"
+                    verification.valid ? "bg-green-100" : "bg-red-100"
                   }`}
                 >
                   {verification.valid ? (
@@ -256,7 +252,10 @@ export function VerificationModal({
                     <AlertCircle className="w-8 h-8 text-black flex-shrink-0" />
                   )}
                   <div className="flex-1">
-                    <p className="font-bold text-xl mb-1 text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+                    <p
+                      className="font-bold text-xl mb-1 text-black"
+                      style={{ fontFamily: "var(--font-lilita-one)" }}
+                    >
                       {verification.valid
                         ? "This Bet is Provably Fair!"
                         : "Verification Issues Detected"}
@@ -274,20 +273,28 @@ export function VerificationModal({
                   <div className="bg-white rounded-xl p-4 border-2 border-black shadow-[0px_2px_0px_0px_#000000]">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-xs text-gray-600 mb-1" style={{ fontFamily: "var(--font-lilita-one)" }}>Bet ID</p>
+                        <p
+                          className="text-xs text-gray-600 mb-1"
+                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                        >
+                          Bet ID
+                        </p>
                         <p className="font-mono text-xs text-black font-semibold break-all">
                           {verification.bet.betId}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-600 mb-1" style={{ fontFamily: "var(--font-lilita-one)" }}>Result</p>
+                        <p
+                          className="text-xs text-gray-600 mb-1"
+                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                        >
+                          Result
+                        </p>
                         <p
                           className="text-lg font-bold text-black"
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
-                          {verification.bet.outcome === "win"
-                            ? "WIN"
-                            : "LOSE"}
+                          {verification.bet.outcome === "win" ? "WIN" : "LOSE"}
                         </p>
                       </div>
                     </div>
@@ -296,7 +303,10 @@ export function VerificationModal({
 
                 {/* Verification Steps */}
                 <div className="space-y-3">
-                  <p className="text-sm font-semibold text-black uppercase tracking-wide" style={{ fontFamily: "var(--font-lilita-one)" }}>
+                  <p
+                    className="text-sm font-semibold text-black uppercase tracking-wide"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
                     Verification Steps
                   </p>
                   {verification.verificationSteps.map((step) => (
@@ -325,38 +335,79 @@ export function VerificationModal({
                   <div className="flex items-start gap-3 mb-3">
                     <Shield className="w-5 h-5 text-black flex-shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-bold text-black text-base mb-2" style={{ fontFamily: "var(--font-lilita-one)" }}>
+                      <h3
+                        className="font-bold text-black text-base mb-2"
+                        style={{ fontFamily: "var(--font-lilita-one)" }}
+                      >
                         How Provably Fair Works
                       </h3>
                       <div className="text-sm text-black space-y-3 leading-relaxed">
                         <div className="flex gap-2">
-                          <span className="font-bold" style={{ fontFamily: "var(--font-lilita-one)" }}>1.</span>
+                          <span
+                            className="font-bold"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            1.
+                          </span>
                           <p>
-                            <strong style={{ fontFamily: "var(--font-lilita-one)" }}>Commitment:</strong> Before your bet, the
-                            server generates a random seed and publishes its
-                            hash. This locks in the outcome.
+                            <strong
+                              style={{ fontFamily: "var(--font-lilita-one)" }}
+                            >
+                              Commitment:
+                            </strong>{" "}
+                            Before your bet, the server generates a random seed
+                            and publishes its hash. This locks in the outcome.
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <span className="font-bold" style={{ fontFamily: "var(--font-lilita-one)" }}>2.</span>
+                          <span
+                            className="font-bold"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            2.
+                          </span>
                           <p>
-                            <strong style={{ fontFamily: "var(--font-lilita-one)" }}>Play:</strong> You place your bet. The
-                            outcome is already determined but remains hidden.
+                            <strong
+                              style={{ fontFamily: "var(--font-lilita-one)" }}
+                            >
+                              Play:
+                            </strong>{" "}
+                            You place your bet. The outcome is already
+                            determined but remains hidden.
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <span className="font-bold" style={{ fontFamily: "var(--font-lilita-one)" }}>3.</span>
+                          <span
+                            className="font-bold"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            3.
+                          </span>
                           <p>
-                            <strong style={{ fontFamily: "var(--font-lilita-one)" }}>Reveal:</strong> After the bet resolves, we
-                            reveal the original seed.
+                            <strong
+                              style={{ fontFamily: "var(--font-lilita-one)" }}
+                            >
+                              Reveal:
+                            </strong>{" "}
+                            After the bet resolves, we reveal the original seed.
                           </p>
                         </div>
                         <div className="flex gap-2">
-                          <span className="font-bold" style={{ fontFamily: "var(--font-lilita-one)" }}>4.</span>
+                          <span
+                            className="font-bold"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            4.
+                          </span>
                           <p>
-                            <strong style={{ fontFamily: "var(--font-lilita-one)" }}>Verify:</strong> Anyone can verify that
-                            SHA256(revealed seed) matches the committed hash,
-                            proving we couldn't have changed the outcome.
+                            <strong
+                              style={{ fontFamily: "var(--font-lilita-one)" }}
+                            >
+                              Verify:
+                            </strong>{" "}
+                            Anyone can verify that SHA256(revealed seed) matches
+                            the committed hash, proving we couldn&apos;t have
+                            changed the outcome.
                           </p>
                         </div>
                       </div>
@@ -364,9 +415,8 @@ export function VerificationModal({
                   </div>
                   <div className="mt-4 pt-4 border-t-2 border-black">
                     <p className="text-xs text-black">
-                      This system makes it mathematically impossible for
-                      anyone to manipulate results. You can verify it yourself
-                      anytime!
+                      This system makes it mathematically impossible for anyone
+                      to manipulate results. You can verify it yourself anytime!
                     </p>
                   </div>
                 </div>

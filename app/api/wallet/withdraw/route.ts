@@ -3,7 +3,7 @@ import { JsonRpcProvider, Wallet, parseEther } from "ethers";
 import { walletDb } from "@/lib/db/wallets";
 import { decryptPrivateKey } from "@/lib/utils/encryption";
 import { getEthValueFromUsd } from "@/lib/utils/price";
-import { CHAIN } from "@/lib/contract/config";
+import { CHAIN } from "@/lib/constants";
 import { estimateGas } from "@/lib/utils/gas";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
 import { prisma } from "@/lib/db/prisma";

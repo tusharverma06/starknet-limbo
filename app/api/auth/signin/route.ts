@@ -11,7 +11,7 @@ import { walletDb } from "@/lib/db/wallets";
 export async function POST(req: NextRequest) {
   // Verify Quick Auth token
   const authResult = await verifyRequest(req);
-  if (!authResult.success) {
+  if (!authResult.success || !authResult.fid) {
     return authResult.response;
   }
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     if (!wallet) {
       console.log("📝 Creating new custodial wallet for user:", user.id);
-      wallet = await walletDb.createWallet(user.id);
+      wallet = await walletDb.createCustodialWallet(user.id);
       console.log("✅ Custodial wallet created:", wallet.address);
     } else {
       console.log("✅ Using existing custodial wallet:", wallet.address);

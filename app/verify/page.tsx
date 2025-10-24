@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, Check, X, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -48,7 +48,7 @@ interface VerificationData {
     };
     step5: {
       txHash: string | null;
-      transactionData: any;
+      transactionData: Record<string, unknown> | null;
       expectedPayout: string;
       actualTxValue: string;
       settlementDelta: string;
@@ -72,7 +72,7 @@ interface VerificationData {
   };
 }
 
-export default function VerifyPage() {
+function VerifyPageContent() {
   const searchParams = useSearchParams();
   const [betId, setBetId] = useState("");
 
@@ -445,9 +445,9 @@ export default function VerifyPage() {
                 Step 5: On-Chain Transaction Verification
               </h3>
               <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3 mb-4 text-sm text-blue-200">
-                <strong>ℹ️ What we're checking:</strong> For winning bets, we
-                verify that the payout transaction on the blockchain matches the
-                expected payout amount.
+                <strong>ℹ️ What we&apos;re checking:</strong> For winning bets,
+                we verify that the payout transaction on the blockchain matches
+                the expected payout amount.
               </div>
               <div className="space-y-3 text-sm">
                 <div>
@@ -566,5 +566,19 @@ export default function VerifyPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-white animate-spin" />
+        </div>
+      }
+    >
+      <VerifyPageContent />
+    </Suspense>
   );
 }

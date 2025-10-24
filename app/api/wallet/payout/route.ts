@@ -7,6 +7,15 @@ import {
 import { requireApiKey } from "@/lib/security/apiAuth";
 
 /**
+ * Response types for payout endpoint
+ */
+type PayoutResponse =
+  | { error: string; required?: string; available?: string; message?: string }
+  | { success: true; message: string }
+  | { success: true; betId: string; txHash: string; payout: string }
+  | { success: true; betId: string; payout: string; message: string };
+
+/**
  * POST /api/wallet/payout
  * Process pending payouts for winning bets
  * This can be called by a background job or manually triggered
@@ -16,7 +25,9 @@ import { requireApiKey } from "@/lib/security/apiAuth";
  * For off-chain balance management, payouts are instant.
  * This endpoint can be used for actual on-chain transfers if needed.
  */
-async function payoutHandler(req: NextRequest) {
+async function payoutHandler(
+  req: NextRequest
+): Promise<NextResponse<PayoutResponse>> {
   try {
     const body = await req.json();
     const { betId, onChainPayout } = body;
@@ -157,12 +168,28 @@ async function payoutHandler(req: NextRequest) {
 export const POST = requireApiKey(payoutHandler);
 
 /**
+ * Response types for get payouts endpoint
+ */
+type GetPayoutsResponse =
+  | {
+      count: number;
+      totalPending: string;
+      payouts: Array<{
+        id: string;
+        payout: string;
+        createdAt: Date;
+        playerId: string;
+      }>;
+    }
+  | { error: string; message?: string };
+
+/**
  * GET /api/wallet/payout
  * Get pending payouts statistics
  *
  * SECURITY: Requires API key authentication
  */
-async function getPayoutsHandler() {
+async function getPayoutsHandler(): Promise<NextResponse<GetPayoutsResponse>> {
   try {
     const pendingPayouts = await prisma.bet.findMany({
       where: {

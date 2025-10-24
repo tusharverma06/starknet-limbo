@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Wallet } from "ethers";
 import { prisma } from "@/lib/db/prisma";
 import { walletDb } from "@/lib/db/wallets";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
-import { encryptPrivateKey } from "@/lib/utils/encryption";
 import { verifySiweSignature } from "@/lib/utils/siwe";
 
 /**
@@ -18,7 +16,10 @@ export async function POST(req: NextRequest) {
     // Validate inputs
     if (!userId || !message || !signature || !userWalletAddress) {
       return NextResponse.json(
-        { error: "userId, message, signature, and userWalletAddress are required" },
+        {
+          error:
+            "userId, message, signature, and userWalletAddress are required",
+        },
         { status: 400 }
       );
     }
@@ -31,16 +32,13 @@ export async function POST(req: NextRequest) {
     // Verify the signature
     const isValid = verifySiweSignature(message, signature, userWalletAddress);
     if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
     console.log("✅ SIWE signature verified");
 
     // Get or create user (userId is Farcaster FID)
-    let user = await getOrCreateUser(userId);
+    const user = await getOrCreateUser(userId);
     if (!user) {
       console.error("❌ getOrCreateUser returned null for FID:", userId);
       return NextResponse.json(

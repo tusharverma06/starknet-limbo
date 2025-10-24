@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
 /**
  * API Key authentication middleware
@@ -63,7 +64,6 @@ export function requireApiKey<T>(
  * Use this to generate new API keys for your .env file
  */
 export function generateApiKey(): string {
-  const crypto = require("crypto");
   return crypto.randomBytes(32).toString("hex");
 }
 

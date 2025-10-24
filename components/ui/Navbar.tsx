@@ -1,24 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useOnClickOutside } from "usehooks-ts";
-import { Button } from "./Button";
-import { Card } from "./Card";
-import {
-  Copy,
-  ExternalLink,
-  ChevronDown,
-  CheckCircle2,
-  Plus,
-  Minus,
-  Shield,
-} from "lucide-react";
-import { CONTRACT_ADDRESS } from "@/lib/contract/config";
-import { ActivityIcon } from "@/components/game/ActivityIcon";
+import { Shield } from "lucide-react";
 import { FundingModal } from "./FundingModal";
 import { WithdrawModal } from "./WithdrawModal";
-import { getUsdValueFromEth } from "@/lib/utils/price";
-import sdk from "@farcaster/miniapp-sdk";
 
 interface NavbarProps {
   walletAddress?: string;
@@ -37,59 +23,11 @@ export function Navbar({
   onWithdraw,
   userId,
 }: NavbarProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [copiedItem, setCopiedItem] = useState<"wallet" | "contract" | null>(
-    null
-  );
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Convert ETH balance to USD
-  useEffect(() => {
-    if (walletBalance && parseFloat(walletBalance) > 0) {
-      getUsdValueFromEth(parseFloat(walletBalance))
-        .then((usdValue) => {
-          if (isFinite(usdValue) && usdValue >= 0) {
-            setUsdBalance(usdValue);
-          } else {
-            setUsdBalance(null);
-          }
-        })
-        .catch(() => setUsdBalance(null));
-    } else {
-      setUsdBalance(null);
-    }
-  }, [walletBalance]);
-
-  useOnClickOutside(popoverRef as React.RefObject<HTMLElement>, () =>
-    setIsOpen(false)
-  );
-
-  const handleCopyAddress = async () => {
-    if (walletAddress) {
-      await navigator.clipboard.writeText(walletAddress);
-      setCopiedItem("wallet");
-      setTimeout(() => setCopiedItem(null), 2000);
-    }
-  };
-
-  const handleCopyContractAddress = async () => {
-    await navigator.clipboard.writeText(CONTRACT_ADDRESS);
-    setCopiedItem("contract");
-    setTimeout(() => setCopiedItem(null), 2000);
-  };
-
-  const handleFund = () => {
-    setShowFundingModal(true);
-    setIsOpen(false);
-  };
-
-  const handleWithdraw = () => {
-    setShowWithdrawModal(true);
-    setIsOpen(false);
-  };
+  useOnClickOutside(popoverRef as React.RefObject<HTMLElement>, () => {});
 
   return (
     <nav className="bg-white border-b-2 border-black px-4 py-3 relative">

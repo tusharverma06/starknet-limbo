@@ -36,11 +36,7 @@ export function ServerWallet({ userId, onWalletReady }: ServerWalletProps) {
     withdraw,
   } = useServerWallet(userId);
 
-  const {
-    pendingCount,
-    totalLocked,
-    bets: pendingBets,
-  } = usePendingSettlements();
+  const { pendingCount, totalLocked } = usePendingSettlements();
 
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showFunding, setShowFunding] = useState(false);

@@ -10,7 +10,7 @@ import { prisma } from "@/lib/db/prisma";
 export async function GET(req: NextRequest) {
   // Verify Quick Auth token
   const authResult = await verifyRequest(req);
-  if (!authResult.success) {
+  if (!authResult.success || !authResult.fid) {
     return authResult.response;
   }
 
@@ -29,10 +29,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({

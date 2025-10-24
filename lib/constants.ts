@@ -1,4 +1,4 @@
-import { baseSepolia, base } from "wagmi/chains";
+import { base } from "wagmi/chains";
 
 // Chain Configuration
 export const CHAIN = base; // Base Sepolia (testnet) - Chain ID: 84532

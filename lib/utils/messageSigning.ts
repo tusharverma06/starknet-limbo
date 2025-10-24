@@ -1,4 +1,4 @@
-import { Wallet } from "ethers";
+import { Wallet, verifyMessage } from "ethers";
 import { decryptPrivateKey } from "./encryption";
 
 /**
@@ -53,7 +53,6 @@ export function verifyBetSignature(
   expectedAddress: string
 ): boolean {
   try {
-    const { verifyMessage } = require("ethers");
     const recoveredAddress = verifyMessage(message, signature);
     return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
   } catch (error) {

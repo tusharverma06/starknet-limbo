@@ -7,3 +7,6 @@ export const CONTRACT_CONFIG = {
   address: CONTRACT_ADDRESS,
   chainId: CHAIN.id,
 } as const;
+
+// Re-export CHAIN for convenience
+export { CHAIN };

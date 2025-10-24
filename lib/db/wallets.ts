@@ -1,4 +1,6 @@
 import { prisma } from "./prisma";
+import { Wallet } from "ethers";
+import { encryptPrivateKey } from "@/lib/utils/encryption";
 
 /**
  * Wallet data structure (matches Prisma model)
@@ -71,6 +73,53 @@ class WalletDatabase {
       }
       console.error("Failed to create wallet:", error);
       throw new Error("Failed to create wallet");
+    }
+  }
+
+  /**
+   * Create a new custodial wallet with auto-generated keys
+   * This is a convenience method that generates a wallet, encrypts the key, and stores it
+   * @param userId - Must be a valid User.id (create User first via getOrCreateUser)
+   */
+  async createCustodialWallet(userId: string): Promise<WalletData> {
+    try {
+      // Check if wallet already exists
+      const existing = await this.getWallet(userId);
+      if (existing) {
+        throw new Error("Wallet already exists for this user");
+      }
+
+      // Generate new random wallet
+      console.log("🔐 Generating new custodial wallet...");
+      const wallet = Wallet.createRandom();
+      const address = wallet.address;
+      const privateKey = wallet.privateKey;
+      console.log("✅ Wallet generated:", address);
+
+      // Encrypt the private key
+      console.log("🔒 Encrypting private key...");
+      const encryptedPrivateKey = encryptPrivateKey(privateKey);
+      console.log("✅ Private key encrypted");
+
+      // Store in database
+      console.log("💾 Storing wallet in database for user ID:", userId);
+      const walletData = await this.createWallet(
+        userId,
+        address,
+        encryptedPrivateKey
+      );
+
+      // Update user with server wallet address
+      await prisma.user.update({
+        where: { id: userId },
+        data: { server_wallet_address: address },
+      });
+      console.log("✅ Updated user with server wallet address");
+
+      return walletData;
+    } catch (error) {
+      console.error("Failed to create custodial wallet:", error);
+      throw error;
     }
   }
 

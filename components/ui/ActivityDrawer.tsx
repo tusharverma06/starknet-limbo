@@ -27,16 +27,39 @@ interface ActivityDrawerProps {
   userId?: string | null;
 }
 
-interface WalletTransaction {
-  id: number;
-  txHash: string;
-  txType: string;
-  amount: string;
-  status: string;
-  blockNumber?: string;
-  gasUsed?: string;
+interface OffchainBet {
+  id: string;
+  wager: string;
+  payout: string | null;
+  limboMultiplier: number | null;
+  targetMultiplier: number;
+  outcome: "win" | "loss" | null;
+  status:
+    | "pending"
+    | "pending_payout"
+    | "resolved"
+    | "complete"
+    | "processing"
+    | "paid_out";
   createdAt: string;
-  confirmedAt?: string;
+  resolvedAt: string | null;
+  txHash: string | null;
+}
+
+interface WalletTransaction {
+  id: string;
+  txHash: string;
+  txType:
+    | "bet_placed"
+    | "bet_won"
+    | "bet_lost"
+    | "payout"
+    | "withdraw"
+    | "deposit"
+    | string;
+  amount: string;
+  status: "pending" | "confirmed" | "failed";
+  createdAt: string;
 }
 
 export function ActivityDrawer({
@@ -58,7 +81,7 @@ export function ActivityDrawer({
     data: offchainBetsData,
     isLoading: isLoadingBets,
     refetch: refetchBets,
-  } = useQuery({
+  } = useQuery<{ bets: OffchainBet[]; count: number }>({
     queryKey: ["betHistory", userAddress],
     queryFn: async () => {
       if (!userAddress) {
@@ -90,14 +113,14 @@ export function ActivityDrawer({
     staleTime: 10000, // Consider data fresh for 10 seconds
   });
 
-  const offchainBets = offchainBetsData?.bets || [];
+  const offchainBets: OffchainBet[] = offchainBetsData?.bets || [];
 
   // Fetch wallet transactions using React Query
   const {
     data: transactionsData,
     isLoading: isLoadingTransactions,
     refetch: refetchTransactions,
-  } = useQuery({
+  } = useQuery<{ transactions: WalletTransaction[] }>({
     queryKey: ["walletTransactions", userId],
     queryFn: async () => {
       if (!userId) {
@@ -117,7 +140,8 @@ export function ActivityDrawer({
     staleTime: 10000,
   });
 
-  const transactions = transactionsData?.transactions || [];
+  const transactions: WalletTransaction[] =
+    transactionsData?.transactions || [];
 
   // Refetch data when drawer opens
   useEffect(() => {
@@ -693,7 +717,7 @@ export function ActivityDrawer({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/70 z-[60]"
+                  className="fixed inset-0 bg-black/70 z-60"
                   onClick={() => {
                     setShowVerification(false);
                     setVerifyingBetId(null);
@@ -705,7 +729,7 @@ export function ActivityDrawer({
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  className="fixed inset-0 sm:inset-4 md:inset-8 lg:inset-16 bg-white rounded-none sm:rounded-lg shadow-2xl z-[70] flex flex-col overflow-hidden max-w-5xl mx-auto"
+                  className="fixed inset-0 sm:inset-4 md:inset-8 lg:inset-16 bg-white rounded-none sm:rounded-lg shadow-2xl z-70 flex flex-col overflow-hidden max-w-5xl mx-auto"
                 >
                   {/* Modal Header */}
                   <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 bg-white sticky top-0 z-10">

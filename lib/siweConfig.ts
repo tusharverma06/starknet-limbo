@@ -1,4 +1,9 @@
-import { getCsrfToken, signIn, signOut } from "next-auth/react";
+// DEPRECATED: This file is no longer used after switching to Quick Auth
+// The app now uses Farcaster Quick Auth (JWT-based) instead of SIWE
+// Kept for reference but commented out to avoid build errors
+
+/*
+import { getCsrfToken } from "next-auth/react";
 import type {
   SIWESession,
   SIWEVerifyMessageArgs,
@@ -32,7 +37,7 @@ export const siweConfig = {
       });
 
       return response.ok;
-    } catch (error) {
+    } catch {
       return false;
     }
   },
@@ -41,7 +46,9 @@ export const siweConfig = {
       const response = await fetch("/api/auth/session");
       if (!response.ok) return null;
       const data = await response.json();
-      return data.address ? { address: data.address, chainId: data.chainId } : null;
+      return data.address
+        ? { address: data.address, chainId: data.chainId }
+        : null;
     } catch {
       return null;
     }
@@ -50,3 +57,6 @@ export const siweConfig = {
     await fetch("/api/auth/signout", { method: "POST" });
   },
 };
+*/
+
+export {};

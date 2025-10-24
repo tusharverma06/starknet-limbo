@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { JsonRpcProvider, formatEther } from "ethers";
 import { walletDb } from "@/lib/db/wallets";
 import { getUsdValueFromEth } from "@/lib/utils/price";
-import { CHAIN } from "@/lib/constants";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
 
 /**
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
       process.env.NEXT_PUBLIC_RPC_URL ||
       `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
-    if (!rpcUrl || rpcUrl.includes('undefined')) {
+    if (!rpcUrl || rpcUrl.includes("undefined")) {
       console.error("No valid RPC URL configured");
       return NextResponse.json(
         { error: "RPC URL not configured" },

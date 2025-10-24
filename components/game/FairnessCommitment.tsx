@@ -99,9 +99,10 @@ export function FairnessCommitment({
                   </h4>
                   <p className="text-xs text-gray-700 leading-relaxed">
                     Before each round, our system generates a hidden random seed
-                    and publishes its hash (commitment). This ensures we can't
-                    change the outcome later. After your bet, we reveal the seed
-                    and you can verify that it matches this commitment hash.
+                    and publishes its hash (commitment). This ensures we
+                    can&apos;t change the outcome later. After your bet, we
+                    reveal the seed and you can verify that it matches this
+                    commitment hash.
                   </p>
                 </div>
               </div>

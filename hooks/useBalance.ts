@@ -12,7 +12,7 @@ interface BalanceData {
 /**
  * Hook to fetch and monitor server wallet balance
  * Fetches directly from blockchain via API
- * Auto-refreshes every 10 seconds
+ * Only refetches on manual trigger or window focus
  * Supports optimistic updates for instant UI feedback
  */
 export function useBalance(userId: string | null) {
@@ -43,9 +43,9 @@ export function useBalance(userId: string | null) {
         };
       },
       enabled: !!userId,
-      refetchInterval: 10000, // Refetch every 10 seconds
-      refetchOnWindowFocus: true,
-      staleTime: 5000, // Consider data stale after 5 seconds
+      refetchInterval: false, // Disable auto-refetch - rely on manual refetch after transactions
+      refetchOnWindowFocus: true, // Still refetch when user returns to tab
+      staleTime: 30000, // Consider data stale after 30 seconds
     });
 
   // Sync optimistic balance with fetched data

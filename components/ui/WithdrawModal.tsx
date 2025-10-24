@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { X, ArrowUpRight, AlertTriangle } from "lucide-react";
 import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
+import { useWaitForTransactionReceipt } from "wagmi";
 
 interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   walletAddress: string;
   currentBalance: string;
-  onWithdraw: (amount: string, toAddress: string) => Promise<void>;
+  onWithdraw: (amount: string, toAddress: string) => Promise<{ txHash: string }>;
   onSuccess?: () => void;
 }
 
@@ -26,6 +27,12 @@ export function WithdrawModal({
   const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [ethAmount, setEthAmount] = useState<number | null>(null);
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+
+  // Wait for transaction confirmation
+  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
+  });
 
   // Convert current balance to USD
   useEffect(() => {
@@ -61,6 +68,25 @@ export function WithdrawModal({
     }
   }, [amount]);
 
+  // Handle transaction confirmation
+  useEffect(() => {
+    if (isTxConfirmed && txHash) {
+      console.log("✅ Withdrawal transaction confirmed! Refreshing balance...");
+
+      // Call onSuccess callback to refresh balance
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      // Reset state and close modal
+      setAmount("");
+      setToAddress("");
+      setTxHash(undefined);
+      setIsWithdrawing(false);
+      onClose();
+    }
+  }, [isTxConfirmed, txHash, onSuccess, onClose]);
+
   if (!isOpen) return null;
 
   const handleWithdraw = async () => {
@@ -90,21 +116,15 @@ export function WithdrawModal({
     setIsWithdrawing(true);
 
     try {
-      await onWithdraw(amount, toAddress);
+      const result = await onWithdraw(amount, toAddress);
 
-      console.log("✅ Withdrawal successful! Refreshing balance...");
+      console.log("✅ Withdrawal transaction sent:", result.txHash);
+      console.log("⏳ Waiting for transaction confirmation...");
 
-      // Call onSuccess callback to refresh balance
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      setAmount("");
-      setToAddress("");
-      onClose();
+      // Set the transaction hash to trigger waiting for confirmation
+      setTxHash(result.txHash as `0x${string}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Withdrawal failed");
-    } finally {
       setIsWithdrawing(false);
     }
   };
@@ -219,6 +239,27 @@ export function WithdrawModal({
             </div>
           )}
 
+          {/* Transaction Status Message */}
+          {txHash && isWithdrawing && (
+            <div className="p-3 bg-blue-50 border-2 border-black rounded-lg mb-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span
+                    className="text-sm text-blue-900 font-semibold"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Waiting for confirmation...
+                  </span>
+                </div>
+                <p className="text-xs text-blue-700">
+                  Your withdrawal is being processed on the blockchain. This
+                  may take a few moments.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-2">
             <button
@@ -238,7 +279,7 @@ export function WithdrawModal({
               {isWithdrawing ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Withdrawing...
+                  {txHash ? "Confirming..." : "Withdrawing..."}
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">

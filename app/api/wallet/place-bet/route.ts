@@ -13,6 +13,9 @@ import {
 } from "@/lib/security/houseWallet";
 import { createBetMessage, signBetMessage } from "@/lib/utils/messageSigning";
 
+// Import cached price for reuse
+let cachedEthPrice: number | null = null;
+
 /**
  * Process blockchain transactions in the background
  * This runs asynchronously after returning the bet result to the user
@@ -191,9 +194,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert USD to ETH
+    // Convert USD to ETH (uses cached price internally)
     console.log("💵 USD bet amount:", usdAmountNum);
     const ethAmount = await getEthValueFromUsd(usdAmountNum);
+
+    // Store the price that was used for this conversion
+    cachedEthPrice = await getEthUsdPrice();
+
     console.log("💎 ETH amount after conversion:", ethAmount);
 
     if (ethAmount <= 0) {
@@ -296,103 +303,102 @@ export async function POST(req: NextRequest) {
     // Convert multiplier to contract format (x100)
     const targetMultiplierScaled = Math.floor(multiplierNum * 100).toString();
 
-    // Fetch current ETH/USD price for verification
-    const ethPriceUsd = await getEthUsdPrice();
+    // Use cached ETH price (already fetched during conversion)
+    const ethPriceUsd = cachedEthPrice || (await getEthUsdPrice());
     console.log("💵 Current ETH/USD price:", ethPriceUsd);
 
-    // Create bet record first to get betId
-    const bet = await prisma.bet.create({
-      data: {
-        userId: user.id,
-        playerId: walletData.address.toLowerCase(),
-        wager: betAmountWei.toString(),
-        targetMultiplier: targetMultiplierScaled,
-        // Temporary placeholder values - will be updated immediately
-        serverSeedHash: "",
-        randomValue: "",
-        gameNumber: "",
-        outcome: "pending",
-        payout: "0",
-        status: "pending",
-        // Store exchange rate and USD values
-        ethPriceUsd: ethPriceUsd.toString(),
-        wagerUsd: usdAmountNum.toString(),
-      },
-    });
+    // Generate unique bet ID before DB insert (using timestamp + random)
+    const tempBetId = `${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
 
-    console.log("🎲 Bet created with ID:", bet.id);
-
-    // Generate provably fair result
+    // Generate provably fair result BEFORE creating DB record
+    // This saves one DB roundtrip in the critical path
     const result = generateBetResult(
       walletData.address.toLowerCase(),
-      bet.id,
+      tempBetId,
       betAmountWei.toString(),
       targetMultiplierScaled
     );
 
-    console.log("🎯 Bet result generated:", {
+    console.log("🎯 Result generated before DB insert:", {
       outcome: result.outcome,
       limboMultiplier: (Number(result.limboMultiplier) / 100).toFixed(2),
-      payout: result.payout,
     });
 
-    // Create and sign bet message for verification
+    // Calculate payout in USD for verification
+    const payoutEth = parseFloat(formatEther(result.payout));
+    const payoutUsd = (payoutEth * ethPriceUsd).toString();
+
+    // Create bet message for verification (non-blocking prep)
     const betMessage = createBetMessage({
-      betId: bet.id,
+      betId: tempBetId,
       wager: betAmountWei.toString(),
       targetMultiplier: targetMultiplierScaled,
       serverSeedHash: result.serverSeedHash,
       timestamp: Date.now(),
     });
 
-    console.log("📝 Bet message created:", betMessage);
-
-    // Sign the bet message with custodial wallet
-    const betSignature = await signBetMessage(
-      betMessage,
-      walletData.encryptedPrivateKey
-    );
-
-    console.log("✍️ Bet message signed");
-
-    // Calculate payout in USD for verification
-    const payoutEth = parseFloat(formatEther(result.payout));
-    const payoutUsd = (payoutEth * ethPriceUsd).toString();
-
-    // Step 1: Optimistically update balances in database first
+    // Calculate balances
     const newBalance = balance - betAmountWei;
     const finalBalance =
       result.outcome === "win"
         ? newBalance + BigInt(result.payout)
         : newBalance;
 
-    // Update balance immediately for instant UX
-    await walletDb.updateBalance(user.id, finalBalance.toString());
-    await walletDb.updateLastUsed(user.id);
+    // CRITICAL OPTIMIZATION: Batch all DB operations in ONE transaction
+    // This reduces DB roundtrips from 3+ to just 1
+    const [bet] = await prisma.$transaction([
+      // 1. Create bet with full data in one shot
+      prisma.bet.create({
+        data: {
+          id: tempBetId,
+          userId: user.id,
+          playerId: walletData.address.toLowerCase(),
+          wager: betAmountWei.toString(),
+          targetMultiplier: targetMultiplierScaled,
+          serverSeedHash: result.serverSeedHash,
+          serverSeed: result.serverSeed,
+          randomValue: result.randomValue,
+          gameNumber: result.gameNumber,
+          limboMultiplier: result.limboMultiplier,
+          outcome: result.outcome,
+          payout: result.payout,
+          payoutUsd: payoutUsd,
+          status: "processing",
+          betMessage: betMessage,
+          ethPriceUsd: ethPriceUsd.toString(),
+          wagerUsd: usdAmountNum.toString(),
+          resolvedAt: new Date(),
+        },
+      }),
+      // 2. Update wallet balance in same transaction
+      prisma.wallet.update({
+        where: { userId: user.id },
+        data: {
+          balance: finalBalance.toString(),
+          lastUsed: BigInt(Date.now()),
+        },
+      }),
+    ]);
 
-    console.log("✅ Balance updated optimistically:", {
-      previous: balance.toString(),
-      new: finalBalance.toString(),
+    console.log("⚡ DB transaction completed in single batch:", {
+      betId: bet.id,
+      outcome: result.outcome,
+      balanceUpdated: finalBalance.toString(),
     });
 
-    // Step 2: Update bet record with result (status: processing)
-    await prisma.bet.update({
-      where: { id: bet.id },
-      data: {
-        serverSeedHash: result.serverSeedHash,
-        serverSeed: result.serverSeed,
-        randomValue: result.randomValue,
-        gameNumber: result.gameNumber,
-        limboMultiplier: result.limboMultiplier,
-        outcome: result.outcome,
-        payout: result.payout,
-        payoutUsd: payoutUsd,
-        status: "processing", // Blockchain txs still pending
-        betSignature: betSignature,
-        betMessage: betMessage,
-        resolvedAt: new Date(),
-      },
-    });
+    // Sign bet message AFTER returning response (non-critical path)
+    // We'll update the signature in background
+    signBetMessage(betMessage, walletData.encryptedPrivateKey)
+      .then(async (signature) => {
+        await prisma.bet.update({
+          where: { id: bet.id },
+          data: { betSignature: signature },
+        });
+        console.log("✍️ Bet signature added in background");
+      })
+      .catch((err) => console.error("⚠️ Failed to add signature:", err));
 
     console.log(
       "⚡ Returning instant result to user (blockchain processing in background)"

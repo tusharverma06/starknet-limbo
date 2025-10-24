@@ -1,6 +1,37 @@
 "use server";
 
+// Cache for ETH price - refreshes every 10 seconds
+let cachedEthPrice: number | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION_MS = 10000; // 10 seconds
+
+/**
+ * Get cached ETH price or fetch new one if cache is expired
+ * This dramatically speeds up bet placement by avoiding API calls
+ */
 export async function getEthUsdPrice(): Promise<number> {
+  const now = Date.now();
+
+  // Return cached price if still valid
+  if (cachedEthPrice !== null && (now - cacheTimestamp) < CACHE_DURATION_MS) {
+    console.log("💰 Using cached ETH price:", cachedEthPrice, "(age:", now - cacheTimestamp, "ms)");
+    return cachedEthPrice;
+  }
+
+  console.log("🔄 Fetching fresh ETH price (cache expired or empty)");
+  const price = await fetchEthUsdPrice();
+
+  // Update cache
+  cachedEthPrice = price;
+  cacheTimestamp = now;
+
+  return price;
+}
+
+/**
+ * Internal function to fetch ETH price from APIs
+ */
+async function fetchEthUsdPrice(): Promise<number> {
   // Try Zerion API first
   try {
     const response = await fetch(

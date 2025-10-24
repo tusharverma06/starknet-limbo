@@ -27,32 +27,40 @@ export function randomnessToUniformFloat(randomnessHex: string): number {
 }
 
 /**
- * Simulate limbo game result
- * Formula: limbo_multiplier = (1 - edge) / max(1e-9, x)
+ * Simulate limbo game result using the ACTUAL game formula
+ * This matches the formula used in provablyFair.ts (gameNumber-based)
  * Returns payout in wei (same units as bet)
  */
 export function simulateLimbo(params: {
   bet: bigint; // Bet amount in wei
   edge: number; // House edge (0.02 for 2%)
-  randomness: string; // Hex string of random bytes
+  randomness: string; // Hex string of random bytes (this is the randomValue/gameNumber)
   targetMultiplier: number; // Target multiplier as decimal (e.g., 1.5 for 1.5x)
 }): bigint {
-  // Convert randomness to uniform float [0, 1)
-  const x = randomnessToUniformFloat(params.randomness);
+  // IMPORTANT: The randomness here should be the gameNumber, not the raw randomValue
+  // The game uses: limboMultiplier = (1 - edge) * 1e9 / gameNumber
 
-  // Calculate limbo multiplier: (1 - edge) / max(1e-9, x)
-  const denominator = Math.max(1e-9, x);
-  const limboMultiplier = (1.0 - params.edge) / denominator;
+  // Parse gameNumber from randomness (assuming it's passed as gameNumber)
+  const gameNumber = BigInt(params.randomness);
+
+  // Calculate multiplier using the same formula as the actual game
+  const edgeFactor = BigInt(Math.floor((1 - params.edge) * 10000));
+  const oneHundred = BigInt(100);
+  const tenThousand = BigInt(10000);
+  const oneBillion = BigInt(1e9);
+
+  const limboMultiplierScaled = (edgeFactor * oneBillion * oneHundred) / (gameNumber * tenThousand);
+  const limboMultiplier = Number(limboMultiplierScaled) / 100;
 
   console.log("🎲 Simulation:", {
-    randomFloat: x,
+    gameNumber: gameNumber.toString(),
     limboMultiplier,
     targetMultiplier: params.targetMultiplier,
-    win: limboMultiplier > params.targetMultiplier,
+    win: limboMultiplier >= params.targetMultiplier,
   });
 
-  // If limbo multiplier > target, user wins
-  if (limboMultiplier > params.targetMultiplier) {
+  // If limbo multiplier >= target, user wins
+  if (limboMultiplier >= params.targetMultiplier) {
     // Payout = target_multiplier * bet
     const payout = BigInt(Math.floor(params.targetMultiplier * Number(params.bet)));
     return payout;
@@ -63,17 +71,22 @@ export function simulateLimbo(params: {
 }
 
 /**
- * Get simulated limbo multiplier from randomness
+ * Get simulated limbo multiplier using the ACTUAL game formula
  * Returns the multiplier value (not the payout)
  */
 export function getSimulatedMultiplier(params: {
-  randomness: string;
+  gameNumber: string; // Changed from randomness to gameNumber for clarity
   edge: number; // 0.02 for 2%
 }): number {
-  const x = randomnessToUniformFloat(params.randomness);
-  const denominator = Math.max(1e-9, x);
-  const limboMultiplier = (1.0 - params.edge) / denominator;
-  return limboMultiplier;
+  // Use the same formula as the actual game (from provablyFair.ts)
+  const gameNum = BigInt(params.gameNumber);
+  const edgeFactor = BigInt(Math.floor((1 - params.edge) * 10000));
+  const oneHundred = BigInt(100);
+  const tenThousand = BigInt(10000);
+  const oneBillion = BigInt(1e9);
+
+  const limboMultiplierScaled = (edgeFactor * oneBillion * oneHundred) / (gameNum * tenThousand);
+  return Number(limboMultiplierScaled) / 100;
 }
 
 /**

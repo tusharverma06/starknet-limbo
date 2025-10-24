@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     // Get simulated multiplier using edge = 0.02
     const HOUSE_EDGE = 0.02;
     const simulatedMultiplier = getSimulatedMultiplier({
-      randomness: bet.randomValue,
+      gameNumber: bet.gameNumber,
       edge: HOUSE_EDGE,
     });
 
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
     const simulatedPayout = simulateLimbo({
       bet: BigInt(bet.wager),
       edge: HOUSE_EDGE,
-      randomness: bet.randomValue,
+      randomness: bet.gameNumber, // Use gameNumber instead of randomValue
       targetMultiplier: targetMultiplierDecimal,
     });
 

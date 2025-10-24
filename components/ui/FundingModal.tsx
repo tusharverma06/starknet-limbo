@@ -101,8 +101,33 @@ export function FundingModal({
 
   // Handle transaction confirmation
   useEffect(() => {
-    if (isTxConfirmed && txHash) {
-      console.log("✅ Transaction confirmed! Refreshing balance...");
+    if (isTxConfirmed && txHash && userId) {
+      console.log("✅ Transaction confirmed! Logging deposit and refreshing balance...");
+
+      // Log the deposit transaction
+      const logDeposit = async () => {
+        try {
+          const response = await fetch("/api/wallet/log-deposit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId,
+              txHash,
+              amount: ethAmount,
+            }),
+          });
+
+          if (!response.ok) {
+            console.error("Failed to log deposit transaction");
+          } else {
+            console.log("✅ Deposit transaction logged");
+          }
+        } catch (error) {
+          console.error("Error logging deposit:", error);
+        }
+      };
+
+      logDeposit();
 
       // Call onSuccess callback to refresh balance
       if (onSuccess) {
@@ -115,7 +140,7 @@ export function FundingModal({
       setIsFunding(false);
       onClose();
     }
-  }, [isTxConfirmed, txHash, onSuccess, onClose]);
+  }, [isTxConfirmed, txHash, userId, ethAmount, onSuccess, onClose]);
 
   if (!isOpen) return null;
 

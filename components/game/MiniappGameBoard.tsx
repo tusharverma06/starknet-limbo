@@ -216,9 +216,19 @@ export function MiniappGameBoard() {
       return;
     }
 
+    // Parse bet amount
+    const betAmountNum = parseFloat(betAmount || "0");
+
     // If balance is less than $0.10, open funding modal
     if (balanceInUsd < 0.1) {
       console.log("💰 Balance too low (< $0.10), opening funding modal...");
+      setShowFundingModal(true);
+      return;
+    }
+
+    // If bet amount exceeds balance, open funding modal
+    if (betAmountNum > 0 && betAmountNum > balanceInUsd) {
+      console.log("💰 Insufficient balance, opening funding modal...");
       setShowFundingModal(true);
       return;
     }
@@ -229,19 +239,9 @@ export function MiniappGameBoard() {
       return;
     }
 
-    // Check if user has sufficient balance
-    const betAmountNum = parseFloat(betAmount || "0");
-
     // Check for zero or invalid bet amount
     if (betAmountNum <= 0) {
       console.log("⚠️ Invalid bet amount");
-      return;
-    }
-
-    // If bet amount exceeds balance, open funding modal
-    if (betAmountNum > balanceInUsd) {
-      console.log("💰 Insufficient balance, opening funding modal...");
-      setShowFundingModal(true);
       return;
     }
 
@@ -319,23 +319,31 @@ export function MiniappGameBoard() {
             console.error(
               "⚠️ Backend did not return payoutInUsd, skipping optimistic payout update"
             );
-            // Fallback: refetch balance to get accurate amount
-            await refetchBalance();
           }
         }
 
-        // Show animated result multiplier in mountain bg
-        setResultMultiplierValue(result.result.limboMultiplier);
-        setResultMultiplierColor(result.result.win ? "green" : "red");
-        setShowResultMultiplier(true);
-
-        // Hide after 3 seconds
+        // Add a brief "rolling" animation delay for better UX (feels like a real game)
         setTimeout(() => {
-          setShowResultMultiplier(false);
-        }, 3000);
+          // Show animated result multiplier in mountain bg
+          setResultMultiplierValue(result.result?.limboMultiplier || 0);
+          setResultMultiplierColor(result.result?.win ? "green" : "red");
+          setShowResultMultiplier(true);
+
+          // Hide after 3 seconds
+          setTimeout(() => {
+            setShowResultMultiplier(false);
+          }, 3000);
+        }, 800); // 800ms "rolling" animation for suspense
 
         setLastResult(betResult.win, betResult.payout);
         setIsPlacingBet(false);
+
+        // Refetch balance after bet to sync optimistic with actual balance
+        // This ensures the balance is accurate after any bet (win or loss)
+        setTimeout(async () => {
+          console.log("🔄 Syncing balance after bet completion...");
+          await refetchBalance();
+        }, 500); // Small delay to ensure backend has processed
       } else {
         // Legacy on-chain betting flow (if still needed)
         console.log("📝 Request ID:", result.requestId);
@@ -408,6 +416,7 @@ export function MiniappGameBoard() {
     try {
       const result = await withdrawFromServerWallet(toAddress, amount);
       console.log("✅ Withdrawal successful:", result.txHash);
+      return result;
     } catch (error) {
       console.error("❌ Withdrawal failed:", error);
       throw error;

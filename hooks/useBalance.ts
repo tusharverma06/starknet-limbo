@@ -57,11 +57,12 @@ export function useBalance(userId: string | null) {
       }
       // If there's a significant difference between optimistic and fetched balance,
       // sync them (this handles async blockchain transaction completion)
-      else if (Math.abs(optimisticBalanceUsd - data.balanceInUsd) > 0.001) {
-        // Only sync if the difference is significant to avoid unnecessary updates
+      else if (Math.abs(optimisticBalanceUsd - data.balanceInUsd) > 0.01) {
+        // Only sync if the difference is significant (>$0.01) to avoid unnecessary updates from rounding
         console.log("🔄 Syncing optimistic balance with fetched balance:", {
           optimistic: optimisticBalanceUsd,
           fetched: data.balanceInUsd,
+          difference: Math.abs(optimisticBalanceUsd - data.balanceInUsd),
         });
         setOptimisticBalance(data.balanceInUsd);
       }

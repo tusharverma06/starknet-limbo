@@ -71,6 +71,7 @@ export function MiniappGameBoard() {
     isAuthenticated: isSiweAuthenticated,
     signIn: siweSignIn,
     isSigning: isSiweSigning,
+    error: siweError,
   } = useSiweAuth();
 
   // Wagmi account for checking external wallet connection
@@ -254,6 +255,13 @@ export function MiniappGameBoard() {
       return;
     }
 
+    // Safety check: Ensure SIWE authentication is valid
+    if (!isSiweAuthenticated) {
+      console.error("❌ Cannot place bet: SIWE authentication required");
+      setBetError("Please sign in with your wallet to place bets");
+      return;
+    }
+
     if (amountError) {
       return;
     }
@@ -301,13 +309,19 @@ export function MiniappGameBoard() {
 
         // Optimistic update: add payout if win
         if (result.result.win) {
-          // Use payoutInUsd if available, otherwise calculate from payout
-          const payoutUsd =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (result.result as any).payoutInUsd ||
-            (parseFloat(result.result.payout as string) / 1e18) * 2000; // Fallback calculation
-          addPayout(payoutUsd);
-          console.log("🎉 Optimistically added payout:", payoutUsd);
+          // Backend always returns payoutInUsd for accurate USD amount
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const payoutUsd = (result.result as any).payoutInUsd;
+          if (payoutUsd) {
+            addPayout(payoutUsd);
+            console.log("🎉 Optimistically added payout:", payoutUsd, "USD");
+          } else {
+            console.error(
+              "⚠️ Backend did not return payoutInUsd, skipping optimistic payout update"
+            );
+            // Fallback: refetch balance to get accurate amount
+            await refetchBalance();
+          }
         }
 
         // Show animated result multiplier in mountain bg
@@ -334,8 +348,18 @@ export function MiniappGameBoard() {
       }
     } catch (error) {
       console.error("❌ Place bet error:", error);
+
       // Revert optimistic update by refreshing balance
-      await refetchBalance();
+      try {
+        await refetchBalance();
+      } catch (refreshError) {
+        // If refresh fails, manually revert the deduction
+        console.error(
+          "⚠️ Balance refresh failed, manually reverting:",
+          refreshError
+        );
+        addPayout(betAmountNum); // Add back the deducted amount
+      }
 
       setBetError(
         error instanceof Error ? error.message : "Failed to place bet"
@@ -502,8 +526,8 @@ export function MiniappGameBoard() {
 
           {/* Right side buttons */}
           <div className="flex items-center gap-2">
-            {/* Only show Verify & Activity buttons when authenticated */}
-            {isAuthenticated && (
+            {/* Only show Verify & Activity buttons when SIWE authenticated */}
+            {isSiweAuthenticated && (
               <>
                 {/* Activity Button */}
                 <button
@@ -517,7 +541,7 @@ export function MiniappGameBoard() {
             )}
 
             {/* Sign In / Wallet Button */}
-            {!isAuthenticated ? (
+            {!isSiweAuthenticated ? (
               <ConnectButton.Custom>
                 {({
                   account,
@@ -543,7 +567,7 @@ export function MiniappGameBoard() {
                         } else if (chain.unsupported) {
                           openChainModal();
                         } else {
-                          // Trigger sign in
+                          // Trigger SIWE sign in
                           handleSignIn();
                         }
                       }}
@@ -554,14 +578,14 @@ export function MiniappGameBoard() {
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
                         {!connected
-                          ? "Sign In"
+                          ? "Connect Wallet"
                           : chain.unsupported
                           ? "Wrong Network"
                           : isSiweSigning
-                          ? "Authorizing..."
+                          ? "Signing..."
                           : isAuthLoading
-                          ? "Signing In..."
-                          : "Sign In"}
+                          ? "Loading..."
+                          : "Authorize"}
                       </span>
                     </button>
                   );
@@ -932,6 +956,7 @@ export function MiniappGameBoard() {
             <button
               onClick={handlePrimaryAction}
               disabled={
+                !isSiweAuthenticated ||
                 !isAuthenticated ||
                 isDisabled ||
                 (balanceInUsd < 0.1 && parseFloat(betAmount || "0") > 0) ||
@@ -970,20 +995,30 @@ export function MiniappGameBoard() {
               </p>
             </button>
 
-            {/* Sign in prompt if not authenticated */}
-            {!isAuthenticated && (
-              <div className="text-sm text-center p-3 bg-yellow-50 border-2 border-black rounded-lg">
+            {/* Sign in prompt if not authenticated with SIWE */}
+            {!isSiweAuthenticated && (
+              <div className="text-sm p-3 bg-yellow-50 border-2 border-black rounded-lg space-y-2">
                 <p
-                  className="text-gray-700"
+                  className="text-gray-800 font-bold text-center"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  Please sign in to start playing
+                  🔐 Authorization Required
                 </p>
+                <p className="text-gray-700 text-xs text-center">
+                  {!isExternalWalletConnected
+                    ? "Connect your wallet and sign a message to authorize betting"
+                    : "Sign a message to authorize your custodial wallet"}
+                </p>
+                {siweError && (
+                  <p className="text-red-600 text-xs text-center font-semibold">
+                    {siweError}
+                  </p>
+                )}
               </div>
             )}
 
             {/* Insufficient balance warning */}
-            {isAuthenticated &&
+            {isSiweAuthenticated &&
               parseFloat(betAmount || "0") > 0 &&
               parseFloat(betAmount || "0") > balanceInUsd && (
                 <div className="text-sm text-center p-3 bg-red-50 border-2 border-black rounded-lg">
@@ -997,7 +1032,7 @@ export function MiniappGameBoard() {
               )}
 
             {/* Low balance warning */}
-            {isAuthenticated && balanceInUsd < 0.1 && balanceInUsd > 0 && (
+            {isSiweAuthenticated && balanceInUsd < 0.1 && balanceInUsd > 0 && (
               <div className="text-sm text-center p-3 bg-yellow-50 border-2 border-black rounded-lg">
                 <p
                   className="text-yellow-700"
@@ -1028,8 +1063,8 @@ export function MiniappGameBoard() {
               </div>
             )}
 
-            {/* Show funding option if authenticated but balance is zero */}
-            {isAuthenticated &&
+            {/* Show funding option if SIWE authenticated but balance is zero */}
+            {isSiweAuthenticated &&
               balanceInUsd !== null &&
               balanceInUsd !== undefined &&
               balanceInUsd === 0 && (

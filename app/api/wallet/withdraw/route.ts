@@ -52,6 +52,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Enforce SIWE authorization - REQUIRED for withdrawals
+    if (!user.siweSignature || !user.siweMessage || !user.siweExpiresAt) {
+      console.error("❌ Withdrawal rejected: Missing SIWE signature");
+      return NextResponse.json(
+        { error: "Authorization required. Please sign in with your wallet." },
+        { status: 401 }
+      );
+    }
+
+    // Check if SIWE signature has expired
+    const now = new Date();
+    const expiresAt = new Date(user.siweExpiresAt);
+    if (now > expiresAt) {
+      console.error(
+        "❌ Withdrawal rejected: SIWE signature expired:",
+        user.siweExpiresAt
+      );
+      return NextResponse.json(
+        { error: "Your session has expired. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    console.log("✅ SIWE authorization valid, processing withdrawal...");
+
     // Get wallet from database
     const walletData = await walletDb.getWallet(user.id);
     if (!walletData) {

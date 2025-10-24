@@ -34,14 +34,16 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if SIWE is valid and not expired
-    const isAuthenticated =
-      !!user.siweSignature &&
-      !!user.siweExpiresAt &&
-      new Date(user.siweExpiresAt) > new Date();
+    const hasSignature = !!user.siweSignature && !!user.siweExpiresAt;
+    const isExpired =
+      hasSignature && new Date(user.siweExpiresAt) <= new Date();
+    const isAuthenticated = hasSignature && !isExpired;
 
     return NextResponse.json({
       isAuthenticated,
+      isExpired,
       custodialWallet: user.server_wallet_address,
+      expiresAt: user.siweExpiresAt,
     });
   } catch (error) {
     console.error("Auth status check error:", error);

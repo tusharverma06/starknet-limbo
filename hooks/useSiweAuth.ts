@@ -14,20 +14,41 @@ export function useSiweAuth() {
   const [custodialWallet, setCustodialWallet] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is already authenticated
+  // Check if user is already authenticated with valid signature
   useEffect(() => {
     const checkAuth = async () => {
-      if (!userId) return;
+      if (!userId) {
+        setIsAuthenticated(false);
+        setCustodialWallet(null);
+        return;
+      }
 
       try {
         const response = await fetch(`/api/auth/status?userId=${userId}`);
         if (response.ok) {
           const data = await response.json();
-          setIsAuthenticated(data.isAuthenticated);
+
+          // Only set as authenticated if signature exists AND is not expired
+          const isValidAuth =
+            data.isAuthenticated && data.custodialWallet && !data.isExpired;
+
+          setIsAuthenticated(isValidAuth);
           setCustodialWallet(data.custodialWallet);
+
+          if (data.isExpired) {
+            console.warn(
+              "⚠️ SIWE signature has expired. Please sign in again."
+            );
+            setError("Your session has expired. Please sign in again.");
+          }
+        } else {
+          setIsAuthenticated(false);
+          setCustodialWallet(null);
         }
       } catch (err) {
         console.error("Error checking auth status:", err);
+        setIsAuthenticated(false);
+        setCustodialWallet(null);
       }
     };
 

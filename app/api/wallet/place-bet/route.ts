@@ -236,18 +236,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Log SIWE authorization status (for auditing)
-    if (!user.siweSignature || !user.siweMessage) {
-      console.log("⚠️ User placing bet without SIWE signature (legacy flow)");
-    } else if (user.siweExpiresAt) {
-      const now = new Date();
-      const expiresAt = new Date(user.siweExpiresAt);
-      if (now > expiresAt) {
-        console.log("⚠️ User SIWE signature expired:", user.siweExpiresAt);
-      } else {
-        console.log("✅ SIWE authorization valid");
-      }
+    // Enforce SIWE authorization - REQUIRED for all bets
+    if (!user.siweSignature || !user.siweMessage || !user.siweExpiresAt) {
+      console.error("❌ Bet rejected: Missing SIWE signature");
+      return NextResponse.json(
+        { error: "Authorization required. Please sign in with your wallet." },
+        { status: 401 }
+      );
     }
+
+    // Check if SIWE signature has expired
+    const now = new Date();
+    const expiresAt = new Date(user.siweExpiresAt);
+    if (now > expiresAt) {
+      console.error(
+        "❌ Bet rejected: SIWE signature expired:",
+        user.siweExpiresAt
+      );
+      return NextResponse.json(
+        { error: "Your session has expired. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    console.log("✅ SIWE authorization valid, processing bet...");
 
     // Get wallet from database
     const walletData = await walletDb.getWallet(user.id);

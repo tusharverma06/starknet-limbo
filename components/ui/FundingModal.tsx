@@ -18,6 +18,7 @@ interface FundingModalProps {
   walletAddress: string;
   currentBalance: string;
   userId?: string | null;
+  onSuccess?: () => void;
 }
 
 export function FundingModal({
@@ -26,6 +27,7 @@ export function FundingModal({
   walletAddress,
   currentBalance,
   userId,
+  onSuccess,
 }: FundingModalProps) {
   const [amount, setAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
@@ -33,6 +35,7 @@ export function FundingModal({
   const [copied, setCopied] = useState(false);
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [ethAmount, setEthAmount] = useState<number | null>(null);
+  const [currentBalanceUsd, setCurrentBalanceUsd] = useState<number | null>(null);
 
   const { address: userAddress, isConnected, chainId } = useAccount();
   const { sendTransaction } = useSendTransaction();
@@ -52,6 +55,18 @@ export function FundingModal({
       setUsdBalance(null);
     }
   }, [userBalance]);
+
+  // Convert current balance to USD
+  useEffect(() => {
+    if (currentBalance) {
+      const ethBalance = parseFloat(currentBalance);
+      getUsdValueFromEth(ethBalance)
+        .then(setCurrentBalanceUsd)
+        .catch(() => setCurrentBalanceUsd(null));
+    } else {
+      setCurrentBalanceUsd(null);
+    }
+  }, [currentBalance]);
 
   // Convert USD amount to ETH when amount changes
   useEffect(() => {
@@ -120,12 +135,21 @@ export function FundingModal({
 
     try {
       // Send transaction directly to server wallet with ETH amount
-      await sendTransaction({
+      const txHash = await sendTransaction({
         to: walletAddress as `0x${string}`,
         value: parseEther(ethAmount.toString()),
       });
 
+      console.log("✅ Funding transaction sent:", txHash);
+      
       setAmount("");
+      
+      // Call onSuccess callback to refresh balance
+      if (onSuccess) {
+        console.log("🔄 Triggering balance refresh...");
+        onSuccess();
+      }
+      
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Funding failed");
@@ -166,6 +190,11 @@ export function FundingModal({
               className="text-lg font-bold text-black"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
+              {currentBalanceUsd !== null
+                ? `$${currentBalanceUsd.toFixed(2)}`
+                : "$0.00"}
+            </div>
+            <div className="text-xs text-gray-500">
               {parseFloat(currentBalance).toFixed(4)} ETH
             </div>
           </div>

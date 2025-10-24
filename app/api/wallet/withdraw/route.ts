@@ -67,14 +67,47 @@ export async function POST(req: NextRequest) {
     const provider = new JsonRpcProvider(rpcUrl);
     const wallet = new Wallet(privateKey, provider);
 
-    // Check balance
+    // Check balance first
     const balance = await provider.getBalance(wallet.address);
+    console.log("💰 Current balance:", balance.toString(), "wei");
+
     // Round to 18 decimals to avoid parseEther precision errors
     const ethAmountRounded = parseFloat(ethAmount.toFixed(18));
     const withdrawAmount = parseEther(ethAmountRounded.toString());
 
-    // Estimate gas using utility
+    console.log("📤 Withdraw amount:", withdrawAmount.toString(), "wei");
+
+    // Check if balance is zero
+    if (balance === BigInt(0)) {
+      return NextResponse.json(
+        {
+          error: "Insufficient balance",
+          message: "Your wallet balance is 0. Please fund your wallet first.",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Check if withdrawal amount exceeds balance (before considering gas)
+    if (withdrawAmount > balance) {
+      const balanceInEth = (Number(balance) / 1e18).toFixed(6);
+      return NextResponse.json(
+        {
+          error: "Insufficient balance",
+          message: `Withdrawal amount ($${usdAmountNum.toFixed(
+            2
+          )}) exceeds your balance (~${balanceInEth} ETH). Please reduce the amount.`,
+          available: balance.toString(),
+          requested: withdrawAmount.toString(),
+        },
+        { status: 400 }
+      );
+    }
+
+    // Estimate gas using utility with fallback
     let gasEstimation;
+    let gasCost: bigint;
+
     try {
       gasEstimation = await estimateGas(
         provider,
@@ -86,31 +119,50 @@ export async function POST(req: NextRequest) {
       console.log("⛽ Gas estimate:", gasEstimation.gasLimit);
       console.log("⛽ Gas price:", gasEstimation.gasPrice, "gwei");
       console.log("⛽ Total gas cost:", gasEstimation.totalCost, "ETH");
+
+      gasCost = parseEther(gasEstimation.totalCost);
     } catch (error) {
       console.error("Gas estimation error:", error);
-      return NextResponse.json(
-        {
-          error: "Failed to estimate gas",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Could not estimate transaction cost",
-        },
-        { status: 400 }
-      );
+      // Use fallback gas estimation: 21000 gas limit * current gas price
+      try {
+        const feeData = await provider.getFeeData();
+        if (!feeData.gasPrice) {
+          throw new Error("Could not get gas price");
+        }
+        gasCost = BigInt(21000) * feeData.gasPrice;
+        console.log(
+          "⛽ Using fallback gas estimate:",
+          gasCost.toString(),
+          "wei"
+        );
+      } catch (fallbackError) {
+        console.error("Fallback gas estimation failed:", fallbackError);
+        return NextResponse.json(
+          {
+            error: "Gas estimation failed",
+            message:
+              "Could not estimate transaction cost. The network may be experiencing issues. Please try again later.",
+          },
+          { status: 500 }
+        );
+      }
     }
 
-    const gasCost = parseEther(gasEstimation.totalCost);
-
     // Check if we have enough for withdrawal + gas
-    if (balance < withdrawAmount + gasCost) {
+    const totalRequired = withdrawAmount + gasCost;
+    if (balance < totalRequired) {
+      const balanceInEth = (Number(balance) / 1e18).toFixed(6);
+      const requiredInEth = (Number(totalRequired) / 1e18).toFixed(6);
+      const gasCostInEth = (Number(gasCost) / 1e18).toFixed(6);
+
       return NextResponse.json(
         {
-          error: "Insufficient balance",
-          required: (withdrawAmount + gasCost).toString(),
+          error: "Insufficient balance for gas",
+          message: `Your balance (~${balanceInEth} ETH) is not enough to cover the withdrawal and gas fees (~${gasCostInEth} ETH gas). Total needed: ~${requiredInEth} ETH. Please reduce the withdrawal amount or add more funds.`,
           available: balance.toString(),
           withdrawAmount: withdrawAmount.toString(),
           gasCost: gasCost.toString(),
+          totalRequired: totalRequired.toString(),
         },
         { status: 400 }
       );

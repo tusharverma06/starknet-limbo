@@ -12,7 +12,7 @@ import { useBetResultWatcher } from "@/hooks/useBetResultWatcher";
 import { useGameState } from "@/hooks/useGameState";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { useQuickAuth } from "@/hooks/useQuickAuth";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, RefreshCw } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -41,7 +41,19 @@ export function MiniappGameBoard() {
     isInitialLoading,
     placeBet: placeBetWithServerWallet,
     withdraw: withdrawFromServerWallet,
+    refreshBalance,
   } = useServerWallet(userId);
+
+  const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
+
+  const handleRefreshBalance = async () => {
+    setIsRefreshingBalance(true);
+    try {
+      await refreshBalance();
+    } finally {
+      setIsRefreshingBalance(false);
+    }
+  };
 
   const {
     isAuthenticated,
@@ -173,6 +185,34 @@ export function MiniappGameBoard() {
   const handlePrimaryAction = async () => {
     // If no wallet, this will be "Create Wallet" - handled by ServerWallet component
     if (!wallet) {
+      return;
+    }
+
+    // Check for amount validation errors first
+    if (amountError) {
+      console.log("⚠️ Amount validation error:", amountError);
+      return;
+    }
+
+    // Check if user has sufficient balance
+    const betAmountNum = parseFloat(betAmount || "0");
+
+    // Check for zero or invalid bet amount
+    if (betAmountNum <= 0) {
+      console.log("⚠️ Invalid bet amount");
+      return;
+    }
+
+    // If balance is 0 or insufficient, open funding modal instead
+    if (!balanceInUsd || balanceInUsd === 0) {
+      console.log("💰 No balance, opening funding modal...");
+      setShowFundingModal(true);
+      return;
+    }
+
+    if (betAmountNum > balanceInUsd) {
+      console.log("💰 Insufficient balance, opening funding modal...");
+      setShowFundingModal(true);
       return;
     }
 
@@ -477,9 +517,26 @@ export function MiniappGameBoard() {
                       <div className="p-3 space-y-2">
                         {/* Balance */}
                         <div className="pb-2 border-b-2 border-gray-200">
-                          <p className="text-xs text-gray-600 mb-1">
-                            Custodial Wallet Balance
-                          </p>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs text-gray-600">
+                              Custodial Wallet Balance
+                            </p>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRefreshBalance();
+                              }}
+                              disabled={isRefreshingBalance}
+                              className="p-1 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+                              title="Refresh balance"
+                            >
+                              <RefreshCw
+                                className={`w-3.5 h-3.5 text-gray-600 ${
+                                  isRefreshingBalance ? "animate-spin" : ""
+                                }`}
+                              />
+                            </button>
+                          </div>
                           <p
                             className="text-lg font-bold text-black"
                             style={{ fontFamily: "var(--font-lilita-one)" }}
@@ -775,14 +832,8 @@ export function MiniappGameBoard() {
               disabled={
                 !isAuthenticated ||
                 isDisabled ||
-                !balanceInUsd ||
-                balanceInUsd === 0 ||
-                (balanceInUsd && parseFloat(betAmount || "0") > balanceInUsd) ||
-                Boolean(
-                  balanceInUsd &&
-                    balanceInUsd > 0 &&
-                    (!!amountError || parseFloat(betAmount || "0") === 0)
-                )
+                !!amountError ||
+                parseFloat(betAmount || "0") <= 0
               }
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >
@@ -798,6 +849,14 @@ export function MiniappGameBoard() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     {getButtonText()}
                   </span>
+                ) : !balanceInUsd || balanceInUsd === 0 ? (
+                  "Fund Wallet to Play"
+                ) : parseFloat(betAmount || "0") > balanceInUsd ? (
+                  "Add More Funds"
+                ) : amountError ? (
+                  "Fix Amount"
+                ) : parseFloat(betAmount || "0") <= 0 ? (
+                  "Enter Amount"
                 ) : (
                   "Bet your amount"
                 )}
@@ -835,16 +894,7 @@ export function MiniappGameBoard() {
             {/* Potential Win */}
             <div className="flex items-center justify-between pt-3 border-t-2 border-gray-200">
               <div className="flex items-center gap-2 relative">
-                <p
-                  className="text-[14px] tracking-[0.14px]"
-                  style={{
-                    color: "#ffff99",
-                    textShadow: "0px 1px 0px #000000",
-                    fontFamily: "var(--font-lilita-one)",
-                  }}
-                >
-                  Potential Win
-                </p>
+                <p className="potential-payout">Potential Win</p>
                 {/* Lock Icon with Tooltip - Only show when authenticated and has commitment hash */}
                 {isAuthenticated && commitmentHash && !isPlacingBet && (
                   <div className="relative">
@@ -966,6 +1016,7 @@ export function MiniappGameBoard() {
           walletAddress={wallet.address}
           currentBalance={balanceInEth || "0"}
           userId={userId}
+          onSuccess={handleRefreshBalance}
         />
       )}
 

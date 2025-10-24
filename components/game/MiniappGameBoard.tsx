@@ -71,7 +71,6 @@ export function MiniappGameBoard() {
     isAuthenticated: isSiweAuthenticated,
     signIn: siweSignIn,
     isSigning: isSiweSigning,
-    error: siweError,
   } = useSiweAuth();
 
   // Wagmi account for checking external wallet connection
@@ -304,6 +303,7 @@ export function MiniappGameBoard() {
         if (result.result.win) {
           // Use payoutInUsd if available, otherwise calculate from payout
           const payoutUsd =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (result.result as any).payoutInUsd ||
             (parseFloat(result.result.payout as string) / 1e18) * 2000; // Fallback calculation
           addPayout(payoutUsd);

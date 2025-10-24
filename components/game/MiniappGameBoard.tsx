@@ -571,7 +571,11 @@ export function MiniappGameBoard() {
                   return (
                     <button
                       onClick={() => {
-                        if (!connected) {
+                        if (
+                          !connected ||
+                          !externalWalletAddress ||
+                          !isExternalWalletConnected
+                        ) {
                           openConnectModal();
                         } else if (chain.unsupported) {
                           openChainModal();
@@ -586,7 +590,9 @@ export function MiniappGameBoard() {
                         className="text-base text-white leading-[0.9]"
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
-                        {!connected
+                        {!connected ||
+                        !externalWalletAddress ||
+                        !isExternalWalletConnected
                           ? "Connect Wallet"
                           : chain.unsupported
                           ? "Wrong Network"

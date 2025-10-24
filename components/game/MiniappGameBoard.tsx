@@ -660,24 +660,34 @@ export function MiniappGameBoard() {
                         {/* Actions */}
                         <button
                           onClick={() => {
+                            if (!wallet || isWalletLoading) {
+                              console.log("⏳ Wallet is still loading...");
+                              return;
+                            }
                             setShowFundingModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          className="w-full py-2 px-3 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm"
+                          disabled={!wallet || isWalletLoading}
+                          className="w-full py-2 px-3 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-px hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
-                          Fund Wallet
+                          {isWalletLoading ? "Loading..." : "Fund Wallet"}
                         </button>
 
                         <button
                           onClick={() => {
+                            if (!wallet || isWalletLoading) {
+                              console.log("⏳ Wallet is still loading...");
+                              return;
+                            }
                             setShowWithdrawModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          className="w-full py-2 px-3 bg-white text-black rounded-lg border-2 border-black hover:bg-gray-50 transition-colors text-sm"
+                          disabled={!wallet || isWalletLoading}
+                          className="w-full py-2 px-3 bg-white text-black rounded-lg border-2 border-black hover:bg-gray-50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
-                          Withdraw
+                          {isWalletLoading ? "Loading..." : "Withdraw"}
                         </button>
 
                         {/* Custodial Wallet Address */}
@@ -1076,11 +1086,18 @@ export function MiniappGameBoard() {
                     Your wallet needs funds to place bets
                   </p>
                   <button
-                    onClick={() => setShowFundingModal(true)}
-                    className="w-full py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm"
+                    onClick={() => {
+                      if (!wallet || isWalletLoading) {
+                        console.log("⏳ Wallet is still loading...");
+                        return;
+                      }
+                      setShowFundingModal(true);
+                    }}
+                    disabled={!wallet || isWalletLoading}
+                    className="w-full py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-px hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    Fund Wallet
+                    {isWalletLoading ? "Loading Wallet..." : "Fund Wallet"}
                   </button>
                 </div>
               )}
@@ -1113,27 +1130,24 @@ export function MiniappGameBoard() {
       />
 
       {/* Funding Modal */}
-      {wallet && (
-        <FundingModal
-          isOpen={showFundingModal}
-          onClose={() => setShowFundingModal(false)}
-          walletAddress={wallet.address}
-          currentBalance={balanceInEth?.toString() || "0"}
-          userId={userId}
-          onSuccess={handleRefreshBalance}
-        />
-      )}
+      <FundingModal
+        isOpen={showFundingModal && !!wallet}
+        onClose={() => setShowFundingModal(false)}
+        walletAddress={wallet?.address || ""}
+        currentBalance={balanceInEth?.toString() || "0"}
+        userId={userId}
+        onSuccess={handleRefreshBalance}
+      />
 
       {/* Withdraw Modal */}
-      {wallet && (
-        <WithdrawModal
-          isOpen={showWithdrawModal}
-          onClose={() => setShowWithdrawModal(false)}
-          walletAddress={wallet.address}
-          currentBalance={balanceInEth?.toString() || "0"}
-          onWithdraw={handleWithdraw}
-        />
-      )}
+      <WithdrawModal
+        isOpen={showWithdrawModal && !!wallet}
+        onClose={() => setShowWithdrawModal(false)}
+        walletAddress={wallet?.address || ""}
+        currentBalance={balanceInEth?.toString() || "0"}
+        onWithdraw={handleWithdraw}
+        onSuccess={handleRefreshBalance}
+      />
     </div>
   );
 }

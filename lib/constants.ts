@@ -1,7 +1,7 @@
-import { base } from "wagmi/chains";
+import { baseSepolia } from "wagmi/chains";
 
 // Chain Configuration
-export const CHAIN = base; // Base Sepolia (testnet) - Chain ID: 84532
+export const CHAIN = baseSepolia; // Base Sepolia (testnet) - Chain ID: 84532
 // export const CHAIN = base; // Base (mainnet) - Chain ID: 8453
 
 export const MIN_BET_USD = 0.1; // USD

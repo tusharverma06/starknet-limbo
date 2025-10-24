@@ -7,6 +7,7 @@ import {
   useSendTransaction,
   useBalance,
   useSwitchChain,
+  useWaitForTransactionReceipt,
 } from "wagmi";
 import { parseEther, formatEther } from "viem";
 import { CHAIN } from "@/lib/constants";
@@ -38,12 +39,18 @@ export function FundingModal({
   const [currentBalanceUsd, setCurrentBalanceUsd] = useState<number | null>(
     null
   );
+  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { address: userAddress, isConnected, chainId } = useAccount();
-  const { sendTransaction } = useSendTransaction();
+  const { sendTransactionAsync } = useSendTransaction();
   const { switchChain } = useSwitchChain();
   const { data: userBalance } = useBalance({
     address: userAddress,
+  });
+
+  // Wait for transaction confirmation
+  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
+    hash: txHash,
   });
 
   // Convert user balance to USD
@@ -92,6 +99,24 @@ export function FundingModal({
     }
   }, [amount]);
 
+  // Handle transaction confirmation
+  useEffect(() => {
+    if (isTxConfirmed && txHash) {
+      console.log("✅ Transaction confirmed! Refreshing balance...");
+
+      // Call onSuccess callback to refresh balance
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      // Reset state and close modal
+      setAmount("");
+      setTxHash(undefined);
+      setIsFunding(false);
+      onClose();
+    }
+  }, [isTxConfirmed, txHash, onSuccess, onClose]);
+
   if (!isOpen) return null;
 
   const handleCopyAddress = async () => {
@@ -137,25 +162,18 @@ export function FundingModal({
 
     try {
       // Send transaction directly to server wallet with ETH amount
-      const txHash = await sendTransaction({
+      const hash = await sendTransactionAsync({
         to: walletAddress as `0x${string}`,
         value: parseEther(ethAmount.toString()),
       });
 
-      console.log("✅ Funding transaction sent:", txHash);
+      console.log("✅ Funding transaction sent:", hash);
+      console.log("⏳ Waiting for transaction confirmation...");
 
-      setAmount("");
-
-      // Call onSuccess callback to refresh balance
-      if (onSuccess) {
-        console.log("🔄 Triggering balance refresh...");
-        onSuccess();
-      }
-
-      onClose();
+      // Set the transaction hash to trigger waiting for confirmation
+      setTxHash(hash);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Funding failed");
-    } finally {
       setIsFunding(false);
     }
   };
@@ -174,7 +192,8 @@ export function FundingModal({
             </h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-black"
+              disabled={isFunding}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-black disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-4 h-4" />
             </button>
@@ -311,6 +330,27 @@ export function FundingModal({
             </div>
           )}
 
+          {/* Transaction Status Message */}
+          {txHash && isFunding && (
+            <div className="p-3 bg-blue-50 border-2 border-black rounded-lg mb-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span
+                    className="text-sm text-blue-900 font-semibold"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Waiting for confirmation...
+                  </span>
+                </div>
+                <p className="text-xs text-blue-700">
+                  Your transaction is being processed on the blockchain. This
+                  may take a few moments.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-2">
             <button
@@ -326,13 +366,13 @@ export function FundingModal({
               disabled={
                 isFunding || !amount || !isConnected || chainId !== CHAIN.id
               }
-              className="flex-1 py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-px hover:shadow-[0px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
               {isFunding ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Funding...
+                  {txHash ? "Confirming..." : "Funding..."}
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">

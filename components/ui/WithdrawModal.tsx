@@ -10,6 +10,7 @@ interface WithdrawModalProps {
   walletAddress: string;
   currentBalance: string;
   onWithdraw: (amount: string, toAddress: string) => Promise<void>;
+  onSuccess?: () => void;
 }
 
 export function WithdrawModal({
@@ -17,6 +18,7 @@ export function WithdrawModal({
   onClose,
   currentBalance,
   onWithdraw,
+  onSuccess,
 }: WithdrawModalProps) {
   const [amount, setAmount] = useState("");
   const [toAddress, setToAddress] = useState("");
@@ -89,6 +91,14 @@ export function WithdrawModal({
 
     try {
       await onWithdraw(amount, toAddress);
+
+      console.log("✅ Withdrawal successful! Refreshing balance...");
+
+      // Call onSuccess callback to refresh balance
+      if (onSuccess) {
+        onSuccess();
+      }
+
       setAmount("");
       setToAddress("");
       onClose();
@@ -113,16 +123,32 @@ export function WithdrawModal({
         <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[0px_4px_0px_0px_#000000]">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>Withdraw Funds</h2>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-black">
+            <h2
+              className="text-lg font-bold text-black"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
+              Withdraw Funds
+            </h2>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-black"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Current Balance */}
           <div className="p-3 bg-white rounded-lg border-2 border-black mb-4 shadow-[0px_2px_0px_0px_#000000]">
-            <div className="text-xs text-gray-600 mb-1" style={{ fontFamily: "var(--font-lilita-one)" }}>Available Balance</div>
-            <div className="text-lg font-bold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+            <div
+              className="text-xs text-gray-600 mb-1"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
+              Available Balance
+            </div>
+            <div
+              className="text-lg font-bold text-black"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
               {parseFloat(currentBalance).toFixed(4)} ETH
             </div>
             {usdBalance !== null && (
@@ -134,7 +160,10 @@ export function WithdrawModal({
 
           {/* Amount Input */}
           <div className="space-y-2 mb-4">
-            <div className="text-sm font-semibold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+            <div
+              className="text-sm font-semibold text-black"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
               Amount to Withdraw (USD)
             </div>
             <div className="flex items-center gap-2">
@@ -165,7 +194,10 @@ export function WithdrawModal({
 
           {/* Recipient Address */}
           <div className="space-y-2 mb-4">
-            <div className="text-sm font-semibold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+            <div
+              className="text-sm font-semibold text-black"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
               Recipient Address
             </div>
             <input
@@ -200,7 +232,7 @@ export function WithdrawModal({
             <button
               onClick={handleWithdraw}
               disabled={isWithdrawing || !amount || !toAddress}
-              className="flex-1 py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-px hover:shadow-[0px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
               {isWithdrawing ? (

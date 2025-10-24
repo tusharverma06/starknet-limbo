@@ -35,7 +35,9 @@ export function FundingModal({
   const [copied, setCopied] = useState(false);
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [ethAmount, setEthAmount] = useState<number | null>(null);
-  const [currentBalanceUsd, setCurrentBalanceUsd] = useState<number | null>(null);
+  const [currentBalanceUsd, setCurrentBalanceUsd] = useState<number | null>(
+    null
+  );
 
   const { address: userAddress, isConnected, chainId } = useAccount();
   const { sendTransaction } = useSendTransaction();
@@ -141,15 +143,15 @@ export function FundingModal({
       });
 
       console.log("✅ Funding transaction sent:", txHash);
-      
+
       setAmount("");
-      
+
       // Call onSuccess callback to refresh balance
       if (onSuccess) {
         console.log("🔄 Triggering balance refresh...");
         onSuccess();
       }
-      
+
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Funding failed");

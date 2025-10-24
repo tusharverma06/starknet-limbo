@@ -4,15 +4,24 @@
     "payload": "eyJkb21haW4iOiJsaW1iby1hcHAudmVyY2VsLmFwcCJ9",
     "signature": "45HwwPRWMEKr3BTytWO49dHQOsHtQHgPIOy8mA0OHRFFSyKHCKnd4TalOtF+mdvhZFLYsKFzhwMJ6nIzIxU1pRs="
   },
-  "frame": {
+  "miniapp": {
     "version": "1",
     "name": "Based Limbo",
-    "iconUrl": "https://limbo-app.vercel.app/logo.png",
+    "subtitle": "Test your luck on-chain",
+    "description": "A fun, provably fair on-chain Limbo betting game built for Farcaster Mini Apps.",
     "homeUrl": "https://limbo-app.vercel.app",
-    "imageUrl": "https://limbo-app.vercel.app/og.png",
-    "buttonTitle": "Play!",
+    "iconUrl": "https://limbo-app.vercel.app/logo.png",
     "splashImageUrl": "https://limbo-app.vercel.app/logo.png",
     "splashBackgroundColor": "#eeccff",
-    "webhookUrl": "https://limbo-app.vercel.app/api/webhook"
+    "webhookUrl": "https://limbo-app.vercel.app/api/webhook",
+    "primaryCategory": "games",
+    "tags": ["game", "limbo", "onchain", "luck", "crypto"],
+    "heroImageUrl": "https://limbo-app.vercel.app/og.png",
+    "tagline": "Play. Bet. Win.",
+    "ogTitle": "Based Limbo - Onchain Game",
+    "ogDescription": "Try your luck in a provably fair onchain betting game on Farcaster.",
+    "ogImageUrl": "https://limbo-app.vercel.app/og.png",
+    "castShareUrl": "https://limbo-app.vercel.app/",
+    "canonicalDomain": "limbo-app.vercel.app"
   }
 }

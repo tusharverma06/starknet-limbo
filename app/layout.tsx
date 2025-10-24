@@ -28,11 +28,13 @@ const frame = {
 };
 
 export const metadata: Metadata = {
-  title: "Limbo Game - Provably Fair",
-  description: "Play Limbo with Chainlink VRF for provably fair randomness",
+  title: "Based Limbo - Provably Fair",
+  description:
+    "Try your luck in a provably fair onchain betting game on Farcaster.",
   openGraph: {
-    title: "Limbo Game",
-    description: "Provably fair limbo game powered by Chainlink VRF",
+    title: "Based Limbo - Provably Fair",
+    description:
+      "Try your luck in a provably fair onchain betting game on Farcaster.",
     images: [`${process.env.NEXT_PUBLIC_APP_URL}/og.png`],
   },
   icons: {

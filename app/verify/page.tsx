@@ -53,10 +53,17 @@ interface VerificationData {
       expectedPayout: string;
       actualTxValue: string;
       settlementDelta: string;
+      txDirectionValid: boolean;
+      txDirectionError: string | null;
+      houseWalletAddress: string;
+      userCustodialWallet: string | null;
     };
     step6: {
       balanceDeltasMatch: boolean | null;
       verified: string | boolean;
+      settlementVerified: boolean;
+      requiresTxHash: boolean;
+      hasTxHash: boolean;
     };
   };
   bet: {
@@ -194,27 +201,6 @@ function VerifyPageContent() {
         {/* Verification Results */}
         {verificationData && (
           <div className="space-y-4">
-            {/* Overall Status */}
-            <div
-              className={`p-6 rounded-lg border-2 ${
-                verificationData.verified
-                  ? "bg-green-500/10 border-green-500/30"
-                  : "bg-yellow-500/10 border-yellow-500/30"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <StatusIcon status={verificationData.verified} />
-                <div>
-                  <h2 className="text-xl font-bold text-white">
-                    {verificationData.verified
-                      ? "✅ Verification Passed"
-                      : "⚠️ Verification Issues Found"}
-                  </h2>
-                  <p className="text-sm">Bet ID: {verificationData.betId}</p>
-                </div>
-              </div>
-            </div>
-
             {/* Step 0: User Authentication */}
             <div className="bg-[#2a2a2a] border border-white/10 rounded-lg p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -450,14 +436,42 @@ function VerifyPageContent() {
 
             {/* Step 5: Transaction Verification */}
             <div className="bg-[#2a2a2a] border border-white/10 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-white mb-4">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 Step 5: On-Chain Transaction Verification
+                {verificationData.steps.step5.txHash &&
+                verificationData.steps.step5.txDirectionValid ? (
+                  <Check className="w-5 h-5 text-green-400" />
+                ) : verificationData.steps.step5.txDirectionError ? (
+                  <X className="w-5 h-5 text-red-400" />
+                ) : null}
               </h3>
               <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3 mb-4 text-sm text-blue-200">
                 <strong>ℹ️ What we&apos;re checking:</strong> For winning bets,
                 we verify that the payout transaction on the blockchain matches
-                the expected payout amount.
+                the expected payout amount AND that it was sent from the house
+                wallet to your custodial wallet (correct direction).
               </div>
+
+              {/* Transaction Direction Error/Warning */}
+              {verificationData.steps.step5.txDirectionError && (
+                <div
+                  className={`${
+                    verificationData.bet.outcome === "win" &&
+                    !verificationData.steps.step5.txHash
+                      ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-200"
+                      : "bg-red-500/10 border-red-500/30 text-red-200"
+                  } border rounded p-3 mb-4 text-sm`}
+                >
+                  <strong>
+                    {verificationData.bet.outcome === "win" &&
+                    !verificationData.steps.step5.txHash
+                      ? "⚠️ Pending Settlement:"
+                      : "❌ Transaction Error:"}
+                  </strong>{" "}
+                  {verificationData.steps.step5.txDirectionError}
+                </div>
+              )}
+
               <div className="space-y-3 text-sm">
                 <div>
                   <span className="text-white/50">Transaction Hash:</span>
@@ -471,39 +485,94 @@ function VerifyPageContent() {
                       {verificationData.steps.step5.txHash}
                     </a>
                   ) : (
-                    <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
-                      No transaction (loss - no payout)
+                    <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs text-yellow-400">
+                      {verificationData.bet.outcome === "win"
+                        ? "⏳ Pending - Payout not yet executed"
+                        : "No transaction (loss - no payout)"}
                     </code>
                   )}
                 </div>
-                <div>
-                  <span className="text-white/50">Expected Payout (Wei):</span>
-                  <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
-                    {verificationData.steps.step5.expectedPayout}
-                  </code>
-                  <span className="text-xs text-white/40 mt-1 block">
-                    {(
-                      Number(verificationData.steps.step5.expectedPayout) / 1e18
-                    ).toFixed(8)}{" "}
-                    ETH
-                  </span>
-                </div>
-                <div>
-                  <span className="text-white/50">
-                    Actual Transaction Value (Wei):
-                  </span>
-                  <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
-                    {verificationData.steps.step5.actualTxValue || "0"}
-                  </code>
-                  <span className="text-xs text-white/40 mt-1 block">
-                    {(
-                      Number(
-                        verificationData.steps.step5.actualTxValue || "0"
-                      ) / 1e18
-                    ).toFixed(8)}{" "}
-                    ETH
-                  </span>
-                </div>
+
+                {verificationData.steps.step5.txHash && (
+                  <>
+                    <div>
+                      <span className="text-white/50">
+                        Transaction Direction:
+                      </span>
+                      <div className="mt-2 space-y-2 bg-[#1a1a1a] p-3 rounded">
+                        <div>
+                          <span className="text-xs text-white/40">
+                            From (House Wallet):
+                          </span>
+                          <code className="block mt-1 font-mono text-xs text-white/90 break-all">
+                            {verificationData.steps.step5.houseWalletAddress}
+                          </code>
+                        </div>
+                        <div>
+                          <span className="text-xs text-white/40">
+                            To (Your Custodial Wallet):
+                          </span>
+                          <code className="block mt-1 font-mono text-xs text-white/90 break-all">
+                            {verificationData.steps.step5.userCustodialWallet ||
+                              "N/A"}
+                          </code>
+                        </div>
+                        <div
+                          className={`mt-2 p-2 rounded text-xs ${
+                            verificationData.steps.step5.txDirectionValid
+                              ? "bg-green-500/10 border border-green-500/30 text-green-200"
+                              : "bg-red-500/10 border border-red-500/30 text-red-200"
+                          }`}
+                        >
+                          {verificationData.steps.step5.txDirectionValid ? (
+                            <span>
+                              ✅ Direction verified: House wallet → Your
+                              custodial wallet
+                            </span>
+                          ) : (
+                            <span>
+                              ❌ Direction invalid: Transaction not from house
+                              to your wallet
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-white/50">
+                        Expected Payout (Wei):
+                      </span>
+                      <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
+                        {verificationData.steps.step5.expectedPayout}
+                      </code>
+                      <span className="text-xs text-white/40 mt-1 block">
+                        {(
+                          Number(verificationData.steps.step5.expectedPayout) /
+                          1e18
+                        ).toFixed(8)}{" "}
+                        ETH
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-white/50">
+                        Actual Transaction Value (Wei):
+                      </span>
+                      <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
+                        {verificationData.steps.step5.actualTxValue || "0"}
+                      </code>
+                      <span className="text-xs text-white/40 mt-1 block">
+                        {(
+                          Number(
+                            verificationData.steps.step5.actualTxValue || "0"
+                          ) / 1e18
+                        ).toFixed(8)}{" "}
+                        ETH
+                      </span>
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <span className="text-white/50">
                     Net Balance Change (Settlement Delta):
@@ -541,34 +610,115 @@ function VerifyPageContent() {
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <StatusIcon
                   status={
-                    typeof verificationData.steps.step6.verified === "boolean"
-                      ? verificationData.steps.step6.verified
-                      : null
+                    verificationData.steps.step6.settlementVerified
+                      ? true
+                      : verificationData.steps.step6.requiresTxHash &&
+                        !verificationData.steps.step6.hasTxHash
+                      ? null
+                      : false
                   }
                 />
                 Step 6: Final Settlement Verification
               </h3>
+
+              {/* Pending Settlement Warning */}
+              {verificationData.steps.step6.requiresTxHash &&
+                !verificationData.steps.step6.hasTxHash && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded p-3 mb-4 text-sm text-yellow-200">
+                    <strong>⚠️ Pending Settlement:</strong> This is a winning
+                    bet that hasn&apos;t been paid out yet. The payout
+                    transaction will be executed shortly. You can verify again
+                    once the transaction is completed.
+                  </div>
+                )}
+
               <div className="space-y-3 text-sm">
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <StatusIcon
-                    status={verificationData.steps.step6.balanceDeltasMatch}
+                    status={
+                      verificationData.steps.step6.settlementVerified
+                        ? true
+                        : verificationData.steps.step6.requiresTxHash &&
+                          !verificationData.steps.step6.hasTxHash
+                        ? null
+                        : false
+                    }
                   />
-                  <span>
-                    Settlement values match on-chain transaction:{" "}
-                    {String(
-                      verificationData.steps.step6.verified
-                    ).toUpperCase()}
-                  </span>
+                  <div className="flex-1">
+                    <span className="text-white/90">
+                      Settlement verification:{" "}
+                      <strong>
+                        {verificationData.steps.step6.settlementVerified
+                          ? "✅ VERIFIED"
+                          : verificationData.steps.step6.requiresTxHash &&
+                            !verificationData.steps.step6.hasTxHash
+                          ? "⏳ PENDING"
+                          : "❌ FAILED"}
+                      </strong>
+                    </span>
+                    {verificationData.steps.step6.requiresTxHash && (
+                      <div className="mt-2 text-xs text-white/60">
+                        <div>
+                          Requires payout transaction:{" "}
+                          {verificationData.steps.step6.hasTxHash
+                            ? "✅ Yes (found)"
+                            : "⏳ Yes (pending)"}
+                        </div>
+                        {typeof verificationData.steps.step6.verified ===
+                          "string" && (
+                          <div className="mt-1 text-yellow-200">
+                            Note: {verificationData.steps.step6.verified}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {verificationData.steps.step6.hasTxHash && (
+                  <div className="mt-3 p-3 bg-[#1a1a1a] rounded">
+                    <div className="flex items-center gap-2">
+                      <StatusIcon
+                        status={verificationData.steps.step6.balanceDeltasMatch}
+                      />
+                      <span className="text-xs text-white/70">
+                        Balance deltas match:{" "}
+                        {verificationData.steps.step6.balanceDeltasMatch
+                          ? "✅ Yes"
+                          : "❌ No"}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Finished */}
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6 text-center">
-              <h2 className="text-2xl font-bold text-green-400">✓ Finished</h2>
+            <div
+              className={`${
+                verificationData.verified
+                  ? "bg-green-500/10 border-green-500/30 text-green-400"
+                  : verificationData.steps.step6.requiresTxHash &&
+                    !verificationData.steps.step6.hasTxHash
+                  ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                  : "bg-red-500/10 border-red-500/30 text-red-400"
+              } border rounded-lg p-6 text-center`}
+            >
+              <h2 className="text-2xl font-bold">
+                {verificationData.verified
+                  ? "✓ Verified"
+                  : verificationData.steps.step6.requiresTxHash &&
+                    !verificationData.steps.step6.hasTxHash
+                  ? "⏳ Pending Settlement"
+                  : "❌ Verification Failed"}
+              </h2>
               <p className="text-white/70 mt-2">
-                Verification process completed. All cryptographic proofs have
-                been checked.
+                {verificationData.verified
+                  ? "Verification process completed. All cryptographic proofs have been checked and the payout transaction has been verified."
+                  : verificationData.steps.step6.requiresTxHash &&
+                    !verificationData.steps.step6.hasTxHash
+                  ? "This bet is resolved and fair, but the payout transaction hasn't been executed yet. Check back soon."
+                  : "Some verification checks failed. Please contact support for assistance."}
               </p>
             </div>
           </div>

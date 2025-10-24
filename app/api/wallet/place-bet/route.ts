@@ -61,7 +61,7 @@ async function processBlockchainTransactions(
         where: { id: betId },
         data: {
           status: "failed",
-          txHash: null,
+          // No txHash for failed bets
         },
       });
       throw error;
@@ -95,7 +95,7 @@ async function processBlockchainTransactions(
           where: { id: betId },
           data: {
             status: "pending_payout",
-            txHash: betTxHash,
+            // Don't set txHash yet - will be set when payout is actually sent
           },
         });
         return;
@@ -126,7 +126,7 @@ async function processBlockchainTransactions(
           where: { id: betId },
           data: {
             status: "pending_payout",
-            txHash: betTxHash,
+            // Don't set txHash yet - will be set when payout is actually sent
           },
         });
         throw error;
@@ -144,8 +144,10 @@ async function processBlockchainTransactions(
     await prisma.bet.update({
       where: { id: betId },
       data: {
-        status: "resolved",
-        txHash: payoutTxHash || betTxHash,
+        status: outcome === "win" ? "resolved" : "complete",
+        // IMPORTANT: Only save payout transaction hash (house → user)
+        // For losses, txHash should be null since there's no payout to verify
+        txHash: payoutTxHash,
       },
     });
   } catch (error) {

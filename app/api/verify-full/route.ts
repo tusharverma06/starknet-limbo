@@ -163,14 +163,25 @@ export async function POST(req: NextRequest) {
       payoutMatches: payoutVerified,
     };
 
-    // STEP 5: On-chain transaction verification
+    // STEP 5: On-chain payout transaction verification
+    // NOTE: txHash should ONLY contain payout transactions (house → user for wins)
+    // For losses, txHash should be null. This step verifies that.
     let transactionData = null;
     let settlementDelta = BigInt(0);
     let txBalanceDelta = BigInt(0);
+    let txDirectionValid = false;
+    let txDirectionError = null;
+
+    // Import house wallet address getter
+    const { getHouseWalletAddress } = await import(
+      "@/lib/security/houseWallet"
+    );
+    const houseWalletAddress = getHouseWalletAddress().toLowerCase();
+    const userCustodialWallet = user.server_wallet_address?.toLowerCase();
 
     if (bet.txHash) {
       try {
-        // Fetch transaction from RPC provider
+        // Fetch payout transaction from RPC provider
         const rpcUrl =
           process.env.NEXT_PUBLIC_RPC_URL ||
           `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
@@ -201,17 +212,50 @@ export async function POST(req: NextRequest) {
               "💰 Extracted balance delta:",
               txBalanceDelta.toString()
             );
+
+            // VERIFY PAYOUT TRANSACTION DIRECTION
+            // This ensures txHash is actually a payout (house → user) not a bet payment (user → house)
+            const txFrom = transactionData.from?.toLowerCase();
+            const txTo = transactionData.to?.toLowerCase();
+
+            console.log("🔍 Verifying payout transaction direction:", {
+              txFrom,
+              txTo,
+              expectedFrom: houseWalletAddress,
+              expectedTo: userCustodialWallet,
+            });
+
+            if (txFrom === houseWalletAddress && txTo === userCustodialWallet) {
+              txDirectionValid = true;
+              console.log("✅ Payout transaction verified (house → user)");
+            } else {
+              txDirectionValid = false;
+              txDirectionError = `Invalid payout direction. Expected FROM: ${houseWalletAddress} TO: ${userCustodialWallet}, but got FROM: ${txFrom} TO: ${txTo}`;
+              console.error(
+                "❌ Invalid payout transaction direction:",
+                txDirectionError
+              );
+            }
           } else {
             console.warn("⚠️ No transaction data found for hash:", bet.txHash);
+            txDirectionError = "Transaction not found on blockchain";
           }
         } else {
           console.error("❌ RPC URL not configured properly");
+          txDirectionError = "RPC URL not configured";
         }
       } catch (error) {
         console.error("❌ Error fetching transaction:", error);
+        txDirectionError =
+          error instanceof Error ? error.message : "Unknown error";
       }
     } else {
       console.log("ℹ️ No txHash found for bet:", bet.id);
+      // For wins without txHash, this means the bet is not settled yet
+      if (bet.outcome === "win") {
+        txDirectionError =
+          "Payout transaction not yet executed (bet pending settlement)";
+      }
     }
 
     // Calculate settlement delta (net change in balance)
@@ -224,43 +268,83 @@ export async function POST(req: NextRequest) {
     const step5 = {
       txHash: bet.txHash,
       transactionData,
-      expectedPayout: bet.payout, // What we expect to be paid
-      actualTxValue: txBalanceDelta.toString(), // What was actually sent in transaction
-      settlementDelta: settlementDelta.toString(), // Net balance change (payout - wager for wins, -wager for losses)
+      expectedPayout: bet.payout, // Expected payout amount
+      actualTxValue: txBalanceDelta.toString(), // Actual payout sent in transaction
+      settlementDelta: settlementDelta.toString(), // Net balance change
+      txDirectionValid, // Verifies transaction is house → user (not user → house)
+      txDirectionError,
+      houseWalletAddress,
+      userCustodialWallet,
     };
 
     // STEP 6: Final settlement verification
-    // For wins, compare the actual payout with transaction value
-    // For losses, there's no payout transaction
+    // For wins: verify payout amount AND transaction direction
+    // For losses: txHash should be null (no payout transaction)
     let payoutMatches = false;
-    if (bet.txHash && bet.outcome === "win") {
-      // Compare actual payout amount with transaction value
-      payoutMatches = BigInt(bet.payout) === txBalanceDelta;
-      console.log("💰 Payout verification:", {
-        expectedPayout: bet.payout,
-        actualTxValue: txBalanceDelta.toString(),
-        matches: payoutMatches,
-      });
+    let settlementVerified = false;
+
+    if (bet.outcome === "win") {
+      if (bet.txHash) {
+        // For wins with txHash: verify amount AND direction
+        const amountMatches = BigInt(bet.payout) === txBalanceDelta;
+        payoutMatches = amountMatches && txDirectionValid;
+        settlementVerified = payoutMatches;
+
+        console.log("💰 Payout verification:", {
+          expectedPayout: bet.payout,
+          actualTxValue: txBalanceDelta.toString(),
+          amountMatches,
+          directionValid: txDirectionValid,
+          overallMatches: payoutMatches,
+        });
+      } else {
+        // For wins without txHash: bet not settled yet
+        payoutMatches = false;
+        settlementVerified = false;
+        console.log(
+          "⚠️ Win bet without payout transaction - pending settlement"
+        );
+      }
     } else if (bet.outcome === "lose") {
-      // For losses, no payout transaction expected
-      payoutMatches = true; // No transaction to verify
+      // For losses, txHash should be null (no payout transaction)
+      if (!bet.txHash) {
+        payoutMatches = true;
+        settlementVerified = true;
+        console.log("✅ Loss verified - no payout transaction as expected");
+      } else {
+        // This indicates a data integrity issue - losses shouldn't have txHash
+        payoutMatches = false;
+        settlementVerified = false;
+        console.error("❌ Loss bet has txHash - data integrity issue!");
+      }
     }
 
     const balanceDeltasMatch = bet.txHash ? payoutMatches : null;
 
     const step6 = {
       balanceDeltasMatch,
+      settlementVerified,
       verified:
-        balanceDeltasMatch !== null ? balanceDeltasMatch : "N/A (no tx hash)",
+        balanceDeltasMatch !== null
+          ? balanceDeltasMatch
+          : bet.outcome === "win"
+          ? "Pending settlement - payout not yet executed"
+          : "N/A (no tx hash)",
+      requiresTxHash: bet.outcome === "win",
+      hasTxHash: !!bet.txHash,
     };
 
-    // Overall verification result (excluding SIWE validation)
+    // Overall verification result (excluding SIWE validation and pending settlements)
+    // If bet is a win without txHash, we can't fully verify it yet
+    const canFullyVerify =
+      bet.outcome === "lose" || (bet.outcome === "win" && !!bet.txHash);
+
     const allChecksPass =
       betSignatureValid &&
       hashMatches &&
       serverSeedHashMatches &&
-      payoutMatches &&
-      (balanceDeltasMatch === null || balanceDeltasMatch === true);
+      payoutVerified &&
+      (canFullyVerify ? settlementVerified : true); // Don't fail if pending settlement
 
     return NextResponse.json({
       success: true,

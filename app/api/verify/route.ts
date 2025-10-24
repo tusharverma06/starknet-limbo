@@ -45,19 +45,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Bet not found" }, { status: 404 });
     }
 
-    // Check if bet is resolved (or processing - verification data is available immediately)
-    const isResolved =
-      bet.status === "resolved" ||
-      bet.status === "complete" ||
-      bet.status === "processing";
-    if (!isResolved || !bet.serverSeed) {
+    // Check if bet has verification data available
+    // We can verify provably fair aspects even if payout hasn't been sent yet
+    if (!bet.serverSeed) {
       return NextResponse.json(
         {
           error: "Bet not resolved yet",
           status: bet.status,
-          note: "The bet needs to be resolved before it can be verified",
+          note: "The bet needs to be resolved before the provably fair verification can be performed. The server seed has not been revealed yet.",
         },
         { status: 400 }
+      );
+    }
+
+    // Check if this is a win that hasn't been settled yet (no payout tx)
+    const isPendingSettlement = bet.outcome === "win" && !bet.txHash;
+    if (isPendingSettlement) {
+      console.log(
+        "⚠️ Bet is a win without payout transaction - pending settlement"
       );
     }
 
@@ -172,10 +177,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       verificationSteps,
       overallStatus: verification.valid
-        ? "✅ All checks passed - Bet is provably fair"
+        ? isPendingSettlement
+          ? "✅ Provably fair verified - ⏳ Pending payout settlement"
+          : "✅ All checks passed - Bet is provably fair"
         : "⚠️ Some checks failed - Verification issues detected",
       valid: verification.valid,
       errors: verification.errors,
+      isPendingSettlement,
       bet: {
         betId: bet.id,
         player: bet.playerId,
@@ -191,6 +199,8 @@ export async function POST(req: NextRequest) {
         status: bet.status,
         placedAt: bet.createdAt.toISOString(),
         resolvedAt: bet.resolvedAt?.toISOString() || null,
+        txHash: bet.txHash,
+        hasPayout: !!bet.txHash,
       },
       provablyFair: {
         serverSeed: bet.serverSeed,

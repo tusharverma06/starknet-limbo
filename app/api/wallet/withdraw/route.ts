@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const user = await getOrCreateUser(userId);
     if (!user) {
       return NextResponse.json(
-        { error: 'Failed to get or create user' },
+        { error: "Failed to get or create user" },
         { status: 500 }
       );
     }
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     // Create provider and wallet using Alchemy RPC
     const rpcUrl =
-      process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
+      process.env.NEXT_PUBLIC_RPC_URL || CHAIN.rpcUrls.default.http[0];
     const provider = new JsonRpcProvider(rpcUrl);
     const wallet = new Wallet(privateKey, provider);
 
@@ -129,10 +129,10 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         txHash: tx.hash,
-        txType: 'withdraw',
+        txType: "withdraw",
         amount: withdrawAmount.toString(),
-        status: 'pending',
-      }
+        status: "pending",
+      },
     });
     console.log("📝 Withdrawal transaction recorded");
 
@@ -143,11 +143,11 @@ export async function POST(req: NextRequest) {
     await prisma.walletTransaction.updateMany({
       where: { txHash: tx.hash },
       data: {
-        status: 'confirmed',
+        status: "confirmed",
         blockNumber: BigInt(receipt?.blockNumber || 0),
-        gasUsed: receipt?.gasUsed?.toString() || '0',
+        gasUsed: receipt?.gasUsed?.toString() || "0",
         confirmedAt: new Date(),
-      }
+      },
     });
     console.log("✅ Withdrawal confirmed in database");
 

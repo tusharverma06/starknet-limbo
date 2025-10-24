@@ -12,7 +12,7 @@ import {
   useSwitchChain,
 } from "wagmi";
 import { parseEther, formatEther } from "viem";
-import { baseSepolia } from "wagmi/chains";
+import { CHAIN } from "@/lib/constants";
 import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
 
 interface FundingModalProps {
@@ -88,10 +88,10 @@ export function FundingModal({
 
   const handleSwitchToBaseSepolia = async () => {
     try {
-      await switchChain({ chainId: baseSepolia.id });
+      await switchChain({ chainId: CHAIN.id });
     } catch (error) {
-      console.error("Failed to switch to Base Sepolia:", error);
-      setError("Failed to switch to Base Sepolia network");
+      console.error(`Failed to switch to ${CHAIN.name}:`, error);
+      setError(`Failed to switch to ${CHAIN.name} network`);
     }
   };
 
@@ -102,8 +102,8 @@ export function FundingModal({
     }
 
     // Check if we're on the correct network
-    if (chainId !== baseSepolia.id) {
-      setError("Please switch to Base Sepolia network to fund your wallet");
+    if (chainId !== CHAIN.id) {
+      setError(`Please switch to ${CHAIN.name} network to fund your wallet`);
       return;
     }
 
@@ -140,29 +140,29 @@ export function FundingModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="max-w-md w-full">
-        <Card className="p-4 bg-white border border-gray-200">
+        <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[0px_4px_0px_0px_#000000]">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-black">Fund Wallet</h2>
-            <Button variant="ghost" size="sm" onClick={onClose} className="p-1">
+            <h2 className="text-lg font-bold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>Fund Wallet</h2>
+            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-black">
               <X className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
 
           {/* Current Balance */}
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-200 mb-4">
-            <div className="text-xs text-gray-600 mb-1">Current Balance</div>
-            <div className="text-lg font-bold text-black">
+          <div className="p-3 bg-white rounded-lg border-2 border-black mb-4 shadow-[0px_2px_0px_0px_#000000]">
+            <div className="text-xs text-gray-600 mb-1" style={{ fontFamily: "var(--font-lilita-one)" }}>Current Balance</div>
+            <div className="text-lg font-bold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
               {parseFloat(currentBalance).toFixed(4)} ETH
             </div>
           </div>
 
           {/* Wallet Connection Status */}
           {!isConnected && (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+            <div className="p-3 bg-yellow-100 border-2 border-black rounded-lg mb-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-600" />
-                <span className="text-sm text-yellow-700">
+                <AlertTriangle className="w-4 h-4 text-black" />
+                <span className="text-sm text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
                   Connect your wallet to fund
                 </span>
               </div>
@@ -170,23 +170,22 @@ export function FundingModal({
           )}
 
           {/* Network Status */}
-          {isConnected && chainId !== baseSepolia.id && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+          {isConnected && chainId !== CHAIN.id && (
+            <div className="p-3 bg-red-100 border-2 border-black rounded-lg mb-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-600" />
-                  <span className="text-sm text-red-700">
-                    Switch to Base Sepolia to fund
+                  <AlertTriangle className="w-4 h-4 text-black" />
+                  <span className="text-sm text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
+                    Switch to {CHAIN.name} to fund
                   </span>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
+                <button
                   onClick={handleSwitchToBaseSepolia}
-                  className="text-xs px-2 py-1"
+                  className="text-xs px-3 py-1 bg-black text-white rounded-lg border-2 border-black hover:bg-gray-800 transition-colors"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
                   Switch
-                </Button>
+                </button>
               </div>
             </div>
           )}
@@ -194,25 +193,26 @@ export function FundingModal({
           {/* Amount Input */}
           <div className="space-y-2 mb-4">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold text-black">
+              <div className="text-sm font-semibold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
                 Amount to Fund (USD)
               </div>
               {usdBalance !== null && (
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-600">
                   Balance: ${usdBalance.toFixed(2)}
                 </div>
               )}
             </div>
-            <Input
+            <input
               type="number"
               placeholder="10.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               step="0.01"
               min="0"
+              className="w-full px-3 py-2 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2574ff]"
             />
             {ethAmount !== null && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-600">
                 ≈ {ethAmount.toFixed(6)} ETH
               </div>
             )}
@@ -220,72 +220,71 @@ export function FundingModal({
 
           {/* Server Wallet Address */}
           <div className="space-y-2 mb-4">
-            <div className="text-sm font-semibold text-black">
+            <div className="text-sm font-semibold text-black" style={{ fontFamily: "var(--font-lilita-one)" }}>
               Server Wallet
             </div>
             <div className="flex items-center gap-2">
-              <code className="flex-1 p-2 bg-gray-50 rounded text-xs text-gray-800 overflow-hidden text-ellipsis border border-gray-200">
+              <code className="flex-1 p-2 bg-white rounded text-xs text-gray-800 overflow-hidden text-ellipsis border-2 border-black">
                 {walletAddress}
               </code>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={handleCopyAddress}
-                className="px-2"
+                className="px-2 py-2 border-2 border-black rounded hover:bg-gray-100 transition-colors"
               >
                 {copied ? (
-                  <span className="text-xs text-green-600">Copied!</span>
+                  <span className="text-xs text-green-600" style={{ fontFamily: "var(--font-lilita-one)" }}>Copied!</span>
                 ) : (
                   <Copy className="w-3 h-3" />
                 )}
-              </Button>
+              </button>
             </div>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="p-2 bg-red-50 border border-red-200 rounded-lg mb-4">
+            <div className="p-2 bg-red-100 border-2 border-black rounded-lg mb-4">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-3 h-3 text-red-600" />
-                <span className="text-xs text-red-600">{error}</span>
+                <AlertTriangle className="w-3 h-3 text-black" />
+                <span className="text-xs text-black">{error}</span>
               </div>
             </div>
           )}
 
           {/* Actions */}
           <div className="flex gap-2">
-            <Button
-              variant="secondary"
+            <button
               onClick={onClose}
-              className="flex-1"
               disabled={isFunding}
+              className="flex-1 py-2 px-4 bg-white text-black rounded-lg border-2 border-black hover:bg-gray-100 disabled:opacity-50 transition-colors"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={handleFund}
-              className="flex-1"
               disabled={
                 isFunding ||
                 !amount ||
                 !isConnected ||
-                chainId !== baseSepolia.id
+                chainId !== CHAIN.id
               }
+              className="flex-1 py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
             >
               {isFunding ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin mr-1" />
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Funding...
-                </>
+                </span>
               ) : (
-                <>
-                  <ArrowDown className="w-3 h-3 mr-1" />
+                <span className="flex items-center justify-center gap-2">
+                  <ArrowDown className="w-3 h-3" />
                   Fund
-                </>
+                </span>
               )}
-            </Button>
+            </button>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

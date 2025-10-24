@@ -2,7 +2,15 @@ import { formatEther } from 'viem';
 
 export function formatETH(wei: bigint, decimals = 4): string {
   const eth = formatEther(wei);
-  return parseFloat(eth).toFixed(decimals);
+  const ethValue = parseFloat(eth);
+
+  // For very small values, use more decimals to make them visible
+  if (ethValue > 0 && ethValue < 0.0001) {
+    // Find the first non-zero digit and show up to 8 decimals
+    return ethValue.toFixed(8).replace(/\.?0+$/, '');
+  }
+
+  return ethValue.toFixed(decimals);
 }
 
 export function formatUSD(amount: number, decimals = 2): string {

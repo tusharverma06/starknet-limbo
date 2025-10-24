@@ -62,8 +62,7 @@ export function useBetResultWatcher(): UseBetResultWatcherReturn {
 
       try {
         const rpcUrl =
-          process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL ||
-          CHAIN.rpcUrls.default.http[0];
+          process.env.NEXT_PUBLIC_RPC_URL || CHAIN.rpcUrls.default.http[0];
         const provider = new JsonRpcProvider(rpcUrl);
         const contract = new Contract(
           CONTRACT_ADDRESS,

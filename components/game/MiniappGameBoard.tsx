@@ -7,17 +7,22 @@ import { Input } from "@/components/ui/Input";
 import { Navbar } from "@/components/ui/Navbar";
 import { ActivityDrawer } from "@/components/ui/ActivityDrawer";
 import { FundingModal } from "@/components/ui/FundingModal";
+import { WithdrawModal } from "@/components/ui/WithdrawModal";
 import { MultiplierSelector } from "./MultiplierSelector";
 import { GameResult } from "./GameResult";
 import { ServerWallet } from "./ServerWallet";
+import { VerificationModal } from "./VerificationModal";
+import { SiweAuthButton } from "@/components/auth/SiweAuthButton";
 import { useServerWallet } from "@/hooks/useServerWallet";
 import { useBetResultPoller } from "@/hooks/useBetResultPoller";
 import { useBetResultWatcher } from "@/hooks/useBetResultWatcher";
 import { useGameState } from "@/hooks/useGameState";
 import { useFarcaster } from "@/hooks/useFarcaster";
-import { Dice6, Loader2 } from "lucide-react";
+import { useQuickAuth } from "@/hooks/useQuickAuth";
+import { Dice6, Loader2, Lock, Info } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 /**
  * Combined bet result type used in the game board
@@ -45,6 +50,15 @@ export function MiniappGameBoard() {
     withdraw: withdrawFromServerWallet,
   } = useServerWallet(userId);
 
+  const {
+    isAuthenticated,
+    custodialWallet,
+    isLoading: isAuthLoading,
+    error: authError,
+    signIn,
+    signOut,
+  } = useQuickAuth();
+
   const { latestBet, isPolling, startPolling, stopPolling, clearLatestBet } =
     useBetResultPoller(wallet?.address);
 
@@ -71,11 +85,38 @@ export function MiniappGameBoard() {
   const [amountError, setAmountError] = useState("");
   const [currentBetResult, setCurrentBetResult] =
     useState<BetResultDisplay | null>(null);
+  const [currentBetId, setCurrentBetId] = useState<string | null>(null);
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [verificationBetId, setVerificationBetId] = useState<string>("");
   const [potentialPayoutUsd, setPotentialPayoutUsd] = useState<number | null>(
     null
   );
+  const [showWalletDropdown, setShowWalletDropdown] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [showResultMultiplier, setShowResultMultiplier] = useState(false);
+  const [resultMultiplierValue, setResultMultiplierValue] = useState<number>(0);
+  const [resultMultiplierColor, setResultMultiplierColor] = useState<
+    "green" | "red"
+  >("green");
+  const [commitmentHash, setCommitmentHash] = useState<string>("");
+  const [showCommitmentTooltip, setShowCommitmentTooltip] = useState(false);
+
+  // Generate commitment hash when authenticated and ready to bet
+  useEffect(() => {
+    if (isAuthenticated && !isPlacingBet) {
+      const generateCommitmentHash = () => {
+        const chars = "0123456789abcdef";
+        let hash = "0x";
+        for (let i = 0; i < 64; i++) {
+          hash += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return hash;
+      };
+      setCommitmentHash(generateCommitmentHash());
+    }
+  }, [isAuthenticated, isPlacingBet]);
 
   // Handle bet resolution from polling
   useEffect(() => {
@@ -91,6 +132,17 @@ export function MiniappGameBoard() {
         targetMultiplier: latestBet.targetMultiplier,
         limboMultiplier: latestBet.limboMultiplier,
       };
+
+      // Show animated result multiplier in mountain bg
+      const displayMultiplier = Number(latestBet.limboMultiplier) / 100;
+      setResultMultiplierValue(displayMultiplier);
+      setResultMultiplierColor(latestBet.win ? "green" : "red");
+      setShowResultMultiplier(true);
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        setShowResultMultiplier(false);
+      }, 3000);
 
       setCurrentBetResult(betResult);
       setLastResult(latestBet.win, latestBet.payout);
@@ -201,16 +253,45 @@ export function MiniappGameBoard() {
         betAmount,
         targetMultiplier
       );
-      console.log("✅ Bet transaction initiated:", result.txHash);
-      console.log("📝 Request ID:", result.requestId);
 
-      // Watch for this specific bet result
-      if (result.requestId) {
-        console.log("👀 Starting to watch for bet result...");
-        watchForResult(result.requestId);
+      console.log("✅ Bet result received instantly:", result);
+
+      // Handle instant result from off-chain provably fair system
+      if (result.result) {
+        const betResult: BetResultDisplay = {
+          win: result.result.win,
+          payout: BigInt(result.result.payout),
+          amount: BigInt(result.result.amount),
+          targetMultiplier: result.result.targetMultiplier,
+          limboMultiplier: BigInt(
+            Math.floor(result.result.limboMultiplier * 100)
+          ),
+        };
+
+        // Show animated result multiplier in mountain bg
+        setResultMultiplierValue(result.result.limboMultiplier);
+        setResultMultiplierColor(result.result.win ? "green" : "red");
+        setShowResultMultiplier(true);
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+          setShowResultMultiplier(false);
+        }, 3000);
+
+        setCurrentBetResult(betResult);
+        setCurrentBetId(result.betId || null);
+        setLastResult(betResult.win, betResult.payout);
+        setShowResult(true);
+        setIsPlacingBet(false);
       } else {
-        // Fallback to polling if no requestId
-        startPolling();
+        // Legacy on-chain betting flow (if still needed)
+        console.log("📝 Request ID:", result.requestId);
+        if (result.requestId) {
+          console.log("👀 Starting to watch for bet result...");
+          watchForResult(result.requestId);
+        } else {
+          startPolling();
+        }
       }
     } catch (error) {
       console.error("❌ Place bet error:", error);
@@ -219,15 +300,21 @@ export function MiniappGameBoard() {
       );
       setIsPlacingBet(false);
     }
-    // Don't set isPlacingBet to false here - keep it true until result comes
   };
 
   const handleResultClose = () => {
     setShowResult(false);
     setCurrentBetResult(null);
+    setCurrentBetId(null);
     clearLatestBet();
     resetGameState();
     setIsPlacingBet(false);
+  };
+
+  const handleOpenVerification = (betId: string) => {
+    setVerificationBetId(betId);
+    setShowVerificationModal(true);
+    setShowResult(false); // Close game result modal if open
   };
 
   // Handle watched bet result (instant result from event watching)
@@ -243,6 +330,17 @@ export function MiniappGameBoard() {
         targetMultiplier: Number(watchedBetResult.targetMultiplier) / 100,
         limboMultiplier: watchedBetResult.limboMultiplier,
       };
+
+      // Show animated result multiplier in mountain bg
+      const displayMultiplier = Number(watchedBetResult.limboMultiplier) / 100;
+      setResultMultiplierValue(displayMultiplier);
+      setResultMultiplierColor(watchedBetResult.win ? "green" : "red");
+      setShowResultMultiplier(true);
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        setShowResultMultiplier(false);
+      }, 3000);
 
       setCurrentBetResult(betResult);
       setLastResult(betResult.win, betResult.payout);
@@ -264,6 +362,23 @@ export function MiniappGameBoard() {
     } catch (error) {
       console.error("❌ Withdrawal failed:", error);
       throw error;
+    }
+  };
+
+  const handleSignIn = async () => {
+    if (!userId) {
+      console.error("Missing userId (Farcaster FID)");
+      return;
+    }
+
+    try {
+      // Call Quick Auth sign-in - no more signature prompts!
+      const success = await signIn();
+      if (success) {
+        console.log("✅ Quick Auth sign in successful");
+      }
+    } catch (error) {
+      console.error("❌ Sign in failed:", error);
     }
   };
 
@@ -310,130 +425,557 @@ export function MiniappGameBoard() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#cfd9ff] relative">
       <div className="max-w-md mx-auto flex flex-col min-h-screen">
-        {/* Navbar */}
-        <Navbar
-          walletAddress={wallet?.address}
-          onActivityClick={() => setIsActivityDrawerOpen(true)}
-          walletBalance={balanceInEth || "0"}
-          userId={userId}
-          onWithdraw={handleWithdraw}
-        />
-
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center p-4 border-b border-gray-200"
-        >
-          <h1 className="text-2xl font-bold text-black mb-2 flex items-center justify-center gap-2">
-            <Dice6 className="w-6 h-6 text-black" />
-            LIMBO
+        {/* Game Board Title & Wallet - Now with inline menu buttons */}
+        <div className="mt-2 mx-2 bg-[#2574ff] border-2 border-black rounded-xl h-[53px] flex items-center justify-between px-2 shadow-[0px_2px_0px_0px_#000000] relative">
+          <h1
+            className="text-[24px] font-bold text-white leading-[0.9]"
+            style={{
+              fontFamily: "var(--font-lilita-one)",
+              textShadow: "0px 2px 0px #000000",
+            }}
+          >
+            Based Limbo
           </h1>
-        </motion.div>
+
+          {/* Right side buttons */}
+          <div className="flex items-center gap-2">
+            {/* Only show Verify & Activity buttons when authenticated */}
+            {isAuthenticated && (
+              <>
+                {/* Verify Button */}
+                <button
+                  onClick={() => setShowVerificationModal(true)}
+                  className="w-[30px] h-[30px] border-2 border-white rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                  title="Verify Fairness"
+                >
+                  <span className="text-white text-sm">✓</span>
+                </button>
+
+                {/* Activity Button */}
+                <button
+                  onClick={() => setIsActivityDrawerOpen(true)}
+                  className="w-[30px] h-[30px] border-2 border-white rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                  title="Activity"
+                >
+                  <span className="text-white text-xs">⋯</span>
+                </button>
+              </>
+            )}
+
+            {/* Sign In / Wallet Button */}
+            {!isAuthenticated ? (
+              <ConnectButton.Custom>
+                {({
+                  account,
+                  chain,
+                  openAccountModal,
+                  openChainModal,
+                  openConnectModal,
+                  authenticationStatus,
+                  mounted,
+                }) => {
+                  const ready = mounted && authenticationStatus !== "loading";
+                  const connected =
+                    ready &&
+                    account &&
+                    chain &&
+                    (!authenticationStatus ||
+                      authenticationStatus === "authenticated");
+
+                  return (
+                    <button
+                      onClick={() => {
+                        if (!connected) {
+                          openConnectModal();
+                        } else if (chain.unsupported) {
+                          openChainModal();
+                        } else {
+                          // Trigger sign in
+                          handleSignIn();
+                        }
+                      }}
+                      className="border-2 border-white rounded-lg px-4 py-1 h-[38px] hover:bg-white/10 transition-colors"
+                    >
+                      <span
+                        className="text-base text-white leading-[0.9]"
+                        style={{ fontFamily: "var(--font-lilita-one)" }}
+                      >
+                        {!connected
+                          ? "Sign In"
+                          : chain.unsupported
+                          ? "Wrong Network"
+                          : isAuthLoading
+                          ? "Signing In..."
+                          : "Sign In"}
+                      </span>
+                    </button>
+                  );
+                }}
+              </ConnectButton.Custom>
+            ) : (
+              <div className="relative">
+                <button
+                  onClick={() => setShowWalletDropdown(!showWalletDropdown)}
+                  className="border-2 border-white rounded-lg px-3 py-1 h-[38px] flex items-center gap-2 hover:bg-white/10 transition-colors"
+                >
+                  <span
+                    className="text-base text-white leading-[0.9]"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    {custodialWallet
+                      ? `${custodialWallet.slice(
+                          0,
+                          4
+                        )}..${custodialWallet.slice(-4)}`
+                      : "Wallet"}
+                  </span>
+                  <span
+                    className={`text-white text-xs transition-transform ${
+                      showWalletDropdown ? "rotate-180" : ""
+                    }`}
+                  >
+                    ▼
+                  </span>
+                </button>
+
+                {/* Dropdown Menu - Only shown when authenticated */}
+                <AnimatePresence>
+                  {showWalletDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-full right-0 mt-2 w-64 bg-white border-2 border-black rounded-lg shadow-[0px_4px_0px_0px_#000000] z-50"
+                    >
+                      <div className="p-3 space-y-2">
+                        {/* Balance */}
+                        <div className="pb-2 border-b-2 border-gray-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Custodial Wallet Balance
+                          </p>
+                          <p
+                            className="text-lg font-bold text-black"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            {balanceInUsd
+                              ? `$${balanceInUsd.toFixed(2)}`
+                              : "$0.00"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {balanceInEth || "0"} ETH
+                          </p>
+                        </div>
+
+                        {/* Actions */}
+                        <button
+                          onClick={() => {
+                            setShowFundingModal(true);
+                            setShowWalletDropdown(false);
+                          }}
+                          className="w-full py-2 px-3 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm"
+                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                        >
+                          Fund Wallet
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setShowWithdrawModal(true);
+                            setShowWalletDropdown(false);
+                          }}
+                          className="w-full py-2 px-3 bg-white text-black rounded-lg border-2 border-black hover:bg-gray-50 transition-colors text-sm"
+                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                        >
+                          Withdraw
+                        </button>
+
+                        {/* Custodial Wallet Address */}
+                        <div className="pt-2 border-t-2 border-gray-200">
+                          <p className="text-xs text-gray-600 mb-1">
+                            Custodial Wallet
+                          </p>
+                          <p className="font-mono text-[10px] text-black break-all">
+                            {custodialWallet}
+                          </p>
+                        </div>
+
+                        {/* Sign Out */}
+                        <button
+                          onClick={() => {
+                            signOut();
+                            setShowWalletDropdown(false);
+                          }}
+                          className="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-200 transition-colors text-xs"
+                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Main Game Content */}
-        <div className="flex-1 p-4 space-y-6">
-          {/* Game Controls - Always visible */}
+        <div className="flex flex-col gap-2 p-2 flex-1">
+          {/* Visual/Game Area - Mountain Background */}
+          <div className="relative bg-white rounded-xl overflow-hidden flex-1 min-h-[380px]  border-2 border-black shadow-[0px_2px_0px_0px_#000000]">
+            {/* Mountain Background Image */}
+            <div className="absolute inset-0">
+              <Image
+                src="/mountain-bg.png"
+                alt="Mountain Background"
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+
+            {/* Result Multiplier Animation */}
+            <AnimatePresence>
+              {showResultMultiplier && (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15,
+                  }}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  <motion.div
+                    animate={{
+                      scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                      duration: 0.5,
+                      repeat: Infinity,
+                      repeatType: "reverse",
+                    }}
+                  >
+                    <p
+                      className={`text-[120px] font-extrabold leading-none ${
+                        resultMultiplierColor === "green"
+                          ? "text-green-500"
+                          : "text-red-500"
+                      }`}
+                      style={{
+                        fontFamily: "var(--font-lilita-one)",
+                        textShadow: "0px 4px 8px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      {resultMultiplierValue.toFixed(2)}x
+                    </p>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Progressive Blur Overlay at Bottom */}
+            {/* <div className="absolute bottom-0 left-0 right-0 h-[238px] bg-gradient-to-t from-white/10 to-transparent backdrop-blur-sm" /> */}
+          </div>
+
+          {/* Game Controls Modal */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
+            className="bg-white backdrop-blur-md border-2 border-black rounded-xl p-4 space-y-6 shadow-[0px_0px_5px_1px_inset_rgba(255,255,255,0.1)]"
           >
             {/* Bet Amount Input */}
-            <div>
-              <div className="w-full flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-black ">
-                  Bet Amount
-                </label>
-
-                <div className="text-center">
-                  {/* <span className="text-sm text-gray-600">Balance: </span> */}
-                  <span className="text-sm font-semibold text-black">
-                    {balanceInUsd ? `$${balanceInUsd.toFixed(2)}` : "$0.00"}
+            <div className="space-y-2">
+              <p
+                className="text-base text-black tracking-[-1px] leading-[0.9]"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
+                Bet Amount
+              </p>
+              <div className="border-2 border-black rounded-xl h-[44px] flex items-center justify-between px-3 py-2">
+                <div className="flex items-center gap-0">
+                  <span className="text-base text-black leading-[0.9] font-bold">
+                    $
                   </span>
-                </div>
-              </div>
-              <div>
-                <div className="relative flex items-center gap-0.5 justify-between h-10 min-h-10 bg-gray-50 border border-gray-300 rounded-xl pr-2 pl-4 py-0">
-                  <span className="text-sm text-black/80 font-normal">$</span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min={MIN_BET_USD}
-                    max={MAX_BET_USD}
+                  <input
+                    type="text"
+                    className="text-base text-black leading-[0.9] bg-transparent focus:outline-none focus:ring-0"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
                     value={betAmount}
-                    onChange={handleBetAmountChange}
-                    disabled={isDisabled}
-                    className="text-sm p-0 font-medium border-none bg-transparent focus:ring-0 focus:outline-none"
-                    placeholder=""
+                    onChange={(e) => setBetAmount(e.target.value)}
                   />
-                  <Image
-                    src="/ethereum.webp"
-                    alt="ETH"
-                    width={20}
-                    height={20}
-                  />
-
+                </div>
+                <div className="flex items-center gap-2">
                   {[
-                    { label: "/2", multiplier: 0.5 },
+                    { label: "0.5x", multiplier: 0.5 },
                     { label: "2x", multiplier: 2 },
-                    { label: "Max", multiplier: -1 },
+                    { label: "MAX", multiplier: -1 },
                   ].map((item, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => handleQuickAmount(item.multiplier)}
                       disabled={isDisabled}
-                      className="text-xs text-black/80 min-w-[30px] min-h-[30px] flex items-center px-1.5 py-0.5 justify-center bg-gray-50 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="border-2 border-black rounded-lg h-[24px] px-[6px] py-[8px] flex items-center justify-center disabled:opacity-50"
                     >
-                      {item.label}
+                      <p
+                        className="text-[12px] text-black tracking-[-1px] leading-[0.9]"
+                        style={{ fontFamily: "var(--font-lilita-one)" }}
+                      >
+                        {item.label}
+                      </p>
                     </button>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Multiplier Selector */}
-            <div>
-              <MultiplierSelector
-                value={targetMultiplier}
-                onChange={setTargetMultiplier}
-                disabled={isDisabled}
-              />
+            {/* Multiplier Input */}
+            <div className="space-y-2">
+              <p
+                className="text-base text-black tracking-[-1px] leading-[0.9]"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
+                Multiplier
+              </p>
+              <div className="border-2 border-black rounded-xl h-[44px] flex items-center justify-between px-3 py-2">
+                <input
+                  type="text"
+                  className="text-base text-black leading-[0.9] bg-transparent focus:outline-none focus:ring-0 flex-1"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                  value={targetMultiplier.toFixed(2)}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val)) {
+                      setTargetMultiplier(Math.max(1.01, Math.min(1000, val)));
+                    }
+                  }}
+                  disabled={isDisabled}
+                />
+                <span className="text-base text-black leading-[0.9] font-bold ml-1">
+                  x
+                </span>
+              </div>
             </div>
 
-            <Button
-              size="lg"
+            {/* COMMENTED OUT: Original Figma Power Bar (Segmented, Clickable) */}
+            {/*
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p
+                  className="text-base text-black leading-[0.9]"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  Multiplier
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      setTargetMultiplier(
+                        Math.max(1.01, targetMultiplier - 0.5)
+                      )
+                    }
+                    disabled={isDisabled || targetMultiplier <= 1.01}
+                    className="w-6 h-6 flex items-center justify-center border-2 border-black rounded bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <span className="text-sm font-bold">-</span>
+                  </button>
+                  <div className="border border-black rounded-sm px-[6px] py-[2px]">
+                    <p
+                      className="text-[14px] text-black leading-[0.9]"
+                      style={{ fontFamily: "var(--font-lilita-one)" }}
+                    >
+                      {targetMultiplier.toFixed(2)}x
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      setTargetMultiplier(Math.min(100, targetMultiplier + 0.5))
+                    }
+                    disabled={isDisabled || targetMultiplier >= 100}
+                    className="w-6 h-6 flex items-center justify-center border-2 border-black rounded bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <span className="text-sm font-bold">+</span>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="relative h-[10px] flex gap-[1.4px] cursor-pointer"
+                onClick={(e) => {
+                  if (isDisabled) return;
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = e.clientX - rect.left;
+                  const percentage = Math.max(0, Math.min(1, x / rect.width));
+                  const newMultiplier = 1 + percentage * 99;
+                  setTargetMultiplier(
+                    Math.max(
+                      1.01,
+                      Math.min(100, Number(newMultiplier.toFixed(2)))
+                    )
+                  );
+                }}
+              >
+                {Array.from({ length: 26 }).map((_, index) => {
+                  const segmentValue = ((index + 1) / 26) * 100;
+                  const currentValue = ((targetMultiplier - 1) / 99) * 100;
+                  const isActive = segmentValue <= currentValue;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex-1 h-full rounded-[1px] border border-black transition-colors ${
+                        isActive ? "bg-[#094eed]" : "bg-[#2a3147]"
+                      }`}
+                    />
+                  );
+                })}
+                <div
+                  className="absolute w-[8px] h-[14px] -top-[2px] border-2 border-black bg-[#424242] rounded-[1px] pointer-events-none"
+                  style={{
+                    left: `calc(${((targetMultiplier - 1) / 99) * 100}% - 4px)`,
+                  }}
+                />
+              </div>
+            </div>
+            */}
+
+            {/* Place Bet Button */}
+            <button
               onClick={handlePrimaryAction}
               disabled={
+                !isAuthenticated ||
                 isDisabled ||
-                !wallet ||
+                !balanceInUsd ||
+                balanceInUsd === 0 ||
+                (balanceInUsd && parseFloat(betAmount || "0") > balanceInUsd) ||
                 Boolean(
-                  wallet &&
-                    balanceInUsd &&
+                  balanceInUsd &&
                     balanceInUsd > 0 &&
                     (!!amountError || parseFloat(betAmount || "0") === 0)
                 )
               }
-              isLoading={isPlacingBet || isWaitingForResult}
-              className="w-full text-sm h-10 mb-2 font-medium"
+              className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >
-              {(isPolling || isWaitingForResult || isPlacingBet) && (
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              <p
+                className="text-base text-white uppercase tracking-[0.16px] leading-normal"
+                style={{
+                  textShadow: "0px 1.6px 0px #000000",
+                  fontFamily: "var(--font-lilita-one)",
+                }}
+              >
+                {isPlacingBet || isWaitingForResult || isPolling ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {getButtonText()}
+                  </span>
+                ) : (
+                  "Bet your amount"
+                )}
+              </p>
+            </button>
+
+            {/* Sign in prompt if not authenticated */}
+            {!isAuthenticated && (
+              <div className="text-sm text-center p-3 bg-yellow-50 border-2 border-black rounded-lg">
+                <p
+                  className="text-gray-700"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  Please sign in to start playing
+                </p>
+              </div>
+            )}
+
+            {/* Insufficient balance warning */}
+            {isAuthenticated &&
+              balanceInUsd !== null &&
+              balanceInUsd !== undefined &&
+              parseFloat(betAmount || "0") > 0 &&
+              parseFloat(betAmount || "0") > balanceInUsd && (
+                <div className="text-sm text-center p-3 bg-red-50 border-2 border-black rounded-lg">
+                  <p
+                    className="text-red-700"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Insufficient balance. You have ${balanceInUsd.toFixed(2)}
+                  </p>
+                </div>
               )}
-              {getButtonText()}
-            </Button>
-            <div className="w-full border-t border-gray-200 pt-2 flex items-center justify-between ">
-              <span className="text-sm text-gray-500 font-medium">
-                Potential Payout:{" "}
-              </span>
-              <span className="text-sm font-semibold text-black">
-                {potentialPayoutUsd
-                  ? `$${potentialPayoutUsd.toFixed(2)}`
-                  : "$0.00"}
-              </span>
+
+            {/* Potential Win */}
+            <div className="flex items-center justify-between pt-3 border-t-2 border-gray-200">
+              <div className="flex items-center gap-2 relative">
+                <p
+                  className="text-[14px] tracking-[0.14px]"
+                  style={{
+                    color: "#ffff99",
+                    textShadow: "0px 1px 0px #000000",
+                    fontFamily: "var(--font-lilita-one)",
+                  }}
+                >
+                  Potential Win
+                </p>
+                {/* Lock Icon with Tooltip - Only show when authenticated and has commitment hash */}
+                {isAuthenticated && commitmentHash && !isPlacingBet && (
+                  <div className="relative">
+                    <button
+                      onClick={() =>
+                        setShowCommitmentTooltip(!showCommitmentTooltip)
+                      }
+                      className="p-0.5 hover:bg-gray-200 rounded transition-colors"
+                      title="Provably Fair Commitment"
+                    >
+                      <Lock className="w-3 h-3 text-green-600" />
+                    </button>
+
+                    {/* Tooltip */}
+                    <AnimatePresence>
+                      {showCommitmentTooltip && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9, y: 5 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9, y: 5 }}
+                          className="absolute bottom-full left-0 mb-2 z-50 w-48"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="bg-white border-2 border-black rounded-lg shadow-lg p-3">
+                            <div className="flex items-start gap-2 mb-2">
+                              <Lock className="w-4 h-4 text-black/8- flex-shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <p className="text-xs font-bold text-black mb-1">
+                                  Committed Round
+                                </p>
+                                <p className="text-[10px] text-gray-600 leading-tight">
+                                  This round is provably fair
+                                </p>
+                              </div>
+                            </div>
+                            <div className="pt-2 border-t border-black">
+                              <p className="text-[9px] text-gray-500 mb-1">
+                                Hash:
+                              </p>
+                              <code className="text-[9px] font-mono text-black/80 break-all block">
+                                {commitmentHash.slice(0, 20)}...
+                              </code>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+              <p
+                className="text-[18px] text-black text-center leading-[0.9] font-bold"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
+                ${potentialPayoutUsd ? potentialPayoutUsd.toFixed(2) : "0.00"}
+              </p>
             </div>
 
             {betError && (
@@ -442,29 +984,25 @@ export function MiniappGameBoard() {
               </div>
             )}
 
-            {/* Show Create Wallet prompt if no wallet */}
-            {!wallet && (
-              <div className="text-sm text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <ServerWallet userId={userId} />
-              </div>
-            )}
-
-            {/* Show funding option if balance is zero */}
-            {wallet &&
+            {/* Show funding option if authenticated but balance is zero */}
+            {isAuthenticated &&
               balanceInUsd !== null &&
               balanceInUsd !== undefined &&
               balanceInUsd === 0 && (
-                <div className="text-sm text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-yellow-800 mb-2">
+                <div className="text-sm text-center p-4 bg-yellow-50 border-2 border-black rounded-lg">
+                  <p
+                    className="text-gray-700 mb-2"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
                     Your wallet needs funds to place bets
                   </p>
-                  <Button
-                    size="sm"
+                  <button
                     onClick={() => setShowFundingModal(true)}
-                    className="w-full"
+                    className="w-full py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
                     Fund Wallet
-                  </Button>
+                  </button>
                 </div>
               )}
           </motion.div>
@@ -472,7 +1010,7 @@ export function MiniappGameBoard() {
       </div>
 
       {/* Game Result Modal */}
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showResult && lastWin !== null && currentBetResult && (
           <GameResult
             win={currentBetResult.win}
@@ -481,9 +1019,18 @@ export function MiniappGameBoard() {
             randomResult={currentBetResult.limboMultiplier}
             payout={currentBetResult.payout}
             onClose={handleResultClose}
+            betId={currentBetId || undefined}
+            onVerify={handleOpenVerification}
           />
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
+
+      {/* Verification Modal */}
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        initialBetId={verificationBetId}
+      />
 
       {/* Activity Drawer */}
       <ActivityDrawer
@@ -501,6 +1048,17 @@ export function MiniappGameBoard() {
           walletAddress={wallet.address}
           currentBalance={balanceInEth || "0"}
           userId={userId}
+        />
+      )}
+
+      {/* Withdraw Modal */}
+      {wallet && (
+        <WithdrawModal
+          isOpen={showWithdrawModal}
+          onClose={() => setShowWithdrawModal(false)}
+          walletAddress={wallet.address}
+          currentBalance={balanceInEth || "0"}
+          onWithdraw={handleWithdraw}
         />
       )}
     </div>

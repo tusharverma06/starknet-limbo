@@ -10,6 +10,7 @@ import { useGameContract } from "@/hooks/useGameContract";
 import { Wallet, TrendingUp, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { CHAIN } from "@/lib/constants";
 
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
@@ -355,7 +356,7 @@ export default function AdminPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Network:</span>
-                <span className="text-white">Base Sepolia (84532)</span>
+                <span className="text-white">{CHAIN.name} ({CHAIN.id})</span>
               </div>
             </div>
           </Card>

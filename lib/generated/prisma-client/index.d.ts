@@ -28,6 +28,11 @@ export type Wallet = $Result.DefaultSelection<Prisma.$WalletPayload>
  * 
  */
 export type WalletTransaction = $Result.DefaultSelection<Prisma.$WalletTransactionPayload>
+/**
+ * Model Bet
+ * 
+ */
+export type Bet = $Result.DefaultSelection<Prisma.$BetPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -176,6 +181,16 @@ export class PrismaClient<
     * ```
     */
   get walletTransaction(): Prisma.WalletTransactionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bet`: Exposes CRUD operations for the **Bet** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Bets
+    * const bets = await prisma.bet.findMany()
+    * ```
+    */
+  get bet(): Prisma.BetDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -618,7 +633,8 @@ export namespace Prisma {
   export const ModelName: {
     User: 'User',
     Wallet: 'Wallet',
-    WalletTransaction: 'WalletTransaction'
+    WalletTransaction: 'WalletTransaction',
+    Bet: 'Bet'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -637,7 +653,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "wallet" | "walletTransaction"
+      modelProps: "user" | "wallet" | "walletTransaction" | "bet"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -863,6 +879,80 @@ export namespace Prisma {
           }
         }
       }
+      Bet: {
+        payload: Prisma.$BetPayload<ExtArgs>
+        fields: Prisma.BetFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BetFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BetFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>
+          }
+          findFirst: {
+            args: Prisma.BetFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BetFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>
+          }
+          findMany: {
+            args: Prisma.BetFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>[]
+          }
+          create: {
+            args: Prisma.BetCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>
+          }
+          createMany: {
+            args: Prisma.BetCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BetCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>[]
+          }
+          delete: {
+            args: Prisma.BetDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>
+          }
+          update: {
+            args: Prisma.BetUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>
+          }
+          deleteMany: {
+            args: Prisma.BetDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BetUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BetUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>[]
+          }
+          upsert: {
+            args: Prisma.BetUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BetPayload>
+          }
+          aggregate: {
+            args: Prisma.BetAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBet>
+          }
+          groupBy: {
+            args: Prisma.BetGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BetGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BetCountArgs<ExtArgs>
+            result: $Utils.Optional<BetCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -962,6 +1052,7 @@ export namespace Prisma {
     user?: UserOmit
     wallet?: WalletOmit
     walletTransaction?: WalletTransactionOmit
+    bet?: BetOmit
   }
 
   /* Types for Logging */
@@ -1038,6 +1129,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type UserCountOutputType
+   */
+
+  export type UserCountOutputType = {
+    bets: number
+  }
+
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bets?: boolean | UserCountOutputTypeCountBetsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserCountOutputType
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountBetsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BetWhereInput
+  }
+
+
+  /**
    * Count Type WalletCountOutputType
    */
 
@@ -1089,6 +1211,9 @@ export namespace Prisma {
     farcaster_pfp: string | null
     wallet_address: string | null
     server_wallet_address: string | null
+    siweSignature: string | null
+    siweMessage: string | null
+    siweExpiresAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1100,6 +1225,9 @@ export namespace Prisma {
     farcaster_pfp: string | null
     wallet_address: string | null
     server_wallet_address: string | null
+    siweSignature: string | null
+    siweMessage: string | null
+    siweExpiresAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1111,6 +1239,9 @@ export namespace Prisma {
     farcaster_pfp: number
     wallet_address: number
     server_wallet_address: number
+    siweSignature: number
+    siweMessage: number
+    siweExpiresAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1124,6 +1255,9 @@ export namespace Prisma {
     farcaster_pfp?: true
     wallet_address?: true
     server_wallet_address?: true
+    siweSignature?: true
+    siweMessage?: true
+    siweExpiresAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1135,6 +1269,9 @@ export namespace Prisma {
     farcaster_pfp?: true
     wallet_address?: true
     server_wallet_address?: true
+    siweSignature?: true
+    siweMessage?: true
+    siweExpiresAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1146,6 +1283,9 @@ export namespace Prisma {
     farcaster_pfp?: true
     wallet_address?: true
     server_wallet_address?: true
+    siweSignature?: true
+    siweMessage?: true
+    siweExpiresAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1230,6 +1370,9 @@ export namespace Prisma {
     farcaster_pfp: string | null
     wallet_address: string | null
     server_wallet_address: string | null
+    siweSignature: string | null
+    siweMessage: string | null
+    siweExpiresAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1258,9 +1401,14 @@ export namespace Prisma {
     farcaster_pfp?: boolean
     wallet_address?: boolean
     server_wallet_address?: boolean
+    siweSignature?: boolean
+    siweMessage?: boolean
+    siweExpiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     wallet?: boolean | User$walletArgs<ExtArgs>
+    bets?: boolean | User$betsArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1270,6 +1418,9 @@ export namespace Prisma {
     farcaster_pfp?: boolean
     wallet_address?: boolean
     server_wallet_address?: boolean
+    siweSignature?: boolean
+    siweMessage?: boolean
+    siweExpiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1281,6 +1432,9 @@ export namespace Prisma {
     farcaster_pfp?: boolean
     wallet_address?: boolean
     server_wallet_address?: boolean
+    siweSignature?: boolean
+    siweMessage?: boolean
+    siweExpiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -1292,13 +1446,18 @@ export namespace Prisma {
     farcaster_pfp?: boolean
     wallet_address?: boolean
     server_wallet_address?: boolean
+    siweSignature?: boolean
+    siweMessage?: boolean
+    siweExpiresAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "farcaster_id" | "farcaster_username" | "farcaster_pfp" | "wallet_address" | "server_wallet_address" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "farcaster_id" | "farcaster_username" | "farcaster_pfp" | "wallet_address" | "server_wallet_address" | "siweSignature" | "siweMessage" | "siweExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     wallet?: boolean | User$walletArgs<ExtArgs>
+    bets?: boolean | User$betsArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
   export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -1307,6 +1466,7 @@ export namespace Prisma {
     name: "User"
     objects: {
       wallet: Prisma.$WalletPayload<ExtArgs> | null
+      bets: Prisma.$BetPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -1315,6 +1475,9 @@ export namespace Prisma {
       farcaster_pfp: string | null
       wallet_address: string | null
       server_wallet_address: string | null
+      siweSignature: string | null
+      siweMessage: string | null
+      siweExpiresAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -1712,6 +1875,7 @@ export namespace Prisma {
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     wallet<T extends User$walletArgs<ExtArgs> = {}>(args?: Subset<T, User$walletArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    bets<T extends User$betsArgs<ExtArgs> = {}>(args?: Subset<T, User$betsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1747,6 +1911,9 @@ export namespace Prisma {
     readonly farcaster_pfp: FieldRef<"User", 'String'>
     readonly wallet_address: FieldRef<"User", 'String'>
     readonly server_wallet_address: FieldRef<"User", 'String'>
+    readonly siweSignature: FieldRef<"User", 'String'>
+    readonly siweMessage: FieldRef<"User", 'String'>
+    readonly siweExpiresAt: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -2153,6 +2320,30 @@ export namespace Prisma {
      */
     include?: WalletInclude<ExtArgs> | null
     where?: WalletWhereInput
+  }
+
+  /**
+   * User.bets
+   */
+  export type User$betsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    where?: BetWhereInput
+    orderBy?: BetOrderByWithRelationInput | BetOrderByWithRelationInput[]
+    cursor?: BetWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BetScalarFieldEnum | BetScalarFieldEnum[]
   }
 
   /**
@@ -4501,6 +4692,1298 @@ export namespace Prisma {
 
 
   /**
+   * Model Bet
+   */
+
+  export type AggregateBet = {
+    _count: BetCountAggregateOutputType | null
+    _min: BetMinAggregateOutputType | null
+    _max: BetMaxAggregateOutputType | null
+  }
+
+  export type BetMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    playerId: string | null
+    serverSeedHash: string | null
+    serverSeed: string | null
+    clientSeed: string | null
+    randomValue: string | null
+    gameNumber: string | null
+    wager: string | null
+    targetMultiplier: string | null
+    limboMultiplier: string | null
+    outcome: string | null
+    payout: string | null
+    status: string | null
+    ethPriceUsd: string | null
+    wagerUsd: string | null
+    payoutUsd: string | null
+    betSignature: string | null
+    betMessage: string | null
+    signature: string | null
+    txHash: string | null
+    createdAt: Date | null
+    resolvedAt: Date | null
+  }
+
+  export type BetMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    playerId: string | null
+    serverSeedHash: string | null
+    serverSeed: string | null
+    clientSeed: string | null
+    randomValue: string | null
+    gameNumber: string | null
+    wager: string | null
+    targetMultiplier: string | null
+    limboMultiplier: string | null
+    outcome: string | null
+    payout: string | null
+    status: string | null
+    ethPriceUsd: string | null
+    wagerUsd: string | null
+    payoutUsd: string | null
+    betSignature: string | null
+    betMessage: string | null
+    signature: string | null
+    txHash: string | null
+    createdAt: Date | null
+    resolvedAt: Date | null
+  }
+
+  export type BetCountAggregateOutputType = {
+    id: number
+    userId: number
+    playerId: number
+    serverSeedHash: number
+    serverSeed: number
+    clientSeed: number
+    randomValue: number
+    gameNumber: number
+    wager: number
+    targetMultiplier: number
+    limboMultiplier: number
+    outcome: number
+    payout: number
+    status: number
+    ethPriceUsd: number
+    wagerUsd: number
+    payoutUsd: number
+    betSignature: number
+    betMessage: number
+    signature: number
+    txHash: number
+    createdAt: number
+    resolvedAt: number
+    _all: number
+  }
+
+
+  export type BetMinAggregateInputType = {
+    id?: true
+    userId?: true
+    playerId?: true
+    serverSeedHash?: true
+    serverSeed?: true
+    clientSeed?: true
+    randomValue?: true
+    gameNumber?: true
+    wager?: true
+    targetMultiplier?: true
+    limboMultiplier?: true
+    outcome?: true
+    payout?: true
+    status?: true
+    ethPriceUsd?: true
+    wagerUsd?: true
+    payoutUsd?: true
+    betSignature?: true
+    betMessage?: true
+    signature?: true
+    txHash?: true
+    createdAt?: true
+    resolvedAt?: true
+  }
+
+  export type BetMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    playerId?: true
+    serverSeedHash?: true
+    serverSeed?: true
+    clientSeed?: true
+    randomValue?: true
+    gameNumber?: true
+    wager?: true
+    targetMultiplier?: true
+    limboMultiplier?: true
+    outcome?: true
+    payout?: true
+    status?: true
+    ethPriceUsd?: true
+    wagerUsd?: true
+    payoutUsd?: true
+    betSignature?: true
+    betMessage?: true
+    signature?: true
+    txHash?: true
+    createdAt?: true
+    resolvedAt?: true
+  }
+
+  export type BetCountAggregateInputType = {
+    id?: true
+    userId?: true
+    playerId?: true
+    serverSeedHash?: true
+    serverSeed?: true
+    clientSeed?: true
+    randomValue?: true
+    gameNumber?: true
+    wager?: true
+    targetMultiplier?: true
+    limboMultiplier?: true
+    outcome?: true
+    payout?: true
+    status?: true
+    ethPriceUsd?: true
+    wagerUsd?: true
+    payoutUsd?: true
+    betSignature?: true
+    betMessage?: true
+    signature?: true
+    txHash?: true
+    createdAt?: true
+    resolvedAt?: true
+    _all?: true
+  }
+
+  export type BetAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Bet to aggregate.
+     */
+    where?: BetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Bets to fetch.
+     */
+    orderBy?: BetOrderByWithRelationInput | BetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Bets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Bets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Bets
+    **/
+    _count?: true | BetCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BetMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BetMaxAggregateInputType
+  }
+
+  export type GetBetAggregateType<T extends BetAggregateArgs> = {
+        [P in keyof T & keyof AggregateBet]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBet[P]>
+      : GetScalarType<T[P], AggregateBet[P]>
+  }
+
+
+
+
+  export type BetGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BetWhereInput
+    orderBy?: BetOrderByWithAggregationInput | BetOrderByWithAggregationInput[]
+    by: BetScalarFieldEnum[] | BetScalarFieldEnum
+    having?: BetScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BetCountAggregateInputType | true
+    _min?: BetMinAggregateInputType
+    _max?: BetMaxAggregateInputType
+  }
+
+  export type BetGroupByOutputType = {
+    id: string
+    userId: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed: string | null
+    clientSeed: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd: string | null
+    wagerUsd: string | null
+    payoutUsd: string | null
+    betSignature: string | null
+    betMessage: string | null
+    signature: string | null
+    txHash: string | null
+    createdAt: Date
+    resolvedAt: Date | null
+    _count: BetCountAggregateOutputType | null
+    _min: BetMinAggregateOutputType | null
+    _max: BetMaxAggregateOutputType | null
+  }
+
+  type GetBetGroupByPayload<T extends BetGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BetGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BetGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BetGroupByOutputType[P]>
+            : GetScalarType<T[P], BetGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BetSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    playerId?: boolean
+    serverSeedHash?: boolean
+    serverSeed?: boolean
+    clientSeed?: boolean
+    randomValue?: boolean
+    gameNumber?: boolean
+    wager?: boolean
+    targetMultiplier?: boolean
+    limboMultiplier?: boolean
+    outcome?: boolean
+    payout?: boolean
+    status?: boolean
+    ethPriceUsd?: boolean
+    wagerUsd?: boolean
+    payoutUsd?: boolean
+    betSignature?: boolean
+    betMessage?: boolean
+    signature?: boolean
+    txHash?: boolean
+    createdAt?: boolean
+    resolvedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bet"]>
+
+  export type BetSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    playerId?: boolean
+    serverSeedHash?: boolean
+    serverSeed?: boolean
+    clientSeed?: boolean
+    randomValue?: boolean
+    gameNumber?: boolean
+    wager?: boolean
+    targetMultiplier?: boolean
+    limboMultiplier?: boolean
+    outcome?: boolean
+    payout?: boolean
+    status?: boolean
+    ethPriceUsd?: boolean
+    wagerUsd?: boolean
+    payoutUsd?: boolean
+    betSignature?: boolean
+    betMessage?: boolean
+    signature?: boolean
+    txHash?: boolean
+    createdAt?: boolean
+    resolvedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bet"]>
+
+  export type BetSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    playerId?: boolean
+    serverSeedHash?: boolean
+    serverSeed?: boolean
+    clientSeed?: boolean
+    randomValue?: boolean
+    gameNumber?: boolean
+    wager?: boolean
+    targetMultiplier?: boolean
+    limboMultiplier?: boolean
+    outcome?: boolean
+    payout?: boolean
+    status?: boolean
+    ethPriceUsd?: boolean
+    wagerUsd?: boolean
+    payoutUsd?: boolean
+    betSignature?: boolean
+    betMessage?: boolean
+    signature?: boolean
+    txHash?: boolean
+    createdAt?: boolean
+    resolvedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bet"]>
+
+  export type BetSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    playerId?: boolean
+    serverSeedHash?: boolean
+    serverSeed?: boolean
+    clientSeed?: boolean
+    randomValue?: boolean
+    gameNumber?: boolean
+    wager?: boolean
+    targetMultiplier?: boolean
+    limboMultiplier?: boolean
+    outcome?: boolean
+    payout?: boolean
+    status?: boolean
+    ethPriceUsd?: boolean
+    wagerUsd?: boolean
+    payoutUsd?: boolean
+    betSignature?: boolean
+    betMessage?: boolean
+    signature?: boolean
+    txHash?: boolean
+    createdAt?: boolean
+    resolvedAt?: boolean
+  }
+
+  export type BetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "playerId" | "serverSeedHash" | "serverSeed" | "clientSeed" | "randomValue" | "gameNumber" | "wager" | "targetMultiplier" | "limboMultiplier" | "outcome" | "payout" | "status" | "ethPriceUsd" | "wagerUsd" | "payoutUsd" | "betSignature" | "betMessage" | "signature" | "txHash" | "createdAt" | "resolvedAt", ExtArgs["result"]["bet"]>
+  export type BetInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type BetIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type BetIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $BetPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Bet"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      playerId: string
+      serverSeedHash: string
+      serverSeed: string | null
+      clientSeed: string | null
+      randomValue: string
+      gameNumber: string
+      wager: string
+      targetMultiplier: string
+      limboMultiplier: string | null
+      outcome: string
+      payout: string
+      status: string
+      ethPriceUsd: string | null
+      wagerUsd: string | null
+      payoutUsd: string | null
+      betSignature: string | null
+      betMessage: string | null
+      signature: string | null
+      txHash: string | null
+      createdAt: Date
+      resolvedAt: Date | null
+    }, ExtArgs["result"]["bet"]>
+    composites: {}
+  }
+
+  type BetGetPayload<S extends boolean | null | undefined | BetDefaultArgs> = $Result.GetResult<Prisma.$BetPayload, S>
+
+  type BetCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BetFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BetCountAggregateInputType | true
+    }
+
+  export interface BetDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Bet'], meta: { name: 'Bet' } }
+    /**
+     * Find zero or one Bet that matches the filter.
+     * @param {BetFindUniqueArgs} args - Arguments to find a Bet
+     * @example
+     * // Get one Bet
+     * const bet = await prisma.bet.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BetFindUniqueArgs>(args: SelectSubset<T, BetFindUniqueArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Bet that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BetFindUniqueOrThrowArgs} args - Arguments to find a Bet
+     * @example
+     * // Get one Bet
+     * const bet = await prisma.bet.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BetFindUniqueOrThrowArgs>(args: SelectSubset<T, BetFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Bet that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetFindFirstArgs} args - Arguments to find a Bet
+     * @example
+     * // Get one Bet
+     * const bet = await prisma.bet.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BetFindFirstArgs>(args?: SelectSubset<T, BetFindFirstArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Bet that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetFindFirstOrThrowArgs} args - Arguments to find a Bet
+     * @example
+     * // Get one Bet
+     * const bet = await prisma.bet.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BetFindFirstOrThrowArgs>(args?: SelectSubset<T, BetFindFirstOrThrowArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Bets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Bets
+     * const bets = await prisma.bet.findMany()
+     * 
+     * // Get first 10 Bets
+     * const bets = await prisma.bet.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const betWithIdOnly = await prisma.bet.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BetFindManyArgs>(args?: SelectSubset<T, BetFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Bet.
+     * @param {BetCreateArgs} args - Arguments to create a Bet.
+     * @example
+     * // Create one Bet
+     * const Bet = await prisma.bet.create({
+     *   data: {
+     *     // ... data to create a Bet
+     *   }
+     * })
+     * 
+     */
+    create<T extends BetCreateArgs>(args: SelectSubset<T, BetCreateArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Bets.
+     * @param {BetCreateManyArgs} args - Arguments to create many Bets.
+     * @example
+     * // Create many Bets
+     * const bet = await prisma.bet.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BetCreateManyArgs>(args?: SelectSubset<T, BetCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Bets and returns the data saved in the database.
+     * @param {BetCreateManyAndReturnArgs} args - Arguments to create many Bets.
+     * @example
+     * // Create many Bets
+     * const bet = await prisma.bet.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Bets and only return the `id`
+     * const betWithIdOnly = await prisma.bet.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BetCreateManyAndReturnArgs>(args?: SelectSubset<T, BetCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Bet.
+     * @param {BetDeleteArgs} args - Arguments to delete one Bet.
+     * @example
+     * // Delete one Bet
+     * const Bet = await prisma.bet.delete({
+     *   where: {
+     *     // ... filter to delete one Bet
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BetDeleteArgs>(args: SelectSubset<T, BetDeleteArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Bet.
+     * @param {BetUpdateArgs} args - Arguments to update one Bet.
+     * @example
+     * // Update one Bet
+     * const bet = await prisma.bet.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BetUpdateArgs>(args: SelectSubset<T, BetUpdateArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Bets.
+     * @param {BetDeleteManyArgs} args - Arguments to filter Bets to delete.
+     * @example
+     * // Delete a few Bets
+     * const { count } = await prisma.bet.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BetDeleteManyArgs>(args?: SelectSubset<T, BetDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Bets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Bets
+     * const bet = await prisma.bet.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BetUpdateManyArgs>(args: SelectSubset<T, BetUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Bets and returns the data updated in the database.
+     * @param {BetUpdateManyAndReturnArgs} args - Arguments to update many Bets.
+     * @example
+     * // Update many Bets
+     * const bet = await prisma.bet.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Bets and only return the `id`
+     * const betWithIdOnly = await prisma.bet.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BetUpdateManyAndReturnArgs>(args: SelectSubset<T, BetUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Bet.
+     * @param {BetUpsertArgs} args - Arguments to update or create a Bet.
+     * @example
+     * // Update or create a Bet
+     * const bet = await prisma.bet.upsert({
+     *   create: {
+     *     // ... data to create a Bet
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Bet we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BetUpsertArgs>(args: SelectSubset<T, BetUpsertArgs<ExtArgs>>): Prisma__BetClient<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Bets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetCountArgs} args - Arguments to filter Bets to count.
+     * @example
+     * // Count the number of Bets
+     * const count = await prisma.bet.count({
+     *   where: {
+     *     // ... the filter for the Bets we want to count
+     *   }
+     * })
+    **/
+    count<T extends BetCountArgs>(
+      args?: Subset<T, BetCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BetCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Bet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BetAggregateArgs>(args: Subset<T, BetAggregateArgs>): Prisma.PrismaPromise<GetBetAggregateType<T>>
+
+    /**
+     * Group by Bet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BetGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BetGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BetGroupByArgs['orderBy'] }
+        : { orderBy?: BetGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BetGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBetGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Bet model
+   */
+  readonly fields: BetFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Bet.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BetClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Bet model
+   */
+  interface BetFieldRefs {
+    readonly id: FieldRef<"Bet", 'String'>
+    readonly userId: FieldRef<"Bet", 'String'>
+    readonly playerId: FieldRef<"Bet", 'String'>
+    readonly serverSeedHash: FieldRef<"Bet", 'String'>
+    readonly serverSeed: FieldRef<"Bet", 'String'>
+    readonly clientSeed: FieldRef<"Bet", 'String'>
+    readonly randomValue: FieldRef<"Bet", 'String'>
+    readonly gameNumber: FieldRef<"Bet", 'String'>
+    readonly wager: FieldRef<"Bet", 'String'>
+    readonly targetMultiplier: FieldRef<"Bet", 'String'>
+    readonly limboMultiplier: FieldRef<"Bet", 'String'>
+    readonly outcome: FieldRef<"Bet", 'String'>
+    readonly payout: FieldRef<"Bet", 'String'>
+    readonly status: FieldRef<"Bet", 'String'>
+    readonly ethPriceUsd: FieldRef<"Bet", 'String'>
+    readonly wagerUsd: FieldRef<"Bet", 'String'>
+    readonly payoutUsd: FieldRef<"Bet", 'String'>
+    readonly betSignature: FieldRef<"Bet", 'String'>
+    readonly betMessage: FieldRef<"Bet", 'String'>
+    readonly signature: FieldRef<"Bet", 'String'>
+    readonly txHash: FieldRef<"Bet", 'String'>
+    readonly createdAt: FieldRef<"Bet", 'DateTime'>
+    readonly resolvedAt: FieldRef<"Bet", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Bet findUnique
+   */
+  export type BetFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * Filter, which Bet to fetch.
+     */
+    where: BetWhereUniqueInput
+  }
+
+  /**
+   * Bet findUniqueOrThrow
+   */
+  export type BetFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * Filter, which Bet to fetch.
+     */
+    where: BetWhereUniqueInput
+  }
+
+  /**
+   * Bet findFirst
+   */
+  export type BetFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * Filter, which Bet to fetch.
+     */
+    where?: BetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Bets to fetch.
+     */
+    orderBy?: BetOrderByWithRelationInput | BetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Bets.
+     */
+    cursor?: BetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Bets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Bets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Bets.
+     */
+    distinct?: BetScalarFieldEnum | BetScalarFieldEnum[]
+  }
+
+  /**
+   * Bet findFirstOrThrow
+   */
+  export type BetFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * Filter, which Bet to fetch.
+     */
+    where?: BetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Bets to fetch.
+     */
+    orderBy?: BetOrderByWithRelationInput | BetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Bets.
+     */
+    cursor?: BetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Bets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Bets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Bets.
+     */
+    distinct?: BetScalarFieldEnum | BetScalarFieldEnum[]
+  }
+
+  /**
+   * Bet findMany
+   */
+  export type BetFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * Filter, which Bets to fetch.
+     */
+    where?: BetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Bets to fetch.
+     */
+    orderBy?: BetOrderByWithRelationInput | BetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Bets.
+     */
+    cursor?: BetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Bets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Bets.
+     */
+    skip?: number
+    distinct?: BetScalarFieldEnum | BetScalarFieldEnum[]
+  }
+
+  /**
+   * Bet create
+   */
+  export type BetCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Bet.
+     */
+    data: XOR<BetCreateInput, BetUncheckedCreateInput>
+  }
+
+  /**
+   * Bet createMany
+   */
+  export type BetCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Bets.
+     */
+    data: BetCreateManyInput | BetCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Bet createManyAndReturn
+   */
+  export type BetCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * The data used to create many Bets.
+     */
+    data: BetCreateManyInput | BetCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Bet update
+   */
+  export type BetUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Bet.
+     */
+    data: XOR<BetUpdateInput, BetUncheckedUpdateInput>
+    /**
+     * Choose, which Bet to update.
+     */
+    where: BetWhereUniqueInput
+  }
+
+  /**
+   * Bet updateMany
+   */
+  export type BetUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Bets.
+     */
+    data: XOR<BetUpdateManyMutationInput, BetUncheckedUpdateManyInput>
+    /**
+     * Filter which Bets to update
+     */
+    where?: BetWhereInput
+    /**
+     * Limit how many Bets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Bet updateManyAndReturn
+   */
+  export type BetUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * The data used to update Bets.
+     */
+    data: XOR<BetUpdateManyMutationInput, BetUncheckedUpdateManyInput>
+    /**
+     * Filter which Bets to update
+     */
+    where?: BetWhereInput
+    /**
+     * Limit how many Bets to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Bet upsert
+   */
+  export type BetUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Bet to update in case it exists.
+     */
+    where: BetWhereUniqueInput
+    /**
+     * In case the Bet found by the `where` argument doesn't exist, create a new Bet with this data.
+     */
+    create: XOR<BetCreateInput, BetUncheckedCreateInput>
+    /**
+     * In case the Bet was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BetUpdateInput, BetUncheckedUpdateInput>
+  }
+
+  /**
+   * Bet delete
+   */
+  export type BetDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+    /**
+     * Filter which Bet to delete.
+     */
+    where: BetWhereUniqueInput
+  }
+
+  /**
+   * Bet deleteMany
+   */
+  export type BetDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Bets to delete
+     */
+    where?: BetWhereInput
+    /**
+     * Limit how many Bets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Bet without action
+   */
+  export type BetDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Bet
+     */
+    select?: BetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Bet
+     */
+    omit?: BetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BetInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -4521,6 +6004,9 @@ export namespace Prisma {
     farcaster_pfp: 'farcaster_pfp',
     wallet_address: 'wallet_address',
     server_wallet_address: 'server_wallet_address',
+    siweSignature: 'siweSignature',
+    siweMessage: 'siweMessage',
+    siweExpiresAt: 'siweExpiresAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -4556,6 +6042,35 @@ export namespace Prisma {
   };
 
   export type WalletTransactionScalarFieldEnum = (typeof WalletTransactionScalarFieldEnum)[keyof typeof WalletTransactionScalarFieldEnum]
+
+
+  export const BetScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    playerId: 'playerId',
+    serverSeedHash: 'serverSeedHash',
+    serverSeed: 'serverSeed',
+    clientSeed: 'clientSeed',
+    randomValue: 'randomValue',
+    gameNumber: 'gameNumber',
+    wager: 'wager',
+    targetMultiplier: 'targetMultiplier',
+    limboMultiplier: 'limboMultiplier',
+    outcome: 'outcome',
+    payout: 'payout',
+    status: 'status',
+    ethPriceUsd: 'ethPriceUsd',
+    wagerUsd: 'wagerUsd',
+    payoutUsd: 'payoutUsd',
+    betSignature: 'betSignature',
+    betMessage: 'betMessage',
+    signature: 'signature',
+    txHash: 'txHash',
+    createdAt: 'createdAt',
+    resolvedAt: 'resolvedAt'
+  };
+
+  export type BetScalarFieldEnum = (typeof BetScalarFieldEnum)[keyof typeof BetScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -4670,9 +6185,13 @@ export namespace Prisma {
     farcaster_pfp?: StringNullableFilter<"User"> | string | null
     wallet_address?: StringNullableFilter<"User"> | string | null
     server_wallet_address?: StringNullableFilter<"User"> | string | null
+    siweSignature?: StringNullableFilter<"User"> | string | null
+    siweMessage?: StringNullableFilter<"User"> | string | null
+    siweExpiresAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    bets?: BetListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -4682,9 +6201,13 @@ export namespace Prisma {
     farcaster_pfp?: SortOrderInput | SortOrder
     wallet_address?: SortOrderInput | SortOrder
     server_wallet_address?: SortOrderInput | SortOrder
+    siweSignature?: SortOrderInput | SortOrder
+    siweMessage?: SortOrderInput | SortOrder
+    siweExpiresAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     wallet?: WalletOrderByWithRelationInput
+    bets?: BetOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -4697,9 +6220,13 @@ export namespace Prisma {
     farcaster_pfp?: StringNullableFilter<"User"> | string | null
     wallet_address?: StringNullableFilter<"User"> | string | null
     server_wallet_address?: StringNullableFilter<"User"> | string | null
+    siweSignature?: StringNullableFilter<"User"> | string | null
+    siweMessage?: StringNullableFilter<"User"> | string | null
+    siweExpiresAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    bets?: BetListRelationFilter
   }, "id" | "farcaster_id">
 
   export type UserOrderByWithAggregationInput = {
@@ -4709,6 +6236,9 @@ export namespace Prisma {
     farcaster_pfp?: SortOrderInput | SortOrder
     wallet_address?: SortOrderInput | SortOrder
     server_wallet_address?: SortOrderInput | SortOrder
+    siweSignature?: SortOrderInput | SortOrder
+    siweMessage?: SortOrderInput | SortOrder
+    siweExpiresAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -4726,6 +6256,9 @@ export namespace Prisma {
     farcaster_pfp?: StringNullableWithAggregatesFilter<"User"> | string | null
     wallet_address?: StringNullableWithAggregatesFilter<"User"> | string | null
     server_wallet_address?: StringNullableWithAggregatesFilter<"User"> | string | null
+    siweSignature?: StringNullableWithAggregatesFilter<"User"> | string | null
+    siweMessage?: StringNullableWithAggregatesFilter<"User"> | string | null
+    siweExpiresAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -4887,6 +6420,151 @@ export namespace Prisma {
     confirmedAt?: DateTimeNullableWithAggregatesFilter<"WalletTransaction"> | Date | string | null
   }
 
+  export type BetWhereInput = {
+    AND?: BetWhereInput | BetWhereInput[]
+    OR?: BetWhereInput[]
+    NOT?: BetWhereInput | BetWhereInput[]
+    id?: StringFilter<"Bet"> | string
+    userId?: StringFilter<"Bet"> | string
+    playerId?: StringFilter<"Bet"> | string
+    serverSeedHash?: StringFilter<"Bet"> | string
+    serverSeed?: StringNullableFilter<"Bet"> | string | null
+    clientSeed?: StringNullableFilter<"Bet"> | string | null
+    randomValue?: StringFilter<"Bet"> | string
+    gameNumber?: StringFilter<"Bet"> | string
+    wager?: StringFilter<"Bet"> | string
+    targetMultiplier?: StringFilter<"Bet"> | string
+    limboMultiplier?: StringNullableFilter<"Bet"> | string | null
+    outcome?: StringFilter<"Bet"> | string
+    payout?: StringFilter<"Bet"> | string
+    status?: StringFilter<"Bet"> | string
+    ethPriceUsd?: StringNullableFilter<"Bet"> | string | null
+    wagerUsd?: StringNullableFilter<"Bet"> | string | null
+    payoutUsd?: StringNullableFilter<"Bet"> | string | null
+    betSignature?: StringNullableFilter<"Bet"> | string | null
+    betMessage?: StringNullableFilter<"Bet"> | string | null
+    signature?: StringNullableFilter<"Bet"> | string | null
+    txHash?: StringNullableFilter<"Bet"> | string | null
+    createdAt?: DateTimeFilter<"Bet"> | Date | string
+    resolvedAt?: DateTimeNullableFilter<"Bet"> | Date | string | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type BetOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    playerId?: SortOrder
+    serverSeedHash?: SortOrder
+    serverSeed?: SortOrderInput | SortOrder
+    clientSeed?: SortOrderInput | SortOrder
+    randomValue?: SortOrder
+    gameNumber?: SortOrder
+    wager?: SortOrder
+    targetMultiplier?: SortOrder
+    limboMultiplier?: SortOrderInput | SortOrder
+    outcome?: SortOrder
+    payout?: SortOrder
+    status?: SortOrder
+    ethPriceUsd?: SortOrderInput | SortOrder
+    wagerUsd?: SortOrderInput | SortOrder
+    payoutUsd?: SortOrderInput | SortOrder
+    betSignature?: SortOrderInput | SortOrder
+    betMessage?: SortOrderInput | SortOrder
+    signature?: SortOrderInput | SortOrder
+    txHash?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type BetWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BetWhereInput | BetWhereInput[]
+    OR?: BetWhereInput[]
+    NOT?: BetWhereInput | BetWhereInput[]
+    userId?: StringFilter<"Bet"> | string
+    playerId?: StringFilter<"Bet"> | string
+    serverSeedHash?: StringFilter<"Bet"> | string
+    serverSeed?: StringNullableFilter<"Bet"> | string | null
+    clientSeed?: StringNullableFilter<"Bet"> | string | null
+    randomValue?: StringFilter<"Bet"> | string
+    gameNumber?: StringFilter<"Bet"> | string
+    wager?: StringFilter<"Bet"> | string
+    targetMultiplier?: StringFilter<"Bet"> | string
+    limboMultiplier?: StringNullableFilter<"Bet"> | string | null
+    outcome?: StringFilter<"Bet"> | string
+    payout?: StringFilter<"Bet"> | string
+    status?: StringFilter<"Bet"> | string
+    ethPriceUsd?: StringNullableFilter<"Bet"> | string | null
+    wagerUsd?: StringNullableFilter<"Bet"> | string | null
+    payoutUsd?: StringNullableFilter<"Bet"> | string | null
+    betSignature?: StringNullableFilter<"Bet"> | string | null
+    betMessage?: StringNullableFilter<"Bet"> | string | null
+    signature?: StringNullableFilter<"Bet"> | string | null
+    txHash?: StringNullableFilter<"Bet"> | string | null
+    createdAt?: DateTimeFilter<"Bet"> | Date | string
+    resolvedAt?: DateTimeNullableFilter<"Bet"> | Date | string | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type BetOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    playerId?: SortOrder
+    serverSeedHash?: SortOrder
+    serverSeed?: SortOrderInput | SortOrder
+    clientSeed?: SortOrderInput | SortOrder
+    randomValue?: SortOrder
+    gameNumber?: SortOrder
+    wager?: SortOrder
+    targetMultiplier?: SortOrder
+    limboMultiplier?: SortOrderInput | SortOrder
+    outcome?: SortOrder
+    payout?: SortOrder
+    status?: SortOrder
+    ethPriceUsd?: SortOrderInput | SortOrder
+    wagerUsd?: SortOrderInput | SortOrder
+    payoutUsd?: SortOrderInput | SortOrder
+    betSignature?: SortOrderInput | SortOrder
+    betMessage?: SortOrderInput | SortOrder
+    signature?: SortOrderInput | SortOrder
+    txHash?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    _count?: BetCountOrderByAggregateInput
+    _max?: BetMaxOrderByAggregateInput
+    _min?: BetMinOrderByAggregateInput
+  }
+
+  export type BetScalarWhereWithAggregatesInput = {
+    AND?: BetScalarWhereWithAggregatesInput | BetScalarWhereWithAggregatesInput[]
+    OR?: BetScalarWhereWithAggregatesInput[]
+    NOT?: BetScalarWhereWithAggregatesInput | BetScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Bet"> | string
+    userId?: StringWithAggregatesFilter<"Bet"> | string
+    playerId?: StringWithAggregatesFilter<"Bet"> | string
+    serverSeedHash?: StringWithAggregatesFilter<"Bet"> | string
+    serverSeed?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    clientSeed?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    randomValue?: StringWithAggregatesFilter<"Bet"> | string
+    gameNumber?: StringWithAggregatesFilter<"Bet"> | string
+    wager?: StringWithAggregatesFilter<"Bet"> | string
+    targetMultiplier?: StringWithAggregatesFilter<"Bet"> | string
+    limboMultiplier?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    outcome?: StringWithAggregatesFilter<"Bet"> | string
+    payout?: StringWithAggregatesFilter<"Bet"> | string
+    status?: StringWithAggregatesFilter<"Bet"> | string
+    ethPriceUsd?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    wagerUsd?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    payoutUsd?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    betSignature?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    betMessage?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    signature?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    txHash?: StringNullableWithAggregatesFilter<"Bet"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Bet"> | Date | string
+    resolvedAt?: DateTimeNullableWithAggregatesFilter<"Bet"> | Date | string | null
+  }
+
   export type UserCreateInput = {
     id?: string
     farcaster_id: string
@@ -4894,9 +6572,13 @@ export namespace Prisma {
     farcaster_pfp?: string | null
     wallet_address?: string | null
     server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     wallet?: WalletCreateNestedOneWithoutUserInput
+    bets?: BetCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -4906,9 +6588,13 @@ export namespace Prisma {
     farcaster_pfp?: string | null
     wallet_address?: string | null
     server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
+    bets?: BetUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -4918,9 +6604,13 @@ export namespace Prisma {
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     wallet?: WalletUpdateOneWithoutUserNestedInput
+    bets?: BetUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -4930,9 +6620,13 @@ export namespace Prisma {
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
+    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -4942,6 +6636,9 @@ export namespace Prisma {
     farcaster_pfp?: string | null
     wallet_address?: string | null
     server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -4953,6 +6650,9 @@ export namespace Prisma {
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -4964,6 +6664,9 @@ export namespace Prisma {
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -5135,6 +6838,187 @@ export namespace Prisma {
     confirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type BetCreateInput = {
+    id?: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed?: string | null
+    clientSeed?: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier?: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd?: string | null
+    wagerUsd?: string | null
+    payoutUsd?: string | null
+    betSignature?: string | null
+    betMessage?: string | null
+    signature?: string | null
+    txHash?: string | null
+    createdAt?: Date | string
+    resolvedAt?: Date | string | null
+    user: UserCreateNestedOneWithoutBetsInput
+  }
+
+  export type BetUncheckedCreateInput = {
+    id?: string
+    userId: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed?: string | null
+    clientSeed?: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier?: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd?: string | null
+    wagerUsd?: string | null
+    payoutUsd?: string | null
+    betSignature?: string | null
+    betMessage?: string | null
+    signature?: string | null
+    txHash?: string | null
+    createdAt?: Date | string
+    resolvedAt?: Date | string | null
+  }
+
+  export type BetUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutBetsNestedInput
+  }
+
+  export type BetUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BetCreateManyInput = {
+    id?: string
+    userId: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed?: string | null
+    clientSeed?: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier?: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd?: string | null
+    wagerUsd?: string | null
+    payoutUsd?: string | null
+    betSignature?: string | null
+    betMessage?: string | null
+    signature?: string | null
+    txHash?: string | null
+    createdAt?: Date | string
+    resolvedAt?: Date | string | null
+  }
+
+  export type BetUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BetUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -5165,6 +7049,17 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -5181,9 +7076,19 @@ export namespace Prisma {
     isNot?: WalletWhereInput | null
   }
 
+  export type BetListRelationFilter = {
+    every?: BetWhereInput
+    some?: BetWhereInput
+    none?: BetWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
+  }
+
+  export type BetOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type UserCountOrderByAggregateInput = {
@@ -5193,6 +7098,9 @@ export namespace Prisma {
     farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
     server_wallet_address?: SortOrder
+    siweSignature?: SortOrder
+    siweMessage?: SortOrder
+    siweExpiresAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -5204,6 +7112,9 @@ export namespace Prisma {
     farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
     server_wallet_address?: SortOrder
+    siweSignature?: SortOrder
+    siweMessage?: SortOrder
+    siweExpiresAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -5215,6 +7126,9 @@ export namespace Prisma {
     farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
     server_wallet_address?: SortOrder
+    siweSignature?: SortOrder
+    siweMessage?: SortOrder
+    siweExpiresAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -5253,6 +7167,20 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -5392,17 +7320,6 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type WalletScalarRelationFilter = {
     is?: WalletWhereInput
     isNot?: WalletWhereInput
@@ -5473,18 +7390,82 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  export type BetCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    playerId?: SortOrder
+    serverSeedHash?: SortOrder
+    serverSeed?: SortOrder
+    clientSeed?: SortOrder
+    randomValue?: SortOrder
+    gameNumber?: SortOrder
+    wager?: SortOrder
+    targetMultiplier?: SortOrder
+    limboMultiplier?: SortOrder
+    outcome?: SortOrder
+    payout?: SortOrder
+    status?: SortOrder
+    ethPriceUsd?: SortOrder
+    wagerUsd?: SortOrder
+    payoutUsd?: SortOrder
+    betSignature?: SortOrder
+    betMessage?: SortOrder
+    signature?: SortOrder
+    txHash?: SortOrder
+    createdAt?: SortOrder
+    resolvedAt?: SortOrder
+  }
+
+  export type BetMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    playerId?: SortOrder
+    serverSeedHash?: SortOrder
+    serverSeed?: SortOrder
+    clientSeed?: SortOrder
+    randomValue?: SortOrder
+    gameNumber?: SortOrder
+    wager?: SortOrder
+    targetMultiplier?: SortOrder
+    limboMultiplier?: SortOrder
+    outcome?: SortOrder
+    payout?: SortOrder
+    status?: SortOrder
+    ethPriceUsd?: SortOrder
+    wagerUsd?: SortOrder
+    payoutUsd?: SortOrder
+    betSignature?: SortOrder
+    betMessage?: SortOrder
+    signature?: SortOrder
+    txHash?: SortOrder
+    createdAt?: SortOrder
+    resolvedAt?: SortOrder
+  }
+
+  export type BetMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    playerId?: SortOrder
+    serverSeedHash?: SortOrder
+    serverSeed?: SortOrder
+    clientSeed?: SortOrder
+    randomValue?: SortOrder
+    gameNumber?: SortOrder
+    wager?: SortOrder
+    targetMultiplier?: SortOrder
+    limboMultiplier?: SortOrder
+    outcome?: SortOrder
+    payout?: SortOrder
+    status?: SortOrder
+    ethPriceUsd?: SortOrder
+    wagerUsd?: SortOrder
+    payoutUsd?: SortOrder
+    betSignature?: SortOrder
+    betMessage?: SortOrder
+    signature?: SortOrder
+    txHash?: SortOrder
+    createdAt?: SortOrder
+    resolvedAt?: SortOrder
   }
 
   export type WalletCreateNestedOneWithoutUserInput = {
@@ -5493,10 +7474,24 @@ export namespace Prisma {
     connect?: WalletWhereUniqueInput
   }
 
+  export type BetCreateNestedManyWithoutUserInput = {
+    create?: XOR<BetCreateWithoutUserInput, BetUncheckedCreateWithoutUserInput> | BetCreateWithoutUserInput[] | BetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BetCreateOrConnectWithoutUserInput | BetCreateOrConnectWithoutUserInput[]
+    createMany?: BetCreateManyUserInputEnvelope
+    connect?: BetWhereUniqueInput | BetWhereUniqueInput[]
+  }
+
   export type WalletUncheckedCreateNestedOneWithoutUserInput = {
     create?: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
     connectOrCreate?: WalletCreateOrConnectWithoutUserInput
     connect?: WalletWhereUniqueInput
+  }
+
+  export type BetUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<BetCreateWithoutUserInput, BetUncheckedCreateWithoutUserInput> | BetCreateWithoutUserInput[] | BetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BetCreateOrConnectWithoutUserInput | BetCreateOrConnectWithoutUserInput[]
+    createMany?: BetCreateManyUserInputEnvelope
+    connect?: BetWhereUniqueInput | BetWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -5505,6 +7500,10 @@ export namespace Prisma {
 
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
   }
 
   export type DateTimeFieldUpdateOperationsInput = {
@@ -5521,6 +7520,20 @@ export namespace Prisma {
     update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutUserInput, WalletUpdateWithoutUserInput>, WalletUncheckedUpdateWithoutUserInput>
   }
 
+  export type BetUpdateManyWithoutUserNestedInput = {
+    create?: XOR<BetCreateWithoutUserInput, BetUncheckedCreateWithoutUserInput> | BetCreateWithoutUserInput[] | BetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BetCreateOrConnectWithoutUserInput | BetCreateOrConnectWithoutUserInput[]
+    upsert?: BetUpsertWithWhereUniqueWithoutUserInput | BetUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: BetCreateManyUserInputEnvelope
+    set?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    disconnect?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    delete?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    connect?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    update?: BetUpdateWithWhereUniqueWithoutUserInput | BetUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: BetUpdateManyWithWhereWithoutUserInput | BetUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: BetScalarWhereInput | BetScalarWhereInput[]
+  }
+
   export type WalletUncheckedUpdateOneWithoutUserNestedInput = {
     create?: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
     connectOrCreate?: WalletCreateOrConnectWithoutUserInput
@@ -5529,6 +7542,20 @@ export namespace Prisma {
     delete?: WalletWhereInput | boolean
     connect?: WalletWhereUniqueInput
     update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutUserInput, WalletUpdateWithoutUserInput>, WalletUncheckedUpdateWithoutUserInput>
+  }
+
+  export type BetUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<BetCreateWithoutUserInput, BetUncheckedCreateWithoutUserInput> | BetCreateWithoutUserInput[] | BetUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BetCreateOrConnectWithoutUserInput | BetCreateOrConnectWithoutUserInput[]
+    upsert?: BetUpsertWithWhereUniqueWithoutUserInput | BetUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: BetCreateManyUserInputEnvelope
+    set?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    disconnect?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    delete?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    connect?: BetWhereUniqueInput | BetWhereUniqueInput[]
+    update?: BetUpdateWithWhereUniqueWithoutUserInput | BetUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: BetUpdateManyWithWhereWithoutUserInput | BetUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: BetScalarWhereInput | BetScalarWhereInput[]
   }
 
   export type UserCreateNestedOneWithoutWalletInput = {
@@ -5609,10 +7636,6 @@ export namespace Prisma {
     connect?: WalletWhereUniqueInput
   }
 
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
-  }
-
   export type WalletUpdateOneRequiredWithoutTransactionsNestedInput = {
     create?: XOR<WalletCreateWithoutTransactionsInput, WalletUncheckedCreateWithoutTransactionsInput>
     connectOrCreate?: WalletCreateOrConnectWithoutTransactionsInput
@@ -5627,6 +7650,20 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type UserCreateNestedOneWithoutBetsInput = {
+    create?: XOR<UserCreateWithoutBetsInput, UserUncheckedCreateWithoutBetsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBetsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutBetsNestedInput = {
+    create?: XOR<UserCreateWithoutBetsInput, UserUncheckedCreateWithoutBetsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBetsInput
+    upsert?: UserUpsertWithoutBetsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBetsInput, UserUpdateWithoutBetsInput>, UserUncheckedUpdateWithoutBetsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -5655,6 +7692,17 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -5722,6 +7770,20 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -5814,17 +7876,6 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -5839,20 +7890,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type WalletCreateWithoutUserInput = {
@@ -5880,6 +7917,66 @@ export namespace Prisma {
   export type WalletCreateOrConnectWithoutUserInput = {
     where: WalletWhereUniqueInput
     create: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
+  }
+
+  export type BetCreateWithoutUserInput = {
+    id?: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed?: string | null
+    clientSeed?: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier?: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd?: string | null
+    wagerUsd?: string | null
+    payoutUsd?: string | null
+    betSignature?: string | null
+    betMessage?: string | null
+    signature?: string | null
+    txHash?: string | null
+    createdAt?: Date | string
+    resolvedAt?: Date | string | null
+  }
+
+  export type BetUncheckedCreateWithoutUserInput = {
+    id?: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed?: string | null
+    clientSeed?: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier?: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd?: string | null
+    wagerUsd?: string | null
+    payoutUsd?: string | null
+    betSignature?: string | null
+    betMessage?: string | null
+    signature?: string | null
+    txHash?: string | null
+    createdAt?: Date | string
+    resolvedAt?: Date | string | null
+  }
+
+  export type BetCreateOrConnectWithoutUserInput = {
+    where: BetWhereUniqueInput
+    create: XOR<BetCreateWithoutUserInput, BetUncheckedCreateWithoutUserInput>
+  }
+
+  export type BetCreateManyUserInputEnvelope = {
+    data: BetCreateManyUserInput | BetCreateManyUserInput[]
+    skipDuplicates?: boolean
   }
 
   export type WalletUpsertWithoutUserInput = {
@@ -5915,6 +8012,51 @@ export namespace Prisma {
     transactions?: WalletTransactionUncheckedUpdateManyWithoutWalletNestedInput
   }
 
+  export type BetUpsertWithWhereUniqueWithoutUserInput = {
+    where: BetWhereUniqueInput
+    update: XOR<BetUpdateWithoutUserInput, BetUncheckedUpdateWithoutUserInput>
+    create: XOR<BetCreateWithoutUserInput, BetUncheckedCreateWithoutUserInput>
+  }
+
+  export type BetUpdateWithWhereUniqueWithoutUserInput = {
+    where: BetWhereUniqueInput
+    data: XOR<BetUpdateWithoutUserInput, BetUncheckedUpdateWithoutUserInput>
+  }
+
+  export type BetUpdateManyWithWhereWithoutUserInput = {
+    where: BetScalarWhereInput
+    data: XOR<BetUpdateManyMutationInput, BetUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type BetScalarWhereInput = {
+    AND?: BetScalarWhereInput | BetScalarWhereInput[]
+    OR?: BetScalarWhereInput[]
+    NOT?: BetScalarWhereInput | BetScalarWhereInput[]
+    id?: StringFilter<"Bet"> | string
+    userId?: StringFilter<"Bet"> | string
+    playerId?: StringFilter<"Bet"> | string
+    serverSeedHash?: StringFilter<"Bet"> | string
+    serverSeed?: StringNullableFilter<"Bet"> | string | null
+    clientSeed?: StringNullableFilter<"Bet"> | string | null
+    randomValue?: StringFilter<"Bet"> | string
+    gameNumber?: StringFilter<"Bet"> | string
+    wager?: StringFilter<"Bet"> | string
+    targetMultiplier?: StringFilter<"Bet"> | string
+    limboMultiplier?: StringNullableFilter<"Bet"> | string | null
+    outcome?: StringFilter<"Bet"> | string
+    payout?: StringFilter<"Bet"> | string
+    status?: StringFilter<"Bet"> | string
+    ethPriceUsd?: StringNullableFilter<"Bet"> | string | null
+    wagerUsd?: StringNullableFilter<"Bet"> | string | null
+    payoutUsd?: StringNullableFilter<"Bet"> | string | null
+    betSignature?: StringNullableFilter<"Bet"> | string | null
+    betMessage?: StringNullableFilter<"Bet"> | string | null
+    signature?: StringNullableFilter<"Bet"> | string | null
+    txHash?: StringNullableFilter<"Bet"> | string | null
+    createdAt?: DateTimeFilter<"Bet"> | Date | string
+    resolvedAt?: DateTimeNullableFilter<"Bet"> | Date | string | null
+  }
+
   export type UserCreateWithoutWalletInput = {
     id?: string
     farcaster_id: string
@@ -5922,8 +8064,12 @@ export namespace Prisma {
     farcaster_pfp?: string | null
     wallet_address?: string | null
     server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bets?: BetCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutWalletInput = {
@@ -5933,8 +8079,12 @@ export namespace Prisma {
     farcaster_pfp?: string | null
     wallet_address?: string | null
     server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    bets?: BetUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutWalletInput = {
@@ -5993,8 +8143,12 @@ export namespace Prisma {
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutWalletInput = {
@@ -6004,8 +8158,12 @@ export namespace Prisma {
     farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
     wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
     server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type WalletTransactionUpsertWithWhereUniqueWithoutWalletInput = {
@@ -6098,6 +8256,182 @@ export namespace Prisma {
     lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateWithoutBetsInput = {
+    id?: string
+    farcaster_id: string
+    farcaster_username: string
+    farcaster_pfp?: string | null
+    wallet_address?: string | null
+    server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wallet?: WalletCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutBetsInput = {
+    id?: string
+    farcaster_id: string
+    farcaster_username: string
+    farcaster_pfp?: string | null
+    wallet_address?: string | null
+    server_wallet_address?: string | null
+    siweSignature?: string | null
+    siweMessage?: string | null
+    siweExpiresAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutBetsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutBetsInput, UserUncheckedCreateWithoutBetsInput>
+  }
+
+  export type UserUpsertWithoutBetsInput = {
+    update: XOR<UserUpdateWithoutBetsInput, UserUncheckedUpdateWithoutBetsInput>
+    create: XOR<UserCreateWithoutBetsInput, UserUncheckedCreateWithoutBetsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutBetsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutBetsInput, UserUncheckedUpdateWithoutBetsInput>
+  }
+
+  export type UserUpdateWithoutBetsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    farcaster_id?: StringFieldUpdateOperationsInput | string
+    farcaster_username?: StringFieldUpdateOperationsInput | string
+    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
+    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wallet?: WalletUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutBetsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    farcaster_id?: StringFieldUpdateOperationsInput | string
+    farcaster_username?: StringFieldUpdateOperationsInput | string
+    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
+    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
+    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
+  }
+
+  export type BetCreateManyUserInput = {
+    id?: string
+    playerId: string
+    serverSeedHash: string
+    serverSeed?: string | null
+    clientSeed?: string | null
+    randomValue: string
+    gameNumber: string
+    wager: string
+    targetMultiplier: string
+    limboMultiplier?: string | null
+    outcome: string
+    payout: string
+    status: string
+    ethPriceUsd?: string | null
+    wagerUsd?: string | null
+    payoutUsd?: string | null
+    betSignature?: string | null
+    betMessage?: string | null
+    signature?: string | null
+    txHash?: string | null
+    createdAt?: Date | string
+    resolvedAt?: Date | string | null
+  }
+
+  export type BetUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BetUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type BetUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    playerId?: StringFieldUpdateOperationsInput | string
+    serverSeedHash?: StringFieldUpdateOperationsInput | string
+    serverSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    clientSeed?: NullableStringFieldUpdateOperationsInput | string | null
+    randomValue?: StringFieldUpdateOperationsInput | string
+    gameNumber?: StringFieldUpdateOperationsInput | string
+    wager?: StringFieldUpdateOperationsInput | string
+    targetMultiplier?: StringFieldUpdateOperationsInput | string
+    limboMultiplier?: NullableStringFieldUpdateOperationsInput | string | null
+    outcome?: StringFieldUpdateOperationsInput | string
+    payout?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    ethPriceUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    wagerUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    payoutUsd?: NullableStringFieldUpdateOperationsInput | string | null
+    betSignature?: NullableStringFieldUpdateOperationsInput | string | null
+    betMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    signature?: NullableStringFieldUpdateOperationsInput | string | null
+    txHash?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type WalletTransactionCreateManyWalletInput = {

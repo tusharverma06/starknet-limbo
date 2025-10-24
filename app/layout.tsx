@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Lilita_One } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers/Web3Provider";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const inter = Inter({ subsets: ["latin"] });
+const lilitaOne = Lilita_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-lilita-one"
+});
 
 // const frame = {
 //   version: "1",
@@ -42,7 +47,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <head>
+        {/* Preconnect to Quick Auth server for better performance */}
+        <link rel="preconnect" href="https://auth.farcaster.xyz" />
+      </head>
+      <body className={`${inter.className} ${lilitaOne.variable}`}>
         <FarcasterProvider>
           <Providers>{children}</Providers>
         </FarcasterProvider>

@@ -25,7 +25,19 @@ interface UseServerWalletReturn {
   placeBet: (
     usdBetAmount: string,
     targetMultiplier: number
-  ) => Promise<{ txHash: string; requestId: string | null }>;
+  ) => Promise<{
+    txHash?: string;
+    requestId?: string | null;
+    betId?: string;
+    result?: {
+      win: boolean;
+      limboMultiplier: number;
+      payout: string;
+      gameNumber: string;
+      amount: string;
+      targetMultiplier: number;
+    };
+  }>;
 }
 
 /**
@@ -215,17 +227,23 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
           throw new Error(data.error || "Bet placement failed");
         }
 
-        console.log("✅ Bet placed:", data.txHash);
+        console.log("✅ Bet placed:", data.txHash || data.betId);
 
-        // Update balance
-        setBalance(data.newBalance);
-        if (wallet) {
-          setWallet({ ...wallet, balance: data.newBalance });
+        // Update balance (handle both old and new response formats)
+        const newBalance = data.balance?.current || data.newBalance;
+        if (newBalance) {
+          setBalance(newBalance);
+          if (wallet) {
+            setWallet({ ...wallet, balance: newBalance });
+          }
         }
 
+        // Return full data object (supports both on-chain and off-chain responses)
         return {
           txHash: data.txHash,
           requestId: data.requestId,
+          betId: data.betId,
+          result: data.result,
           blockNumber: data.blockNumber,
         };
       } catch (err) {

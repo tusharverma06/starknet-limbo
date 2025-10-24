@@ -1,11 +1,21 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { formatETH } from "@/lib/utils/format";
 import { toDisplayMultiplier } from "@/lib/utils/multiplier";
 import { getUsdValueFromEth } from "@/lib/utils/price";
-import { CheckCircle2, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Shield,
+  Copy,
+  Check,
+  Loader2,
+} from "lucide-react";
 
 interface GameResultProps {
   win: boolean;
@@ -14,6 +24,13 @@ interface GameResultProps {
   randomResult: bigint; // limboMultiplier from contract (e.g., 128 for 1.28x)
   payout?: bigint; // Actual payout from contract event (optional for backward compatibility)
   onClose: () => void;
+  betId?: string; // Bet ID for provably fair verification
+  onVerify?: (betId: string) => void; // Callback to open verification modal
+}
+
+interface QuickVerificationData {
+  serverSeedHash: string;
+  verified: boolean;
 }
 
 export function GameResult({
@@ -23,13 +40,19 @@ export function GameResult({
   randomResult,
   payout: contractPayout,
   onClose,
+  betId,
+  onVerify,
 }: GameResultProps) {
   const [payoutUsd, setPayoutUsd] = useState<number | null>(null);
   const [amountUsd, setAmountUsd] = useState<number | null>(null);
+  const [showProofDetails, setShowProofDetails] = useState(false);
+  const [verificationData, setVerificationData] =
+    useState<QuickVerificationData | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [copiedHash, setCopiedHash] = useState(false);
 
   // Convert contract format to display format
   const resultMultiplier = toDisplayMultiplier(Number(randomResult));
-  const targetDisplay = toDisplayMultiplier(targetMultiplier);
 
   // Use payout from contract event, fallback to calculation for backward compatibility
   const payout =
@@ -38,6 +61,37 @@ export function GameResult({
       : win
       ? (amount * randomResult) / BigInt(100)
       : BigInt(0);
+
+  // Fetch quick verification data
+  useEffect(() => {
+    const fetchVerification = async () => {
+      if (!betId) return;
+
+      setIsVerifying(true);
+      try {
+        const response = await fetch("/api/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ betId }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setVerificationData({
+            serverSeedHash: data.provablyFair?.serverSeedHash || "",
+            verified: data.valid,
+          });
+        }
+      } catch (error) {
+        console.error("Quick verification failed:", error);
+      } finally {
+        // Add a small delay to show the verification animation
+        setTimeout(() => setIsVerifying(false), 800);
+      }
+    };
+
+    fetchVerification();
+  }, [betId]);
 
   // Calculate USD values
   useEffect(() => {
@@ -60,16 +114,27 @@ export function GameResult({
     calculateUsdValues();
   }, [amount, payout, win]);
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedHash(true);
+    setTimeout(() => setCopiedHash(false), 2000);
+  };
+
+  const truncateHash = (hash: string) => {
+    if (!hash) return "";
+    return `${hash.slice(0, 10)}...${hash.slice(-8)}`;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-auto"
       onClick={onClose}
     >
       <div
-        className="max-w-md w-full bg-white rounded-xl p-6 shadow-lg border border-gray-300"
+        className="max-w-md w-full bg-white rounded-xl p-6 border-2 border-black shadow-[0px_4px_0px_0px_#000000] my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center space-y-6">
@@ -92,44 +157,74 @@ export function GameResult({
               className={`text-4xl font-bold mb-2 ${
                 win ? "text-green-500" : "text-red-500"
               }`}
+              style={{ fontFamily: "var(--font-lilita-one)" }}
             >
               {win ? "YOU WIN!" : "YOU LOSE"}
             </h2>
-            <p className="text-gray-600">
-              Result:{" "}
-              <span className="text-black font-semibold">
+
+            {/* Result Multiplier - BOLD AND BIG */}
+            <div className="my-4">
+              <p
+                className="text-sm text-gray-600 mb-1"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
+                Result Multiplier
+              </p>
+              <p
+                className={`text-6xl font-extrabold ${
+                  win ? "text-green-600" : "text-red-600"
+                }`}
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
                 {resultMultiplier.toFixed(2)}x
-              </span>
-            </p>
-            <p className="text-gray-600">
+              </p>
+            </div>
+
+            <p
+              className="text-gray-600 mt-3"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
               Target:{" "}
               <span className="text-black font-semibold">
-                {targetDisplay.toFixed(2)}x
+                {targetMultiplier.toFixed(2)}x
               </span>
             </p>
           </div>
 
           {/* Payout */}
-          <div className="py-4 px-6 rounded-xl bg-gray-50 border border-gray-300">
-            <div className="text-sm text-gray-600 mb-1">
+          <div className="py-4 px-6 rounded-xl bg-white border-2 border-black shadow-[0px_2px_0px_0px_#000000]">
+            <div
+              className="text-sm text-gray-600 mb-1"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
               {win ? "Payout" : "Lost"}
             </div>
             <div
               className={`text-2xl font-bold ${
                 win ? "text-green-500" : "text-red-500"
               }`}
+              style={{ fontFamily: "var(--font-lilita-one)" }}
             >
               {win ? "+" : "-"}
               {formatETH(win ? payout : amount)} ETH
             </div>
-            {(win ? payoutUsd : amountUsd) && (
+            {/* Show USD value with proper formatting */}
+            {((win && payoutUsd !== null && payoutUsd > 0) ||
+              (!win && amountUsd !== null && amountUsd > 0)) && (
               <div
                 className={`text-lg font-semibold ${
                   win ? "text-green-500" : "text-red-500"
                 }`}
+                style={{ fontFamily: "var(--font-lilita-one)" }}
               >
-                {win ? "+" : "-"}${(win ? payoutUsd! : amountUsd!).toFixed(2)}{" "}
-                USD
+                {win ? "+" : "-"}${win
+                  ? payoutUsd! < 0.01
+                    ? payoutUsd!.toFixed(4)
+                    : payoutUsd!.toFixed(2)
+                  : amountUsd! < 0.01
+                    ? amountUsd!.toFixed(4)
+                    : amountUsd!.toFixed(2)
+                } USD
               </div>
             )}
           </div>
@@ -137,7 +232,8 @@ export function GameResult({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-black hover:bg-gray-800 text-white font-semibold transition-colors"
+            className="w-full py-3 rounded-xl bg-[#2574ff] hover:bg-[#1e5fd9] text-white font-semibold border-2 border-black shadow-[0px_3px_0px_0px_#000000] hover:translate-y-[1px] hover:shadow-[0px_2px_0px_0px_#000000] transition-all"
+            style={{ fontFamily: "var(--font-lilita-one)" }}
           >
             Continue
           </button>

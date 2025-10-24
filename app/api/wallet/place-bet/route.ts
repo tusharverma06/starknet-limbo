@@ -1,25 +1,163 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  JsonRpcProvider,
-  Wallet,
-  parseEther,
-  Contract,
-  randomBytes,
-} from "ethers";
+import { parseEther, formatEther } from "ethers";
 import { walletDb } from "@/lib/db/wallets";
-import { decryptPrivateKey } from "@/lib/utils/encryption";
-import { getEthValueFromUsd } from "@/lib/utils/price";
-import { CHAIN, CONTRACT_ADDRESS } from "@/lib/contract/config";
-import { LIMBO_GAME_ABI } from "@/lib/contract/abi";
-import { toContractMultiplier } from "@/lib/utils/multiplier";
+import { getEthValueFromUsd, getEthUsdPrice } from "@/lib/utils/price";
 import { MIN_BET_USD } from "@/lib/constants";
-import { estimateContractGas } from "@/lib/utils/gas";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
 import { prisma } from "@/lib/db/prisma";
+import { generateBetResult } from "@/lib/utils/provablyFair";
+import {
+  sendFromHouseWallet,
+  getHouseWalletBalance,
+  sendToHouseWallet,
+} from "@/lib/security/houseWallet";
+import { createBetMessage, signBetMessage } from "@/lib/utils/messageSigning";
+
+/**
+ * Process blockchain transactions in the background
+ * This runs asynchronously after returning the bet result to the user
+ */
+async function processBlockchainTransactions(
+  betId: string,
+  userId: string,
+  encryptedPrivateKey: string,
+  userWalletAddress: string,
+  betAmount: bigint,
+  outcome: string,
+  payout: string
+) {
+  let betTxHash: string | null = null;
+  let payoutTxHash: string | null = null;
+
+  try {
+    console.log(
+      "🔄 [Background] Starting blockchain transaction processing for bet:",
+      betId
+    );
+
+    // Step 1: Send bet amount FROM user's wallet TO house wallet
+    try {
+      betTxHash = await sendToHouseWallet(encryptedPrivateKey, betAmount);
+      console.log("✅ [Background] Bet sent to house wallet:", betTxHash);
+
+      // Record bet transaction
+      await prisma.walletTransaction.create({
+        data: {
+          userId: userId,
+          txHash: betTxHash,
+          txType: "bet_placed",
+          amount: betAmount.toString(),
+          status: "confirmed",
+          confirmedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      console.error(
+        "❌ [Background] Failed to send bet to house wallet:",
+        error
+      );
+      // Update bet status to failed
+      await prisma.bet.update({
+        where: { id: betId },
+        data: {
+          status: "failed",
+          txHash: null,
+        },
+      });
+      throw error;
+    }
+
+    // Step 2: If win, send payout FROM house wallet BACK to user
+    if (outcome === "win") {
+      const payoutAmount = BigInt(payout);
+
+      console.log(
+        "💰 [Background] User won! Sending payout from house wallet:",
+        {
+          to: userWalletAddress,
+          amount: payoutAmount.toString(),
+        }
+      );
+
+      // Check house wallet balance
+      const houseBalance = await getHouseWalletBalance();
+      console.log(
+        "🏦 [Background] House wallet balance:",
+        houseBalance.toString()
+      );
+
+      if (houseBalance < payoutAmount) {
+        console.error(
+          "❌ [Background] Insufficient house wallet balance for payout"
+        );
+        // Mark as pending payout to be processed later
+        await prisma.bet.update({
+          where: { id: betId },
+          data: {
+            status: "pending_payout",
+            txHash: betTxHash,
+          },
+        });
+        return;
+      }
+
+      try {
+        payoutTxHash = await sendFromHouseWallet(
+          userWalletAddress,
+          payoutAmount
+        );
+        console.log("✅ [Background] Payout sent to user:", payoutTxHash);
+
+        // Record payout transaction
+        await prisma.walletTransaction.create({
+          data: {
+            userId: userId,
+            txHash: payoutTxHash,
+            txType: "payout",
+            amount: payout,
+            status: "confirmed",
+            confirmedAt: new Date(),
+          },
+        });
+      } catch (error) {
+        console.error("❌ [Background] Failed to send payout:", error);
+        // Mark as pending payout to retry later
+        await prisma.bet.update({
+          where: { id: betId },
+          data: {
+            status: "pending_payout",
+            txHash: betTxHash,
+          },
+        });
+        throw error;
+      }
+    }
+
+    // Step 3: Mark bet as fully resolved
+    console.log("✅ [Background] Bet fully resolved:", {
+      betId,
+      outcome,
+      betTxHash,
+      payoutTxHash,
+    });
+
+    await prisma.bet.update({
+      where: { id: betId },
+      data: {
+        status: "resolved",
+        txHash: payoutTxHash || betTxHash,
+      },
+    });
+  } catch (error) {
+    console.error("❌ [Background] Blockchain processing error:", error);
+    // Error status already updated in individual catch blocks
+  }
+}
 
 /**
  * POST /api/wallet/place-bet
- * Place a bet using the server-side wallet
+ * Place a bet using off-chain provably fair randomness
+ * Returns instant results with verification data
  */
 export async function POST(req: NextRequest) {
   try {
@@ -63,11 +201,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate ETH amount is reasonable based on USD amount
-    // For minimum bet of $1.00, at ETH price of ~$2000-5000, we expect 0.0002-0.0005 ETH
-    // If the calculated amount is less than what $0.01 should be at $10,000 ETH price,
-    // something is wrong with the price feed
-    const minimumReasonableEth = 0.000001; // ~$0.01 at $10,000 ETH
+    // Validate ETH amount is reasonable
+    const minimumReasonableEth = 0.000001;
     if (ethAmount < minimumReasonableEth) {
       console.error(
         "⚠️ Suspiciously low ETH amount. Price conversion may have failed.",
@@ -92,11 +227,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user from database (userId is Farcaster FID)
+    // Get user from database
     const user = await getOrCreateUser(userId);
     if (!user) {
       return NextResponse.json(
-        { error: 'Failed to get or create user' },
+        { error: "Failed to get or create user" },
         { status: 500 }
       );
     }
@@ -110,214 +245,178 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Decrypt private key
-    const privateKey = decryptPrivateKey(walletData.encryptedPrivateKey);
-
-    // Create provider and wallet using Alchemy RPC
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
-    const provider = new JsonRpcProvider(rpcUrl);
-    const wallet = new Wallet(privateKey, provider);
-
-    // Check balance
-    const balance = await provider.getBalance(wallet.address);
-    // Round to 18 decimals to avoid parseEther precision errors
+    // Convert bet amount to wei
     const ethAmountRounded = parseFloat(ethAmount.toFixed(18));
     const betAmountWei = parseEther(ethAmountRounded.toString());
 
-    console.log("💰 Wallet balance:", balance.toString());
+    console.log("💰 Wallet balance:", walletData.balance);
     console.log("💰 Bet amount:", betAmountWei.toString());
 
-    // Estimate gas for the transaction
-    const contract = new Contract(CONTRACT_ADDRESS, LIMBO_GAME_ABI, wallet);
-    const contractMultiplier = toContractMultiplier(multiplierNum);
-
-    // Generate client seed for provably fair gaming
-    const clientSeed = randomBytes(32);
-
-    // Check house balance and potential payout
-    try {
-      const houseBalance = await contract.houseBalance();
-      // Calculate potential payout using contract multiplier
-      const potentialPayout =
-        (betAmountWei * BigInt(contractMultiplier)) / BigInt(100);
-
-      console.log("🏠 House balance:", houseBalance.toString());
-      console.log("💰 Potential payout:", potentialPayout.toString());
-      console.log("🎯 Contract multiplier:", contractMultiplier);
-
-      if (houseBalance < potentialPayout) {
-        return NextResponse.json(
-          {
-            error: "House has insufficient funds to cover potential payout",
-            houseBalance: houseBalance.toString(),
-            potentialPayout: potentialPayout.toString(),
-            message:
-              "The house needs more funding. Please contact support or try a smaller bet.",
-          },
-          { status: 400 }
-        );
-      }
-    } catch (balanceError) {
-      console.error("House balance check error:", balanceError);
-      // Continue anyway - let the gas estimation catch it
-    }
-
-    // Log bet amount for debugging
-    console.log("✅ Bet amount validation passed:", {
-      usdAmount: usdAmountNum,
-      ethAmount: ethAmountRounded,
-      betAmountWei: betAmountWei.toString(),
-    });
-
-    try {
-      // Use the gas estimation utility
-      const gasEstimation = await estimateContractGas(
-        contract,
-        "placeBet",
-        [BigInt(contractMultiplier), clientSeed],
-        betAmountWei
-      );
-
-      const { gasLimit, gasPrice, totalCost } = gasEstimation;
-
-      console.log("⛽ Gas limit:", gasLimit.toString());
-      console.log("⛽ Gas price:", gasPrice.toString(), "wei");
-      console.log("⛽ Total gas cost:", totalCost.toString());
-
-      // Check if we have enough for bet + gas
-      if (balance < betAmountWei + totalCost) {
-        return NextResponse.json(
-          {
-            error: "Insufficient balance",
-            required: (betAmountWei + totalCost).toString(),
-            available: balance.toString(),
-            needsToFund: (betAmountWei + totalCost - balance).toString(),
-          },
-          { status: 400 }
-        );
-      }
-    } catch (estimateError) {
-      console.error("❌ Gas estimation error:", estimateError);
-      console.error("📊 Failed transaction details:", {
-        betAmountWei: betAmountWei.toString(),
-        contractMultiplier,
-        balance: balance.toString(),
-        walletAddress: wallet.address,
-      });
-
-      // Provide more helpful error messages
-      let errorMessage = "Contract call would fail";
-      if (estimateError instanceof Error && estimateError.message) {
-        if (estimateError.message.includes("insufficient funds")) {
-          errorMessage = "Insufficient funds for transaction";
-        } else if (
-          estimateError.message.includes("require(false)") ||
-          estimateError.message.includes("execution reverted")
-        ) {
-          errorMessage =
-            "Bet rejected by contract. The bet amount is too small to cover VRF callback gas costs. Minimum bet is $1 USD.";
-        } else if ((estimateError as { reason?: string }).reason) {
-          errorMessage = `Transaction would revert: ${
-            (estimateError as { reason?: string }).reason
-          }`;
-        }
-      }
-
+    // Check wallet balance
+    const balance = BigInt(walletData.balance || "0");
+    if (balance < betAmountWei) {
       return NextResponse.json(
         {
-          error: "Failed to estimate gas",
-          message: errorMessage,
-          details:
-            estimateError instanceof Error
-              ? estimateError.message
-              : "Unknown error",
+          error: "Insufficient balance",
+          required: betAmountWei.toString(),
+          available: balance.toString(),
+          needsToFund: (betAmountWei - balance).toString(),
         },
         { status: 400 }
       );
     }
 
-    // Place the bet
-    console.log("🎲 Placing bet:", {
-      usdBetAmount: usdAmountNum,
-      ethAmount: ethAmountRounded,
-      targetMultiplier,
-      contractMultiplier,
-      contractAddress: CONTRACT_ADDRESS,
-    });
+    // Convert multiplier to contract format (x100)
+    const targetMultiplierScaled = Math.floor(multiplierNum * 100).toString();
 
-    const tx = await contract.placeBet(BigInt(contractMultiplier), clientSeed, {
-      value: betAmountWei,
-    });
-    console.log(tx);
-    console.log("📝 Bet transaction sent:", tx.hash);
+    // Fetch current ETH/USD price for verification
+    const ethPriceUsd = await getEthUsdPrice();
+    console.log("💵 Current ETH/USD price:", ethPriceUsd);
 
-    // Record pending transaction
-    await prisma.walletTransaction.create({
+    // Create bet record first to get betId
+    const bet = await prisma.bet.create({
       data: {
         userId: user.id,
-        txHash: tx.hash,
-        txType: 'bet',
-        amount: betAmountWei.toString(),
-        status: 'pending',
-      }
+        playerId: walletData.address.toLowerCase(),
+        wager: betAmountWei.toString(),
+        targetMultiplier: targetMultiplierScaled,
+        // Temporary placeholder values - will be updated immediately
+        serverSeedHash: "",
+        randomValue: "",
+        gameNumber: "",
+        outcome: "pending",
+        payout: "0",
+        status: "pending",
+        // Store exchange rate and USD values
+        ethPriceUsd: ethPriceUsd.toString(),
+        wagerUsd: usdAmountNum.toString(),
+      },
     });
-    console.log("📝 Wallet transaction recorded");
 
-    // Wait for confirmation
-    const receipt = await tx.wait();
-    console.log("🎲 Receipt:", receipt.logs);
+    console.log("🎲 Bet created with ID:", bet.id);
 
-    // Update transaction status
-    await prisma.walletTransaction.updateMany({
-      where: { txHash: tx.hash },
-      data: {
-        status: 'confirmed',
-        blockNumber: BigInt(receipt?.blockNumber || 0),
-        gasUsed: receipt?.gasUsed?.toString() || '0',
-        confirmedAt: new Date(),
-      }
+    // Generate provably fair result
+    const result = generateBetResult(
+      walletData.address.toLowerCase(),
+      bet.id,
+      betAmountWei.toString(),
+      targetMultiplierScaled
+    );
+
+    console.log("🎯 Bet result generated:", {
+      outcome: result.outcome,
+      limboMultiplier: (Number(result.limboMultiplier) / 100).toFixed(2),
+      payout: result.payout,
     });
-    console.log("✅ Transaction confirmed in database");
 
-    // Update last used timestamp
+    // Create and sign bet message for verification
+    const betMessage = createBetMessage({
+      betId: bet.id,
+      wager: betAmountWei.toString(),
+      targetMultiplier: targetMultiplierScaled,
+      serverSeedHash: result.serverSeedHash,
+      timestamp: Date.now(),
+    });
+
+    console.log("📝 Bet message created:", betMessage);
+
+    // Sign the bet message with custodial wallet
+    const betSignature = await signBetMessage(
+      betMessage,
+      walletData.encryptedPrivateKey
+    );
+
+    console.log("✍️ Bet message signed");
+
+    // Calculate payout in USD for verification
+    const payoutEth = parseFloat(formatEther(result.payout));
+    const payoutUsd = (payoutEth * ethPriceUsd).toString();
+
+    // Step 1: Optimistically update balances in database first
+    const newBalance = balance - betAmountWei;
+    const finalBalance =
+      result.outcome === "win"
+        ? newBalance + BigInt(result.payout)
+        : newBalance;
+
+    // Update balance immediately for instant UX
+    await walletDb.updateBalance(user.id, finalBalance.toString());
     await walletDb.updateLastUsed(user.id);
 
-    // Update balance
-    const newBalance = await provider.getBalance(wallet.address);
-    await walletDb.updateBalance(user.id, newBalance.toString());
+    console.log("✅ Balance updated optimistically:", {
+      previous: balance.toString(),
+      new: finalBalance.toString(),
+    });
 
-    console.log("✅ Bet confirmed:", receipt?.hash);
+    // Step 2: Update bet record with result (status: processing)
+    await prisma.bet.update({
+      where: { id: bet.id },
+      data: {
+        serverSeedHash: result.serverSeedHash,
+        serverSeed: result.serverSeed,
+        randomValue: result.randomValue,
+        gameNumber: result.gameNumber,
+        limboMultiplier: result.limboMultiplier,
+        outcome: result.outcome,
+        payout: result.payout,
+        payoutUsd: payoutUsd,
+        status: "processing", // Blockchain txs still pending
+        betSignature: betSignature,
+        betMessage: betMessage,
+        resolvedAt: new Date(),
+      },
+    });
 
-    // Extract BetPlaced event from receipt
-    let requestId = null;
-    if (receipt && receipt.logs) {
-      for (const log of receipt.logs) {
-        try {
-          const parsedLog = contract.interface.parseLog({
-            topics: [...log.topics],
-            data: log.data,
-          });
-          if (parsedLog && parsedLog.name === "BetPlaced") {
-            requestId = parsedLog.args.requestId?.toString();
-            console.log("🎰 BetPlaced event found, requestId:", requestId);
-          }
-        } catch {
-          // Not a BetPlaced event, skip
-        }
-      }
-    }
+    console.log(
+      "⚡ Returning instant result to user (blockchain processing in background)"
+    );
+
+    // Step 3: Process blockchain transactions asynchronously
+    // Don't await this - let it run in the background
+    processBlockchainTransactions(
+      bet.id,
+      user.id,
+      walletData.encryptedPrivateKey,
+      walletData.address,
+      betAmountWei,
+      result.outcome,
+      result.payout
+    ).catch((error) => {
+      console.error("❌ Background blockchain processing failed:", error);
+      // Errors are handled within the function and bet status is updated accordingly
+    });
 
     return NextResponse.json({
       success: true,
-      txHash: receipt?.hash,
-      requestId,
+      betId: bet.id,
+      serverSeedHash: result.serverSeedHash,
+      result: {
+        win: result.outcome === "win",
+        limboMultiplier: Number(result.limboMultiplier) / 100,
+        payout: result.payout,
+        gameNumber: result.gameNumber,
+        amount: betAmountWei.toString(),
+        targetMultiplier: multiplierNum,
+      },
+      verification: {
+        canVerify: true,
+        verifyUrl: `/api/verify?betId=${bet.id}`,
+      },
+      balance: {
+        previous: balance.toString(),
+        current: finalBalance.toString(),
+        locked: "0",
+        payout: result.outcome === "win" ? result.payout : "0",
+      },
+      // Indicate that blockchain transactions are processing in background
+      processing: {
+        status: "processing",
+        message:
+          "Blockchain transactions are being processed in the background",
+        betStatus: "processing",
+      },
       usdBetAmount: usdAmountNum,
       ethAmount: ethAmountRounded,
-      targetMultiplier,
-      blockNumber: receipt?.blockNumber,
-      newBalance: newBalance.toString(),
-      clientSeed: clientSeed,
     });
   } catch (error) {
     console.error("Place bet error:", error);

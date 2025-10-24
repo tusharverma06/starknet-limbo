@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
 import { createConfig, http, type Config } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { CHAIN } from "@/lib/constants";
 import { farcasterMiniApp as miniAppConnector } from "@farcaster/miniapp-wagmi-connector";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { type ReactNode, useState, useEffect } from "react";
@@ -13,9 +13,9 @@ import { Ponder } from "./PonderProvider";
 const queryClient = new QueryClient();
 
 const baseConfig = createConfig({
-  chains: [baseSepolia],
+  chains: [CHAIN],
   transports: {
-    [baseSepolia.id]: http(),
+    [CHAIN.id]: http(),
   },
 });
 
@@ -34,10 +34,10 @@ export function Providers({ children }: { children: ReactNode }) {
         if (isInMiniApp) {
           console.log("🟣 Configuring Farcaster Mini App wallet connector...");
           const newConfig = createConfig({
-            chains: [baseSepolia],
+            chains: [CHAIN],
             connectors: [miniAppConnector()],
             transports: {
-              [baseSepolia.id]: http(),
+              [CHAIN.id]: http(),
             },
           });
           console.log("🟣 Mini App config created:", newConfig);
@@ -62,7 +62,7 @@ export function Providers({ children }: { children: ReactNode }) {
           coolMode={true}
           showRecentTransactions={true}
           modalSize="compact"
-          initialChain={baseSepolia}
+          initialChain={CHAIN}
         >
           <Ponder>
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

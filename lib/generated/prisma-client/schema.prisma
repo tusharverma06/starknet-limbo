@@ -14,16 +14,23 @@ generator client {
 
 // User model to store Farcaster identity details
 model User {
-  id                    String   @id @default(cuid())
-  farcaster_id          String   @unique @db.VarChar(255)
-  farcaster_username    String   @db.VarChar(255)
-  farcaster_pfp         String?  @db.Text
-  wallet_address        String?  @db.VarChar(42) // Farcaster connected wallet
-  server_wallet_address String?  @db.VarChar(42) // Server-side wallet address
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                    String  @id @default(cuid())
+  farcaster_id          String  @unique @db.VarChar(255)
+  farcaster_username    String  @db.VarChar(255)
+  farcaster_pfp         String? @db.Text
+  wallet_address        String? @db.VarChar(42) // Farcaster connected wallet (initial wallet for SIWE)
+  server_wallet_address String? @db.VarChar(42) // Server-side custodial wallet address
+
+  // SIWE Authentication fields
+  siweSignature String?   @map("siwe_signature") @db.Text // SIWE signature authorizing custodial wallet
+  siweMessage   String?   @map("siwe_message") @db.Text // SIWE message that was signed
+  siweExpiresAt DateTime? @map("siwe_expires_at") // Expiration of SIWE authorization
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   wallet Wallet?
+  bets   Bet[]
 
   @@index([farcaster_id])
   @@index([server_wallet_address])
@@ -95,4 +102,44 @@ model WalletTransaction {
   @@index([txHash])
   @@index([createdAt])
   @@map("wallet_transactions")
+}
+
+// Off-chain provably fair bet storage
+model Bet {
+  id               String  @id @default(cuid())
+  userId           String  @map("user_id") @db.VarChar(255)
+  playerId         String  @map("player_id") @db.VarChar(42) // Wallet address (custodial wallet)
+  serverSeedHash   String  @map("server_seed_hash") @db.VarChar(64) // SHA256 commitment
+  serverSeed       String? @map("server_seed") @db.VarChar(64) // Revealed after resolution
+  clientSeed       String? @map("client_seed") @db.VarChar(64) // Optional client seed
+  randomValue      String  @map("random_value") @db.VarChar(64) // SHA256(serverSeed + playerId + betId)
+  gameNumber       String  @map("game_number") @db.VarChar(78) // (BigInt(randomValue) % 1e9) + 1
+  wager            String  @db.VarChar(78) // Bet amount in wei
+  targetMultiplier String  @map("target_multiplier") @db.VarChar(20) // Target multiplier (x100)
+  limboMultiplier  String? @map("limbo_multiplier") @db.VarChar(20) // Actual result multiplier (x100)
+  outcome          String  @db.VarChar(10) // 'win' or 'lose'
+  payout           String  @db.VarChar(78) // Payout amount in wei
+  status           String  @db.VarChar(20) // 'pending', 'processing', 'resolved' (win), 'complete' (loss), 'failed', 'pending_payout'
+
+  // Exchange rate and USD values (for verification)
+  ethPriceUsd String? @map("eth_price_usd") @db.VarChar(20) // ETH/USD price at bet time
+  wagerUsd    String? @map("wager_usd") @db.VarChar(20) // Bet amount in USD
+  payoutUsd   String? @map("payout_usd") @db.VarChar(20) // Payout amount in USD
+
+  // Bet signature for verification (signed by custodial wallet)
+  betSignature String? @map("bet_signature") @db.Text // Signature of bet message
+  betMessage   String? @map("bet_message") @db.Text // Message that was signed (contains betId, wager, multiplier, hash, timestamp)
+
+  signature  String?   @db.Text // Backend signature for payout verification (legacy)
+  txHash     String?   @map("tx_hash") @db.VarChar(66) // Payout transaction hash
+  createdAt  DateTime  @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([playerId])
+  @@index([createdAt])
+  @@index([status])
+  @@map("bets")
 }

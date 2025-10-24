@@ -17,7 +17,7 @@ interface GameState {
 
 export const useGameState = create<GameState>((set) => ({
   state: "IDLE",
-  betAmount: "0.01",
+  betAmount: "0.1",
   targetMultiplier: 2.0,
   lastWin: null,
   lastPayout: null,

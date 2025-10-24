@@ -1,58 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http, decodeEventLog } from "viem";
-import { baseSepolia } from "viem/chains";
-import { LIMBO_GAME_ABI } from "@/lib/contract/abi";
+import { prisma } from "@/lib/db/prisma";
+import { verifyBet } from "@/lib/utils/provablyFair";
 
-const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http(process.env.NEXT_PUBLIC_RPC_URL),
-});
-
+/**
+ * POST /api/verify
+ * Verify a bet's provably fair properties
+ *
+ * This endpoint verifies that:
+ * 1. SHA256(serverSeed) === serverSeedHash
+ * 2. randomValue === SHA256(serverSeed + playerId + betId)
+ * 3. gameNumber is correctly derived from randomValue
+ * 4. limboMultiplier is correctly calculated from gameNumber
+ * 5. outcome (win/lose) matches the multiplier comparison
+ * 6. payout is correctly calculated
+ */
 export async function POST(req: NextRequest) {
-  const { requestId } = await req.json();
-
   try {
-    // Fetch bet from your Ponder GraphQL API
-    const ponderUrl =
-      process.env.PONDER_API_URL ||
-      "https://limbo-ponder-production.up.railway.app";
-    const betResponse = await fetch(`${ponderUrl}/graphql`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: `
-          query GetBet($id: String!) {
-            bet(id: $id) {
-              id
-              player
-              betAmount
-              targetMultiplier
-              limboMultiplier
-              vrfRandomWord
-              win
-              payout
-              status
-              placedAt
-              resolvedAt
-              clientSeed
-              vrfRequestTxHash
-              vrfFulfillTxHash
-            }
-          }
-        `,
-        variables: { id: requestId },
-      }),
-    });
+    const { betId, requestId } = await req.json();
 
-    const { data } = await betResponse.json();
-    const bet = data?.bet;
+    // Support both betId and requestId for backwards compatibility
+    const id = betId || requestId;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "betId or requestId is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch bet from database
+    const bet = await prisma.bet.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            farcaster_username: true,
+            farcaster_pfp: true,
+          },
+        },
+      },
+    });
 
     if (!bet) {
       return NextResponse.json({ error: "Bet not found" }, { status: 404 });
     }
 
-    // Check if bet is resolved
-    if (bet.status !== "RESOLVED" || !bet.vrfFulfillTxHash) {
+    // Check if bet is resolved (or processing - verification data is available immediately)
+    const isResolved =
+      bet.status === "resolved" ||
+      bet.status === "complete" ||
+      bet.status === "processing";
+    if (!isResolved || !bet.serverSeed) {
       return NextResponse.json(
         {
           error: "Bet not resolved yet",
@@ -63,196 +61,182 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch actual transaction receipts for proof
-    const placeBetTx = await publicClient.getTransaction({
-      hash: bet.vrfRequestTxHash,
-    });
-    const placeBetReceipt = await publicClient.getTransactionReceipt({
-      hash: bet.vrfRequestTxHash,
-    });
-    const vrfTx = await publicClient.getTransactionReceipt({
-      hash: bet.vrfFulfillTxHash,
+    // Perform verification
+    const verification = verifyBet({
+      serverSeed: bet.serverSeed,
+      serverSeedHash: bet.serverSeedHash,
+      playerId: bet.playerId,
+      betId: bet.id,
+      randomValue: bet.randomValue,
+      gameNumber: bet.gameNumber,
+      limboMultiplier: bet.limboMultiplier || "0",
+      targetMultiplier: bet.targetMultiplier,
+      outcome: bet.outcome,
+      wager: bet.wager,
+      payout: bet.payout,
     });
 
-    // Verification steps
-    const verificationSteps = [];
-
-    // Step 1: Verify bet placement transaction
-    verificationSteps.push({
-      step: 1,
-      description: "Verify bet placement transaction on blockchain",
-      status: placeBetReceipt.status === "success" ? "✅" : "❌",
-      data: {
-        description: "The bet was placed on-chain by the custodial wallet",
-        transactionHash: bet.vrfRequestTxHash,
-        from: placeBetTx.from,
-        to: placeBetTx.to,
-        blockNumber: placeBetReceipt.blockNumber.toString(),
-        gasUsed: placeBetReceipt.gasUsed.toString(),
-        status: placeBetReceipt.status,
-        timestamp: "Block confirmed on-chain",
-        signature: {
-          r: placeBetTx.r,
-          s: placeBetTx.s,
-          v: placeBetTx.v?.toString(),
+    // Build verification steps for frontend display
+    const verificationSteps = [
+      {
+        step: 1,
+        description: "Verify server seed hash commitment",
+        status: verification.checks.serverSeedHashMatches ? "✅" : "❌",
+        data: {
+          description:
+            "Check that SHA256(serverSeed) matches the committed hash",
+          serverSeed: bet.serverSeed,
+          serverSeedHash: bet.serverSeedHash,
+          formula: "SHA256(serverSeed) === serverSeedHash",
+          verified: verification.checks.serverSeedHashMatches,
         },
       },
-    });
-
-    // Step 2: Decode and verify BetPlaced event
-    let betPlacedEvent = null;
-    for (const log of placeBetReceipt.logs) {
-      try {
-        const decoded = decodeEventLog({
-          abi: LIMBO_GAME_ABI,
-          data: log.data,
-          topics: [...log.topics] as [`0x${string}`, ...`0x${string}`[]],
-        });
-        if (decoded.eventName === "BetPlaced") {
-          betPlacedEvent = decoded;
-          break;
-        }
-      } catch {
-        // Not the event we're looking for
-      }
-    }
-
-    verificationSteps.push({
-      step: 2,
-      description: "Verify BetPlaced event was emitted correctly",
-      status: betPlacedEvent ? "✅" : "❌",
-      data: {
-        description:
-          "The smart contract emitted a BetPlaced event with the bet details",
-        eventName: "BetPlaced",
-        eventData: betPlacedEvent
-          ? {
-              player: betPlacedEvent.args?.[0] as string,
-              requestId: betPlacedEvent.args?.[1]?.toString(),
-              betAmount: betPlacedEvent.args?.[2]?.toString(),
-              targetMultiplier: betPlacedEvent.args?.[3]?.toString(),
-            }
-          : null,
-        eventSignature: "BetPlaced(address,uint256,uint256,uint256,bytes32)",
-        logIndex: betPlacedEvent
-          ? placeBetReceipt.logs.findIndex(
-              (l) => l.topics[0] === betPlacedEvent?.args?.[0]
-            )
-          : undefined,
+      {
+        step: 2,
+        description: "Verify random value generation",
+        status: verification.checks.randomValueMatches ? "✅" : "❌",
+        data: {
+          description:
+            "Check that random value is correctly generated from inputs",
+          formula: "SHA256(serverSeed + playerId + betId)",
+          inputs: {
+            serverSeed: bet.serverSeed,
+            playerId: bet.playerId,
+            betId: bet.id,
+          },
+          randomValue: bet.randomValue,
+          verified: verification.checks.randomValueMatches,
+        },
       },
-    });
-
-    // Step 3: Verify VRF randomness fulfillment
-    for (const log of vrfTx.logs) {
-      try {
-        const decoded = decodeEventLog({
-          abi: LIMBO_GAME_ABI,
-          data: log.data,
-          topics: [...log.topics] as [`0x${string}`, ...`0x${string}`[]],
-        });
-        if (decoded.eventName === "BetResolved") {
-          // Event found, VRF fulfilled
-          break;
-        }
-      } catch {
-        // Not the event we're looking for
-      }
-    }
-
-    verificationSteps.push({
-      step: 3,
-      description: "Verify Chainlink VRF provided randomness",
-      status: "✅",
-      data: {
-        description:
-          "Chainlink VRF oracle fulfilled the randomness request on-chain",
-        vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-        randomWord: bet.vrfRandomWord,
-        requestId: bet.id,
-        fulfillmentTxHash: bet.vrfFulfillTxHash,
-        blockNumber: vrfTx.blockNumber.toString(),
-        clientSeed: bet.clientSeed,
-        proofOfRandomness:
-          "VRF proof verified on-chain by Chainlink coordinator",
+      {
+        step: 3,
+        description: "Verify game number derivation",
+        status: verification.checks.gameNumberMatches ? "✅" : "❌",
+        data: {
+          description:
+            "Check that game number is correctly derived from random value",
+          formula: "(BigInt(0x + randomValue) % 1e9) + 1",
+          randomValue: bet.randomValue,
+          gameNumber: bet.gameNumber,
+          verified: verification.checks.gameNumberMatches,
+        },
       },
-    });
-
-    // Step 4: Verify payout calculation
-    const expectedPayout = bet.win
-      ? (BigInt(bet.betAmount) * BigInt(bet.targetMultiplier)) / BigInt(100)
-      : BigInt(0);
-    const actualPayout = bet.payout ? BigInt(bet.payout) : BigInt(0);
-
-    verificationSteps.push({
-      step: 4,
-      description: "Check that the bet's payout is correct",
-      status: expectedPayout === actualPayout ? "✅" : "❌",
-      data: {
-        betAmount: bet.betAmount,
-        targetMultiplier: (Number(bet.targetMultiplier) / 100).toFixed(2),
-        limboMultiplier: bet.limboMultiplier
-          ? (Number(bet.limboMultiplier) / 100).toFixed(2)
-          : "N/A",
-        expectedPayout: expectedPayout.toString(),
-        actualPayout: bet.payout || "0",
-        matches: expectedPayout === actualPayout,
+      {
+        step: 4,
+        description: "Verify limbo multiplier calculation",
+        status: verification.checks.multiplierMatches ? "✅" : "❌",
+        data: {
+          description:
+            "Check that the limbo multiplier is correctly calculated",
+          formula: "(1 - houseEdge) / (gameNumber / 1e9)",
+          houseEdge: "0.02 (2%)",
+          gameNumber: bet.gameNumber,
+          limboMultiplier: bet.limboMultiplier
+            ? (Number(bet.limboMultiplier) / 100).toFixed(2) + "x"
+            : "N/A",
+          verified: verification.checks.multiplierMatches,
+        },
       },
-    });
-
-    // Step 5: Verify limbo calculation
-    const x = (BigInt(bet.vrfRandomWord!) % BigInt(1e9)) + BigInt(1);
-    const edgeFactor = BigInt(10000) - BigInt(200); // (1 - 0.02)
-    const calculatedMultiplier =
-      (edgeFactor * BigInt(1e11)) / (x * BigInt(10000));
-
-    verificationSteps.push({
-      step: 5,
-      description: "Check that the bet's settlement values are correct",
-      status:
-        calculatedMultiplier.toString() === bet.limboMultiplier ? "✅" : "❌",
-      data: {
-        formula: "(1 - 0.02) / x",
-        x: x.toString(),
-        calculatedMultiplier: calculatedMultiplier.toString(),
-        contractMultiplier: bet.limboMultiplier || "N/A",
-        matches: calculatedMultiplier.toString() === bet.limboMultiplier,
+      {
+        step: 5,
+        description: "Verify bet outcome",
+        status: verification.checks.outcomeMatches ? "✅" : "❌",
+        data: {
+          description: "Check that win/lose outcome is correct",
+          limboMultiplier: Number(bet.limboMultiplier) / 100,
+          targetMultiplier: Number(bet.targetMultiplier) / 100,
+          formula: "limboMultiplier >= targetMultiplier = WIN",
+          outcome: bet.outcome,
+          verified: verification.checks.outcomeMatches,
+        },
       },
-    });
-
-    // Step 6: Verify on-chain transaction
-    verificationSteps.push({
-      step: 6,
-      description:
-        "Check that the settlement values match the on-chain transaction",
-      status: "✅",
-      data: {
-        transactionHash: bet.vrfFulfillTxHash,
-        blockNumber: vrfTx.blockNumber.toString(),
-        status: bet.status,
-        verified: true,
+      {
+        step: 6,
+        description: "Verify payout calculation",
+        status: verification.checks.payoutMatches ? "✅" : "❌",
+        data: {
+          description: "Check that payout is correctly calculated",
+          formula:
+            bet.outcome === "win"
+              ? "wager * (targetMultiplier / 100)"
+              : "0 (loss)",
+          wager: bet.wager,
+          targetMultiplier: Number(bet.targetMultiplier) / 100,
+          expectedPayout: bet.payout,
+          actualPayout: bet.payout,
+          verified: verification.checks.payoutMatches,
+        },
       },
-    });
+    ];
 
     return NextResponse.json({
       verificationSteps,
-      overallStatus: verificationSteps.every((s) => s.status === "✅")
-        ? "✅ All checks passed"
-        : "⚠️ Some checks failed",
+      overallStatus: verification.valid
+        ? "✅ All checks passed - Bet is provably fair"
+        : "⚠️ Some checks failed - Verification issues detected",
+      valid: verification.valid,
+      errors: verification.errors,
       bet: {
-        requestId: bet.id,
-        player: bet.player,
-        betAmount: bet.betAmount,
-        targetMultiplier: bet.targetMultiplier,
-        limboMultiplier: bet.limboMultiplier,
-        win: bet.win,
+        betId: bet.id,
+        player: bet.playerId,
+        playerName: bet.user.farcaster_username,
+        playerPfp: bet.user.farcaster_pfp,
+        betAmount: bet.wager,
+        targetMultiplier: Number(bet.targetMultiplier) / 100,
+        limboMultiplier: bet.limboMultiplier
+          ? Number(bet.limboMultiplier) / 100
+          : null,
+        outcome: bet.outcome,
         payout: bet.payout,
         status: bet.status,
-        placedAt: bet.placedAt,
-        resolvedAt: bet.resolvedAt,
+        placedAt: bet.createdAt.toISOString(),
+        resolvedAt: bet.resolvedAt?.toISOString() || null,
+      },
+      provablyFair: {
+        serverSeed: bet.serverSeed,
+        serverSeedHash: bet.serverSeedHash,
+        clientSeed: bet.clientSeed,
+        randomValue: bet.randomValue,
+        gameNumber: bet.gameNumber,
       },
     });
   } catch (error) {
     console.error("Verification error:", error);
+    return NextResponse.json(
+      {
+        error: "Verification failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * GET /api/verify?betId=xxx
+ * Verify a bet via GET request
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const betId = searchParams.get("betId") || searchParams.get("requestId");
+
+    if (!betId) {
+      return NextResponse.json(
+        { error: "betId or requestId query parameter is required" },
+        { status: 400 }
+      );
+    }
+
+    // Call POST handler with the betId
+    return POST(
+      new NextRequest(req.url, {
+        method: "POST",
+        body: JSON.stringify({ betId }),
+      })
+    );
+  } catch (error) {
+    console.error("Verification GET error:", error);
     return NextResponse.json(
       {
         error: "Verification failed",

@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { JsonRpcProvider, formatEther } from 'ethers';
-import { walletDb } from '@/lib/db/wallets';
-import { getUsdValueFromEth } from '@/lib/utils/price';
-import { CHAIN } from '@/lib/contract/config';
-import { getOrCreateUser } from '@/lib/getOrCreateUser';
+import { NextRequest, NextResponse } from "next/server";
+import { JsonRpcProvider, formatEther } from "ethers";
+import { walletDb } from "@/lib/db/wallets";
+import { getUsdValueFromEth } from "@/lib/utils/price";
+import { CHAIN } from "@/lib/constants";
+import { getOrCreateUser } from "@/lib/getOrCreateUser";
 
 /**
  * GET /api/wallet/balance?userId=xxx
@@ -11,11 +11,11 @@ import { getOrCreateUser } from '@/lib/getOrCreateUser';
  */
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get('userId');
+    const userId = req.nextUrl.searchParams.get("userId");
 
     if (!userId) {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: "User ID is required" },
         { status: 400 }
       );
     }
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const user = await getOrCreateUser(userId);
     if (!user) {
       return NextResponse.json(
-        { error: 'Failed to get or create user' },
+        { error: "Failed to get or create user" },
         { status: 500 }
       );
     }
@@ -32,14 +32,22 @@ export async function GET(req: NextRequest) {
     const wallet = await walletDb.getWallet(user.id);
 
     if (!wallet) {
+      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
+    }
+
+    // Get balance from blockchain
+    const rpcUrl =
+      process.env.NEXT_PUBLIC_RPC_URL ||
+      `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+
+    if (!rpcUrl || rpcUrl.includes('undefined')) {
+      console.error("No valid RPC URL configured");
       return NextResponse.json(
-        { error: 'Wallet not found' },
-        { status: 404 }
+        { error: "RPC URL not configured" },
+        { status: 500 }
       );
     }
 
-    // Get balance from blockchain using Alchemy RPC
-    const rpcUrl = process.env.NEXT_PUBLIC_ALCHEMY_RPC_URL || CHAIN.rpcUrls.default.http[0];
     const provider = new JsonRpcProvider(rpcUrl);
     const balance = await provider.getBalance(wallet.address);
 
@@ -57,11 +65,10 @@ export async function GET(req: NextRequest) {
       balanceInUsd: usdBalance,
     });
   } catch (error) {
-    console.error('Get balance error:', error);
+    console.error("Get balance error:", error);
     return NextResponse.json(
-      { error: 'Failed to get balance' },
+      { error: "Failed to get balance" },
       { status: 500 }
     );
   }
 }
-

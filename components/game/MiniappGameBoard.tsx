@@ -18,7 +18,7 @@ import { Loader2, Lock, RefreshCw } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 
 /**
  * Combined bet result type used in the game board
@@ -120,6 +120,7 @@ export function MiniappGameBoard() {
   const [resultMultiplierColor, setResultMultiplierColor] = useState<
     "green" | "red"
   >("green");
+  const { connect, connectors } = useConnect();
   // const [commitmentHash, setCommitmentHash] = useState<string>("");
   // const [showCommitmentTooltip, setShowCommitmentTooltip] = useState(false);
 
@@ -576,7 +577,7 @@ export function MiniappGameBoard() {
                           !externalWalletAddress ||
                           !isExternalWalletConnected
                         ) {
-                          openConnectModal();
+                          connect({ connector: connectors[0] });
                         } else if (chain.unsupported) {
                           openChainModal();
                         } else {

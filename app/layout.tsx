@@ -21,7 +21,7 @@ const frame = {
       type: "launch_frame",
       name: "Based Limbo",
       url: "https://limbo-app.vercel.app/",
-      splashImageUrl: "https://limbo-app.vercel.app/mountain-bg.png",
+      splashImageUrl: "https://limbo-app.vercel.app/og.png",
       splashBackgroundColor: "#eeccff",
     },
   },
@@ -33,7 +33,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Limbo Game",
     description: "Provably fair limbo game powered by Chainlink VRF",
-    images: [`${process.env.NEXT_PUBLIC_APP_URL}/splash.png`],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL}/og.png`],
+  },
+  icons: {
+    icon: "https://limbo-app.vercel.app/logo.png",
   },
   other: {
     "fc:miniapp": JSON.stringify(frame),

@@ -27,7 +27,6 @@ export function useSiweAuth() {
         const response = await fetch(`/api/auth/status?userId=${userId}`);
         if (response.ok) {
           const data = await response.json();
-
           // Only set as authenticated if signature exists AND is not expired
           const isValidAuth =
             data.isAuthenticated && data.custodialWallet && !data.isExpired;

@@ -717,7 +717,7 @@ export function MiniappGameBoard() {
                         </div>
 
                         {/* Sign Out */}
-                        <button
+                        {/* <button
                           onClick={() => {
                             signOut();
                             setShowWalletDropdown(false);
@@ -726,7 +726,7 @@ export function MiniappGameBoard() {
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
                           Sign Out
-                        </button>
+                        </button> */}
                       </div>
                     </motion.div>
                   )}

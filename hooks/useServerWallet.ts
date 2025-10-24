@@ -74,7 +74,6 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
       }
 
       const data = await response.json();
-      console.log("🔑 Wallet data:", data);
       setWallet(data);
       setBalance(data.balance);
     } catch (err) {
@@ -110,7 +109,6 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         throw new Error(data.error || "Failed to create wallet");
       }
 
-      console.log("✅ Wallet created:", data.address);
       await fetchWallet();
     } catch (err) {
       console.error("Error creating wallet:", err);
@@ -177,9 +175,6 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         if (!response.ok) {
           throw new Error(data.error || "Withdrawal failed");
         }
-
-        console.log("✅ Withdrawal successful:", data.txHash);
-
         // Update balance
         setBalance(data.newBalance);
         if (wallet) {
@@ -226,8 +221,6 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         if (!response.ok) {
           throw new Error(data.error || "Bet placement failed");
         }
-
-        console.log("✅ Bet placed:", data.txHash || data.betId);
 
         // Update balance (handle both old and new response formats)
         const newBalance = data.balance?.current || data.newBalance;

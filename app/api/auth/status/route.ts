@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { farcaster_id: userId },
       select: {
         siweSignature: true,
         siweExpiresAt: true,

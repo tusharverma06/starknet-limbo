@@ -145,11 +145,6 @@ export function ActivityDrawer({
 
   // Refetch data when drawer opens
   useEffect(() => {
-    console.log("🔄 Activity Drawer state changed:", {
-      isOpen,
-      userAddress,
-      userId,
-    });
     if (isOpen) {
       // Refetch on-chain bets
       if (userAddress) {

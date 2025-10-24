@@ -5,17 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ActivityDrawer } from "@/components/ui/ActivityDrawer";
 import { FundingModal } from "@/components/ui/FundingModal";
 import { WithdrawModal } from "@/components/ui/WithdrawModal";
-import { VerificationModal } from "./VerificationModal";
 import { useServerWallet } from "@/hooks/useServerWallet";
+import { useBalance } from "@/hooks/useBalance";
 import { useBetResultPoller } from "@/hooks/useBetResultPoller";
 import { useBetResultWatcher } from "@/hooks/useBetResultWatcher";
 import { useGameState } from "@/hooks/useGameState";
+import { useGameStore } from "@/store/gameStore";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { useQuickAuth } from "@/hooks/useQuickAuth";
+import { useSiweAuth } from "@/hooks/useSiweAuth";
 import { Loader2, Lock, RefreshCw } from "lucide-react";
 import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
 
 /**
  * Combined bet result type used in the game board
@@ -33,26 +36,26 @@ export function MiniappGameBoard() {
   const { user } = useFarcaster();
   const userId = user?.fid?.toString() || null;
 
+  // Use the new balance hook for real-time balance
   const {
-    wallet,
     balanceInEth,
     balanceInUsd,
-    isLoading: isWalletLoading,
-    isInitialLoading,
+    isLoading: isBalanceLoading,
+    isRefetching: isRefreshingBalance,
+    refetch: refetchBalance,
+  } = useBalance(userId);
+
+  // Keep useServerWallet for wallet operations (placeBet, withdraw)
+  const {
+    wallet,
     placeBet: placeBetWithServerWallet,
     withdraw: withdrawFromServerWallet,
-    refreshBalance,
+    isLoading: isWalletLoading,
+    isInitialLoading,
   } = useServerWallet(userId);
 
-  const [isRefreshingBalance, setIsRefreshingBalance] = useState(false);
-
   const handleRefreshBalance = async () => {
-    setIsRefreshingBalance(true);
-    try {
-      await refreshBalance();
-    } finally {
-      setIsRefreshingBalance(false);
-    }
+    await refetchBalance();
   };
 
   const {
@@ -62,6 +65,20 @@ export function MiniappGameBoard() {
     signIn,
     signOut,
   } = useQuickAuth();
+
+  // SIWE Auth for external wallet authorization
+  const {
+    isAuthenticated: isSiweAuthenticated,
+    signIn: siweSignIn,
+    isSigning: isSiweSigning,
+    error: siweError,
+  } = useSiweAuth();
+
+  // Wagmi account for checking external wallet connection
+  const {
+    address: externalWalletAddress,
+    isConnected: isExternalWalletConnected,
+  } = useAccount();
 
   const { latestBet, isPolling, startPolling, stopPolling } =
     useBetResultPoller(wallet?.address);
@@ -81,9 +98,15 @@ export function MiniappGameBoard() {
     setLastResult,
   } = useGameState();
 
+  const { deductBet, addPayout, setOptimisticBalance } = useGameStore();
+
   const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [betError, setBetError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
+  const [multiplierError, setMultiplierError] = useState("");
+  const [multiplierInput, setMultiplierInput] = useState(
+    targetMultiplier.toFixed(2)
+  );
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
@@ -97,23 +120,23 @@ export function MiniappGameBoard() {
   const [resultMultiplierColor, setResultMultiplierColor] = useState<
     "green" | "red"
   >("green");
-  const [commitmentHash, setCommitmentHash] = useState<string>("");
-  const [showCommitmentTooltip, setShowCommitmentTooltip] = useState(false);
+  // const [commitmentHash, setCommitmentHash] = useState<string>("");
+  // const [showCommitmentTooltip, setShowCommitmentTooltip] = useState(false);
 
-  // Generate commitment hash when authenticated and ready to bet
-  useEffect(() => {
-    if (isAuthenticated && !isPlacingBet) {
-      const generateCommitmentHash = () => {
-        const chars = "0123456789abcdef";
-        let hash = "0x";
-        for (let i = 0; i < 64; i++) {
-          hash += chars[Math.floor(Math.random() * chars.length)];
-        }
-        return hash;
-      };
-      setCommitmentHash(generateCommitmentHash());
-    }
-  }, [isAuthenticated, isPlacingBet]);
+  // // Generate commitment hash when authenticated and ready to bet
+  // useEffect(() => {
+  //   if (isAuthenticated && !isPlacingBet) {
+  //     const generateCommitmentHash = () => {
+  //       const chars = "0123456789abcdef";
+  //       let hash = "0x";
+  //       for (let i = 0; i < 64; i++) {
+  //         hash += chars[Math.floor(Math.random() * chars.length)];
+  //       }
+  //       return hash;
+  //     };
+  //     setCommitmentHash(generateCommitmentHash());
+  //   }
+  // }, [isAuthenticated, isPlacingBet]);
 
   // Handle bet resolution from polling
   useEffect(() => {
@@ -136,6 +159,11 @@ export function MiniappGameBoard() {
       setIsPlacingBet(false);
     }
   }, [latestBet, setLastResult, stopPolling]);
+
+  // Sync multiplierInput when targetMultiplier changes from external sources (buttons, etc.)
+  useEffect(() => {
+    setMultiplierInput(targetMultiplier.toFixed(2));
+  }, [targetMultiplier]);
 
   // Calculate potential payout in USD
   useEffect(() => {
@@ -188,6 +216,13 @@ export function MiniappGameBoard() {
       return;
     }
 
+    // If balance is less than $0.10, open funding modal
+    if (balanceInUsd < 0.1) {
+      console.log("💰 Balance too low (< $0.10), opening funding modal...");
+      setShowFundingModal(true);
+      return;
+    }
+
     // Check for amount validation errors first
     if (amountError) {
       console.log("⚠️ Amount validation error:", amountError);
@@ -203,13 +238,7 @@ export function MiniappGameBoard() {
       return;
     }
 
-    // If balance is 0 or insufficient, open funding modal instead
-    if (!balanceInUsd || balanceInUsd === 0) {
-      console.log("💰 No balance, opening funding modal...");
-      setShowFundingModal(true);
-      return;
-    }
-
+    // If bet amount exceeds balance, open funding modal
     if (betAmountNum > balanceInUsd) {
       console.log("💰 Insufficient balance, opening funding modal...");
       setShowFundingModal(true);
@@ -230,15 +259,32 @@ export function MiniappGameBoard() {
       return;
     }
 
+    // Validate multiplier before placing bet
+    const multiplierValue = parseFloat(multiplierInput);
+    if (
+      isNaN(multiplierValue) ||
+      multiplierValue < 1.01 ||
+      multiplierValue > 1000
+    ) {
+      setMultiplierError("Multiplier must be between 1.01 and 1000");
+      return;
+    }
+
+    // Clear multiplier error and update the actual multiplier value
+    setMultiplierError("");
+    setTargetMultiplier(multiplierValue);
+
     console.log("🎲 Starting bet placement with server wallet...");
     setIsPlacingBet(true);
     setBetError(null);
 
+    // Optimistic update: immediately deduct bet amount
+    const betAmountNum = parseFloat(betAmount);
+    deductBet(betAmountNum);
+    console.log("💸 Optimistically deducted bet amount:", betAmountNum);
+
     try {
-      const result = await placeBetWithServerWallet(
-        betAmount,
-        targetMultiplier
-      );
+      const result = await placeBetWithServerWallet(betAmount, multiplierValue);
 
       console.log("✅ Bet result received instantly:", result);
 
@@ -253,6 +299,16 @@ export function MiniappGameBoard() {
             Math.floor(result.result.limboMultiplier * 100)
           ),
         };
+
+        // Optimistic update: add payout if win
+        if (result.result.win) {
+          // Use payoutInUsd if available, otherwise calculate from payout
+          const payoutUsd =
+            (result.result as any).payoutInUsd ||
+            (parseFloat(result.result.payout as string) / 1e18) * 2000; // Fallback calculation
+          addPayout(payoutUsd);
+          console.log("🎉 Optimistically added payout:", payoutUsd);
+        }
 
         // Show animated result multiplier in mountain bg
         setResultMultiplierValue(result.result.limboMultiplier);
@@ -278,6 +334,9 @@ export function MiniappGameBoard() {
       }
     } catch (error) {
       console.error("❌ Place bet error:", error);
+      // Revert optimistic update by refreshing balance
+      await refetchBalance();
+
       setBetError(
         error instanceof Error ? error.message : "Failed to place bet"
       );
@@ -338,13 +397,49 @@ export function MiniappGameBoard() {
     }
 
     try {
-      // Call Quick Auth sign-in - no more signature prompts!
+      console.log("🔐 Starting sign-in flow...");
+
+      // Step 1: Check if external wallet is connected
+      if (!isExternalWalletConnected || !externalWalletAddress) {
+        console.log(
+          "⚠️ External wallet not connected - RainbowKit will handle connection"
+        );
+        // RainbowKit ConnectButton will handle opening the modal
+        return;
+      }
+
+      console.log("✅ External wallet connected:", externalWalletAddress);
+
+      // Step 2: Sign SIWE message to authorize custodial wallet
+      if (!isSiweAuthenticated) {
+        console.log("📝 Requesting SIWE signature...");
+        const siweSuccess = await siweSignIn();
+
+        if (!siweSuccess) {
+          console.error("❌ SIWE signature failed");
+          setBetError("Failed to authorize wallet. Please try again.");
+          return;
+        }
+
+        console.log("✅ SIWE signature completed");
+      } else {
+        console.log("✅ Already have SIWE authorization");
+      }
+
+      // Step 3: Complete Quick Auth flow (creates/links custodial wallet)
+      console.log("🔑 Completing Quick Auth...");
       const success = await signIn();
+
       if (success) {
-        console.log("✅ Quick Auth sign in successful");
+        console.log("✅ Sign-in flow completed successfully");
+        setBetError(null); // Clear any previous errors
+      } else {
+        console.error("❌ Quick Auth failed");
+        setBetError("Sign-in failed. Please try again.");
       }
     } catch (error) {
       console.error("❌ Sign in failed:", error);
+      setBetError(error instanceof Error ? error.message : "Sign-in failed");
     }
   };
 
@@ -410,15 +505,6 @@ export function MiniappGameBoard() {
             {/* Only show Verify & Activity buttons when authenticated */}
             {isAuthenticated && (
               <>
-                {/* Verify Button */}
-                <button
-                  onClick={() => setShowVerificationModal(true)}
-                  className="w-[30px] h-[30px] border-2 border-white rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                  title="Verify Fairness"
-                >
-                  <span className="text-white text-sm">✓</span>
-                </button>
-
                 {/* Activity Button */}
                 <button
                   onClick={() => setIsActivityDrawerOpen(true)}
@@ -471,6 +557,8 @@ export function MiniappGameBoard() {
                           ? "Sign In"
                           : chain.unsupported
                           ? "Wrong Network"
+                          : isSiweSigning
+                          ? "Authorizing..."
                           : isAuthLoading
                           ? "Signing In..."
                           : "Sign In"}
@@ -489,12 +577,7 @@ export function MiniappGameBoard() {
                     className="text-base text-white leading-[0.9]"
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    {custodialWallet
-                      ? `${custodialWallet.slice(
-                          0,
-                          4
-                        )}..${custodialWallet.slice(-4)}`
-                      : "Wallet"}
+                    {isBalanceLoading ? "..." : `$${balanceInUsd.toFixed(2)}`}
                   </span>
                   <span
                     className={`text-white text-xs transition-transform ${
@@ -727,13 +810,29 @@ export function MiniappGameBoard() {
               <div className="border-2 border-black rounded-xl h-[44px] flex items-center justify-between px-3 py-2">
                 <input
                   type="text"
+                  inputMode="decimal"
+                  placeholder="1.01 - 1000"
                   className="text-base text-black leading-[0.9] bg-transparent focus:outline-none focus:ring-0 flex-1"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
-                  value={targetMultiplier.toFixed(2)}
+                  value={multiplierInput}
                   onChange={(e) => {
-                    const val = parseFloat(e.target.value);
+                    const value = e.target.value;
+                    // Allow empty, numbers, and decimal point
+                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+                      setMultiplierInput(value);
+                      setMultiplierError(""); // Clear error while typing
+                    }
+                  }}
+                  onBlur={() => {
+                    // On blur, validate and format the input
+                    const val = parseFloat(multiplierInput);
                     if (!isNaN(val)) {
-                      setTargetMultiplier(Math.max(1.01, Math.min(1000, val)));
+                      const clamped = Math.max(1.01, Math.min(1000, val));
+                      setTargetMultiplier(clamped);
+                      setMultiplierInput(clamped.toFixed(2));
+                      setMultiplierError("");
+                    } else if (multiplierInput !== "") {
+                      setMultiplierError("Invalid multiplier");
                     }
                   }}
                   disabled={isDisabled}
@@ -742,6 +841,9 @@ export function MiniappGameBoard() {
                   x
                 </span>
               </div>
+              {multiplierError && (
+                <p className="text-xs text-red-600 mt-1">{multiplierError}</p>
+              )}
             </div>
 
             {/* COMMENTED OUT: Original Figma Power Bar (Segmented, Clickable) */}
@@ -832,8 +934,11 @@ export function MiniappGameBoard() {
               disabled={
                 !isAuthenticated ||
                 isDisabled ||
-                !!amountError ||
-                parseFloat(betAmount || "0") <= 0
+                (balanceInUsd < 0.1 && parseFloat(betAmount || "0") > 0) ||
+                (parseFloat(betAmount || "0") <= 0 && balanceInUsd >= 0.1) ||
+                (!!amountError &&
+                  balanceInUsd >= parseFloat(betAmount || "0")) ||
+                !!multiplierError
               }
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >
@@ -849,12 +954,14 @@ export function MiniappGameBoard() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     {getButtonText()}
                   </span>
-                ) : !balanceInUsd || balanceInUsd === 0 ? (
+                ) : balanceInUsd < 0.1 ? (
                   "Fund Wallet to Play"
                 ) : parseFloat(betAmount || "0") > balanceInUsd ? (
                   "Add More Funds"
                 ) : amountError ? (
                   "Fix Amount"
+                ) : multiplierError ? (
+                  "Fix Multiplier"
                 ) : parseFloat(betAmount || "0") <= 0 ? (
                   "Enter Amount"
                 ) : (
@@ -877,8 +984,6 @@ export function MiniappGameBoard() {
 
             {/* Insufficient balance warning */}
             {isAuthenticated &&
-              balanceInUsd !== null &&
-              balanceInUsd !== undefined &&
               parseFloat(betAmount || "0") > 0 &&
               parseFloat(betAmount || "0") > balanceInUsd && (
                 <div className="text-sm text-center p-3 bg-red-50 border-2 border-black rounded-lg">
@@ -891,59 +996,22 @@ export function MiniappGameBoard() {
                 </div>
               )}
 
+            {/* Low balance warning */}
+            {isAuthenticated && balanceInUsd < 0.1 && balanceInUsd > 0 && (
+              <div className="text-sm text-center p-3 bg-yellow-50 border-2 border-black rounded-lg">
+                <p
+                  className="text-yellow-700"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  Balance too low. Please add at least $0.10 to play.
+                </p>
+              </div>
+            )}
+
             {/* Potential Win */}
             <div className="flex items-center justify-between pt-3 border-t-2 border-gray-200">
               <div className="flex items-center gap-2 relative">
                 <p className="potential-payout">Potential Win</p>
-                {/* Lock Icon with Tooltip - Only show when authenticated and has commitment hash */}
-                {isAuthenticated && commitmentHash && !isPlacingBet && (
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setShowCommitmentTooltip(!showCommitmentTooltip)
-                      }
-                      className="p-0.5 hover:bg-gray-200 rounded transition-colors"
-                      title="Provably Fair Commitment"
-                    >
-                      <Lock className="w-3 h-3 text-green-600" />
-                    </button>
-
-                    {/* Tooltip */}
-                    <AnimatePresence>
-                      {showCommitmentTooltip && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.9, y: 5 }}
-                          animate={{ opacity: 1, scale: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.9, y: 5 }}
-                          className="absolute bottom-full left-0 mb-2 z-50 w-48"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="bg-white border-2 border-black rounded-lg shadow-lg p-3">
-                            <div className="flex items-start gap-2 mb-2">
-                              <Lock className="w-4 h-4 text-black/8- flex-shrink-0 mt-0.5" />
-                              <div className="flex-1">
-                                <p className="text-xs font-bold text-black mb-1">
-                                  Committed Round
-                                </p>
-                                <p className="text-[10px] text-gray-600 leading-tight">
-                                  This round is provably fair
-                                </p>
-                              </div>
-                            </div>
-                            <div className="pt-2 border-t border-black">
-                              <p className="text-[9px] text-gray-500 mb-1">
-                                Hash:
-                              </p>
-                              <code className="text-[9px] font-mono text-black/80 break-all block">
-                                {commitmentHash.slice(0, 20)}...
-                              </code>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
               </div>
               <p
                 className="text-[18px] text-black text-center leading-[0.9] font-bold"
@@ -953,6 +1021,7 @@ export function MiniappGameBoard() {
               </p>
             </div>
 
+            {/* Display bet error */}
             {betError && (
               <div className="text-sm text-red-600 text-center p-3 bg-red-50 border border-red-200 rounded-lg">
                 {betError}
@@ -1014,7 +1083,7 @@ export function MiniappGameBoard() {
           isOpen={showFundingModal}
           onClose={() => setShowFundingModal(false)}
           walletAddress={wallet.address}
-          currentBalance={balanceInEth || "0"}
+          currentBalance={balanceInEth?.toString() || "0"}
           userId={userId}
           onSuccess={handleRefreshBalance}
         />
@@ -1026,7 +1095,7 @@ export function MiniappGameBoard() {
           isOpen={showWithdrawModal}
           onClose={() => setShowWithdrawModal(false)}
           walletAddress={wallet.address}
-          currentBalance={balanceInEth || "0"}
+          currentBalance={balanceInEth?.toString() || "0"}
           onWithdraw={handleWithdraw}
         />
       )}

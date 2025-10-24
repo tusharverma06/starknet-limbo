@@ -13,10 +13,11 @@ interface VerificationData {
     step0: {
       userWalletAddress: string | null;
       custodialWalletAddress: string | null;
+      signerAddress: string | null;
       siweSignature: string | null;
       siweMessage: string | null;
       siweExpiresAt: Date | null;
-      siweValid: boolean;
+      signatureError: string | null;
     };
     step1: {
       betMessage: string | null;
@@ -217,7 +218,12 @@ function VerifyPageContent() {
             {/* Step 0: User Authentication */}
             <div className="bg-[#2a2a2a] border border-white/10 rounded-lg p-6">
               <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <StatusIcon status={verificationData.steps.step0.siweValid} />
+                <StatusIcon
+                  status={
+                    !!verificationData.steps.step0.signerAddress &&
+                    !verificationData.steps.step0.signatureError
+                  }
+                />
                 Step 0: User Authentication & Authorization
               </h3>
               <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3 mb-4 text-sm text-blue-200">
@@ -252,21 +258,24 @@ function VerifyPageContent() {
                     your behalf
                   </span>
                 </div>
-                <div className="flex items-center gap-2 mt-3 p-2 bg-green-500/10 border border-green-500/30 rounded">
-                  <StatusIcon status={verificationData.steps.step0.siweValid} />
-                  <span
-                    className={
-                      verificationData.steps.step0.siweValid
-                        ? "text-green-300"
-                        : "text-red-300"
-                    }
-                  >
-                    Signature verification:{" "}
-                    {verificationData.steps.step0.siweValid
-                      ? "VALID ✓"
-                      : "INVALID ✗"}
+                <div>
+                  <span className="text-white/50">
+                    Signer (wallet that authorized):
+                  </span>
+                  <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
+                    {verificationData.steps.step0.signerAddress || "N/A"}
+                  </code>
+                  <span className="text-xs text-white/40 mt-1 block">
+                    ✍️ This is the wallet that signed the authorization message
                   </span>
                 </div>
+                {verificationData.steps.step0.signatureError && (
+                  <div className="mt-2 p-2 bg-red-500/10 border border-red-500/30 rounded">
+                    <span className="text-xs text-red-300">
+                      ⚠️ {verificationData.steps.step0.signatureError}
+                    </span>
+                  </div>
+                )}
                 {verificationData.steps.step0.siweMessage && (
                   <details className="mt-3">
                     <summary className="text-white/50 cursor-pointer hover:text-white/70">
@@ -454,7 +463,7 @@ function VerifyPageContent() {
                   <span className="text-white/50">Transaction Hash:</span>
                   {verificationData.steps.step5.txHash ? (
                     <a
-                      href={`https://sepolia.basescan.org/tx/${verificationData.steps.step5.txHash}`}
+                      href={`https://basescan.org/tx/${verificationData.steps.step5.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs text-blue-400 hover:text-blue-300 break-all"

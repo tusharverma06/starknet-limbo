@@ -1,0 +1,183 @@
+🎯 GOAL
+
+Design a backend system (Next.js API routes) to:
+
+Place and verify bets securely
+
+Generate off-chain provably fair random numbers
+
+Settle payouts quickly
+
+Maintain on-chain verifiability and transparency
+
+Avoid data leaks, tampering, or latency delays
+
+🧱 SYSTEM OVERVIEW
+
+Core flow:
+
+Player places a bet request (via frontend).
+
+Backend verifies request → creates random seed → returns result instantly.
+
+Bet outcome + verification proof is stored.
+
+Contract or admin can later verify the proof for fairness.
+
+Custodial wallet executes payouts.
+
+🗂️ MAJOR TASKS & SUBTASKS
+1️⃣ Bet Placement API (/api/place-bet)
+
+Task: Handle bet requests from frontend.
+
+Subtasks:
+
+ Accept player info, bet amount, target multiplier.
+
+ Validate bet input (e.g., limits, game active).
+
+ Generate a serverSeed (secure random, never revealed).
+
+ Derive a serverSeedHash = SHA256(serverSeed) (to commit).
+
+ Combine with clientSeed (if using) or user ID to form randomness base.
+
+ Store betId, serverSeedHash, wager, multiplier, timestamp in DB.
+
+ Return the betId + serverSeedHash to the frontend immediately.
+
+2️⃣ Random Result Generation
+
+Task: Generate fair, verifiable random number.
+
+Subtasks:
+
+ When resolving bet, reveal serverSeed.
+
+ Compute:
+
+randomValue = SHA256(serverSeed + playerId + betId)
+gameNumber = (BigInt(randomValue) % 1e9n) + 1n
+
+
+ Use this gameNumber to determine multiplier outcome (e.g., limbo crash point).
+
+ Store both serverSeed and randomValue with bet result.
+
+3️⃣ Fairness Verification
+
+Task: Allow anyone to verify that results weren’t tampered with.
+
+Subtasks:
+
+ Expose an API endpoint /api/verify-bet?betId=.
+
+ For a given betId, return:
+
+{
+  "serverSeed": "...",
+  "serverSeedHash": "...",
+  "playerId": "...",
+  "betId": "...",
+  "result": "...",
+  "randomValue": "..."
+}
+
+
+ Public verifiers can check:
+
+SHA256(serverSeed) == serverSeedHash
+randomValue = SHA256(serverSeed + playerId + betId)
+
+
+ If both match → ✅ fair and untampered.
+
+4️⃣ Custodial Wallet Payout System
+
+Task: Manage automatic payouts to player’s custodial wallet.
+
+Subtasks:
+
+ Maintain wallet private keys securely (e.g., encrypted Vault).
+
+ If playerWins, use the custodial wallet to call contract or transfer funds.
+
+ Log every payout event with txHash and timestamp.
+
+ In case of failure, queue payout for retry.
+
+ Implement rate limiting and safety threshold for balance.
+
+5️⃣ Fast Response & UX Optimization
+
+Task: Keep gameplay instant while ensuring fairness.
+
+Subtasks:
+
+ Return “Result” within 300–600 ms by calculating outcome off-chain instantly.
+
+ Perform payout asynchronously (background task or cron).
+
+ Keep UI in sync via WebSocket or Next.js Server Actions.
+
+ Cache bet results to show history without re-querying chain.
+
+6️⃣ Security & Anti-Tamper Measures
+
+Task: Prevent manipulation, replay, or leak of seeds.
+
+Subtasks:
+
+ Never expose serverSeed before bet is resolved.
+
+ Always hash serverSeed before storing initial commit.
+
+ Use separate salts for hashing (optional but adds entropy).
+
+ Encrypt stored seeds using AES or environment-based key.
+
+ Log every API access for auditing.
+
+ Add rate limiting on /api/place-bet.
+
+7️⃣ Optional On-Chain Verification (Future Step)
+
+Task: Let smart contract verify randomness post-game.
+
+Subtasks:
+
+ Add contract function verifySeed(bytes32 serverSeed, bytes32 serverSeedHash)
+
+ Return true if keccak256(serverSeed) == serverSeedHash.
+
+ Optional: verify full randomValue derivation.
+
+📜 DATA STRUCTURE EXAMPLE
+Database bets table:
+Field	Type	Description
+betId	string	Unique UUID
+playerId	string	Custodial wallet ID
+serverSeedHash	string	Commitment to randomness
+serverSeed	string (nullable)	Revealed later
+wager	string	Bet amount
+targetMultiplier	string	Chosen multiplier
+randomValue	string	Derived SHA256 output
+outcome	string	win/lose
+payout	string	amount if win
+status	string	pending/resolved
+txHash	string	payout tx (optional)
+
+🚀 END-TO-END FLOW SUMMARY
+
+Player → places bet (backend commits serverSeedHash).
+
+Backend → generates result instantly (but keeps seed secret).
+
+Player → sees result (win/lose instantly).
+
+Backend → later reveals serverSeed for public verification.
+
+Custodial wallet → pays out asynchronously if win.
+
+Anyone → can verify fairness using hash checks.

@@ -1,0 +1,71 @@
+- We need to save exchange rate too for each bet which would be price of eth in use
+- We need to save bet placed amounts in eth and dollar both. 
+- And we should be saving all this payouts and placed eth amounts formatted.
+- We need to sign a message from custodial wallet each time before placing bet , which would include the bet details and a pre committed hash that’s gonna be used in server side so we can match later and say true.
+- We need to save transactionHash and signature to bet table each time we save bet.
+Now for the verification flow:
+- We need to add login button which would use siwe for auth and that message should include that you are allowing us to use this Wallet to place bets . We need to save this signature and the message  and it should show the newly created wallet address. Smth like You are approving wallet address 0xNewOne to login and sign bets until 2025-10-18 13:45:05\n Allowed to initiate withdrawals back to the initial wallet\n
+- This should be linked to user table which must have custodial wallet so we can all the data and show it in verification
+- We need to move the flow of verifying directly on game result model to recent bets history, can add a small icon there which can open the modal etc
+- CRITICAL: WE NEED TO STRICTLY ENSURE THAT WE ACHIEVE ALL OF THIS AND PROCESSING TIME SHOULD STILL NOT GREATER THAN 1-3 seconds.
+
+Flow:
+
+
+Basic user auth verify
+- Show user details by custodial wallet address: -signature, address, custodial_wallet, expires at etc.
+- Show the  message separately using signature, wtv its fetched from onchain and we  need to make sure its true w/ Wallet address and signature itself it should be displayed
+Step1 : >>> Checking message signature:
+- Show bet signature message that we saved that was signed by custodial wallet contained pre committed hash. It should also display: w/ Wallet address and signature itself it should be displayed.
+
+
+Step2:>>> 2. Check that the bet request signature is signed by the custodied_address: True/False
+
+Step 3: 
+- Show the random number was generated using the same hash you showed in message.
+- Show that the server seed was extracted from the hash in signature.
+- Matches? Show true
+- Show simulated random float and simulated payout using that float based on other bet params.
+
+Step 4:
+>>> Check that the bet's payout is correct: True ( should match to simulated one)
+
+Some helpful info
+def simulate_limbo(bet: int, edge: float, randomness: bytes, target_multiplier: float) -> int:
+    x = randomness_to_uniform_float(randomness)
+    limbo_multiplier = (1.0 - edge) / max(1e-9, x)
+    if limbo_multiplier > target_multiplier:
+        return math.floor(target_multiplier * bet)
+    else:
+        return 0
+
+            simulated_win_amount = simulate_limbo(bet_amount, edge, randomness, target)
+
+  bet_amount = bet["raw_bet"]
+    win_amount = bet["raw_win"]
+    edge = 0.02 ( constant)
+    randomness = bet_randomness(bet)
+
+    verified = win_amount == simulated_win_amount
+
+Step 5:
+ >>>Check that the bet's settlement values are correct: True/False
+
+Fetch from an api like alchemy and use their getTransaction method using json and then show the whole response directly on ui.
+
+At the end: 
+>>> bet Settlement balance delta: -385674
+
+>>> ether tx balance delta: -385674
+
+Finally show this :
+Step 6:
+>>>  Check that the settlement values match the on-chain transaction values: True
+
+Display:
+“Finished”
+
+
+Now this all verification stuff needs to be on another page , out of mini app which would be just a dark gray bg and over that we can show more darker containers having json responses and all these text in white/70 smth colour.
+
+Layout should first show an input of bet id and a button verify.. and do you think we are gonna need any extra stuff for this? Thru input.

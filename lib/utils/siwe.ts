@@ -40,7 +40,19 @@ export function verifySiweSignature(
 ): boolean {
   try {
     const recoveredAddress = verifyMessage(message, signature);
-    return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
+    const isValid =
+      recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
+
+    if (!isValid) {
+      console.error("SIWE signature verification failed:", {
+        expectedAddress: expectedAddress.toLowerCase(),
+        recoveredAddress: recoveredAddress.toLowerCase(),
+        messagePreview: message.substring(0, 100) + "...",
+        signaturePreview: signature.substring(0, 20) + "...",
+      });
+    }
+
+    return isValid;
   } catch (error) {
     console.error("Error verifying SIWE signature:", error);
     return false;

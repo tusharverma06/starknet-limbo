@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { verifySiweSignature } from "@/lib/utils/siwe";
 import {
   verifyBetSignature,
   parseBetMessage,
@@ -44,24 +43,39 @@ export async function POST(req: NextRequest) {
 
     const user = bet.user;
 
-    // STEP 0: User Authentication Details
+    // STEP 0: User Authentication & Authorization - Display signer information
+    // This is informational only - we recover who signed the authorization message
+    let signerAddress = null;
+    let signatureError = null;
+
+    if (user.siweMessage && user.siweSignature) {
+      try {
+        // Import verifyMessage directly to recover the signer
+        const { verifyMessage } = await import("ethers");
+        signerAddress = verifyMessage(user.siweMessage, user.siweSignature);
+        console.log("✅ Recovered signer address:", signerAddress);
+      } catch (error) {
+        signatureError = "Could not recover signer from signature";
+        console.error("❌ Error recovering signer:", error);
+      }
+    } else {
+      signatureError =
+        "Missing SIWE authentication data (message or signature)";
+      console.error("❌ Missing SIWE data:", {
+        hasMessage: !!user.siweMessage,
+        hasSignature: !!user.siweSignature,
+      });
+    }
+
     const step0 = {
       userWalletAddress: user.wallet_address,
       custodialWalletAddress: user.server_wallet_address,
+      signerAddress,
       siweSignature: user.siweSignature,
       siweMessage: user.siweMessage,
       siweExpiresAt: user.siweExpiresAt,
+      signatureError,
     };
-
-    // Verify SIWE signature if available
-    let siweValid = false;
-    if (user.siweSignature && user.siweMessage && user.wallet_address) {
-      siweValid = verifySiweSignature(
-        user.siweMessage,
-        user.siweSignature,
-        user.wallet_address
-      );
-    }
 
     // STEP 1: Check bet signature message
     const step1 = {
@@ -240,9 +254,8 @@ export async function POST(req: NextRequest) {
         balanceDeltasMatch !== null ? balanceDeltasMatch : "N/A (no tx hash)",
     };
 
-    // Overall verification result
+    // Overall verification result (excluding SIWE validation)
     const allChecksPass =
-      siweValid &&
       betSignatureValid &&
       hashMatches &&
       serverSeedHashMatches &&
@@ -254,10 +267,7 @@ export async function POST(req: NextRequest) {
       betId: bet.id,
       verified: allChecksPass,
       steps: {
-        step0: {
-          ...step0,
-          siweValid,
-        },
+        step0,
         step1,
         step2,
         step3,

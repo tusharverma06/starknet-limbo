@@ -641,7 +641,7 @@ export function ProvablyFairVerification({
                                             )}
                                           </button>
                                           <a
-                                            href={`https://sepolia.basescan.org/tx/${hash}`}
+                                            href={`https://basescan.org/tx/${hash}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="p-1 hover:bg-gray-100 rounded"

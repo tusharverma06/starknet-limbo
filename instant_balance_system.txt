@@ -1,0 +1,117 @@
+⚡ INSTANT BET RESULT + BACKGROUND PAYOUT SYSTEM
+================================================
+
+This document explains how to show bet results instantly in your game while doing all blockchain transactions asynchronously in the background — providing a smooth, responsive user experience.
+
+------------------------------------------------
+1️⃣ ARCHITECTURE OVERVIEW
+------------------------------------------------
+
+Layer | Description | Update Timing
+------|--------------|---------------
+Frontend (UI State) | User-visible live balance | Instantly on bet
+Backend Database | Source of truth (balance, bets) | Real-time & reconciled
+Blockchain | Actual on-chain transactions | Asynchronously in background
+
+------------------------------------------------
+2️⃣ FLOW SUMMARY
+------------------------------------------------
+
+1. User places bet → Frontend immediately deducts balance (optimistic update)
+2. Backend validates and stores bet result instantly
+3. Backend triggers async worker to process on-chain transactions (house wallet ↔ user wallet)
+4. Frontend shows result immediately (win/loss)
+5. Worker updates balance once transactions complete
+6. Frontend periodically refreshes or listens via WebSocket for updated balance
+
+------------------------------------------------
+3️⃣ FRONTEND CODE (Optimistic Updates)
+------------------------------------------------
+
+Example (React/Next.js):
+
+const [balance, setBalance] = useState(0);
+
+useEffect(() => {
+  fetch("/api/user/balance")
+    .then(res => res.json())
+    .then(data => setBalance(data.balance));
+}, []);
+
+const handlePlaceBet = async (amount, multiplier) => {
+  setBalance(prev => prev - amount); // instant deduct
+
+  const res = await fetch("/api/bet", {
+    method: "POST",
+    body: JSON.stringify({ amount, multiplier }),
+  });
+  const bet = await res.json();
+
+  if (bet.result.win) {
+    setBalance(prev => prev + amount * bet.result.limboMultiplier);
+  }
+};
+
+// Auto sync balance every few seconds
+useEffect(() => {
+  const interval = setInterval(() => {
+    fetch("/api/user/balance")
+      .then(res => res.json())
+      .then(data => setBalance(data.balance));
+  }, 5000);
+  return () => clearInterval(interval);
+}, []);
+
+------------------------------------------------
+4️⃣ BACKEND LOGIC (API /api/bet)
+------------------------------------------------
+
+1. Validate bet + user balance
+2. Deduct funds from balance (lock amount)
+3. Generate provably fair result instantly
+4. Return result JSON immediately
+5. Kick off async blockchain transactions:
+   - Send bet from user wallet → house wallet
+   - If win: payout house → user
+6. Once confirmed, update database balance and mark bet as resolved
+
+------------------------------------------------
+5️⃣ BACKGROUND WORKER (ASYNC PAYOUT)
+------------------------------------------------
+
+Run this as a queue or detached function:
+
+async function processBlockchainTransactions(...) {
+  await sendToHouseWallet();
+  if (win) await sendFromHouseWallet();
+  await prisma.bet.update({ status: "resolved" });
+  await prisma.user.update({ balance: { increment: payout } });
+}
+
+------------------------------------------------
+6️⃣ SECURITY & ERROR HANDLING
+------------------------------------------------
+
+- All blockchain actions validated server-side
+- Failed payouts marked as "pending_payout"
+- UI auto-refresh or re-fetch ensures consistency
+- Optimistic UI ensures smooth experience
+
+------------------------------------------------
+✅ FINAL EXPERIENCE SUMMARY
+------------------------------------------------
+
+1. User clicks BET → Instant animation & result
+2. Backend confirms bet logic within <100ms
+3. Blockchain payout runs asynchronously
+4. User's balance appears updated instantly
+5. Reconciliation handled silently in background
+
+------------------------------------------------
+🔧 OPTIONAL IMPROVEMENTS
+------------------------------------------------
+
+- Add Redis job queue for failed payouts
+- Use WebSocket to push balance updates instantly
+- Add retry logic for payout retries
+- Include transaction hash on verification page

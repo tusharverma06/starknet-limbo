@@ -569,7 +569,7 @@ export function ActivityDrawer({
                                                 : "Bet Tx:"}
                                             </span>
                                             <a
-                                              href={`https://sepolia.basescan.org/tx/${bet.txHash}`}
+                                              href={`https://basescan.org/tx/${bet.txHash}`}
                                               target="_blank"
                                               rel="noopener noreferrer"
                                               className="font-mono text-blue-600 hover:underline text-[10px] flex items-center gap-1"
@@ -685,7 +685,7 @@ export function ActivityDrawer({
                           <span>Tx Hash:</span>
                           {tx.txHash.startsWith("0x") ? (
                             <a
-                              href={`https://sepolia.basescan.org/tx/${tx.txHash}`}
+                              href={`https://basescan.org/tx/${tx.txHash}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-mono text-blue-600 hover:underline text-[10px] flex items-center gap-1"

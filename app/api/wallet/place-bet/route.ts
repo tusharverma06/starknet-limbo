@@ -236,6 +236,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Log SIWE authorization status (for auditing)
+    if (!user.siweSignature || !user.siweMessage) {
+      console.log("⚠️ User placing bet without SIWE signature (legacy flow)");
+    } else if (user.siweExpiresAt) {
+      const now = new Date();
+      const expiresAt = new Date(user.siweExpiresAt);
+      if (now > expiresAt) {
+        console.log("⚠️ User SIWE signature expired:", user.siweExpiresAt);
+      } else {
+        console.log("✅ SIWE authorization valid");
+      }
+    }
+
     // Get wallet from database
     const walletData = await walletDb.getWallet(user.id);
     if (!walletData) {
@@ -394,6 +407,7 @@ export async function POST(req: NextRequest) {
         win: result.outcome === "win",
         limboMultiplier: Number(result.limboMultiplier) / 100,
         payout: result.payout,
+        payoutInUsd: parseFloat(payoutUsd),
         gameNumber: result.gameNumber,
         amount: betAmountWei.toString(),
         targetMultiplier: multiplierNum,

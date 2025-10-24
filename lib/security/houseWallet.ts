@@ -123,6 +123,8 @@ export async function sendFromHouseWallet(
     if (amount <= BigInt(0)) {
       throw new Error("Amount must be greater than 0");
     }
+    const nonce = await wallet.getNonce();
+    console.log("🔑 Nonce:", nonce);
 
     // Send transaction
     const tx = await wallet.sendTransaction({
@@ -130,6 +132,7 @@ export async function sendFromHouseWallet(
       value: amount,
       // Add reasonable gas settings
       gasLimit: 21000,
+      nonce: nonce,
     });
 
     // Return only the transaction hash (safe to log)

@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     // Check if SIWE is valid and not expired
     const hasSignature = !!user.siweSignature && !!user.siweExpiresAt;
     const isExpired =
-      hasSignature && new Date(user.siweExpiresAt) <= new Date();
+      hasSignature && new Date(user.siweExpiresAt!) <= new Date();
     const isAuthenticated = hasSignature && !isExpired;
 
     return NextResponse.json({

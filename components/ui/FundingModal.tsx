@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Copy, X, ArrowDown, AlertTriangle } from "lucide-react";
 import {
   useAccount,
@@ -12,6 +12,7 @@ import {
 import { parseEther, formatEther } from "viem";
 import { CHAIN } from "@/lib/constants";
 import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
+import { useOnClickOutside } from "usehooks-ts";
 
 interface FundingModalProps {
   isOpen: boolean;
@@ -46,6 +47,16 @@ export function FundingModal({
   const { switchChain } = useSwitchChain();
   const { data: userBalance } = useBalance({
     address: userAddress,
+  });
+
+  // Ref for click outside detection
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close modal when clicking outside (only if not funding)
+  useOnClickOutside(modalRef as React.RefObject<HTMLElement>, () => {
+    if (!isFunding && isOpen) {
+      onClose();
+    }
   });
 
   // Wait for transaction confirmation
@@ -102,8 +113,6 @@ export function FundingModal({
   // Handle transaction confirmation
   useEffect(() => {
     if (isTxConfirmed && txHash && userId) {
-      console.log("✅ Transaction confirmed! Logging deposit and refreshing balance...");
-
       // Log the deposit transaction
       const logDeposit = async () => {
         try {
@@ -118,12 +127,8 @@ export function FundingModal({
           });
 
           if (!response.ok) {
-            console.error("Failed to log deposit transaction");
-          } else {
-            console.log("✅ Deposit transaction logged");
           }
         } catch (error) {
-          console.error("Error logging deposit:", error);
         }
       };
 
@@ -154,7 +159,6 @@ export function FundingModal({
     try {
       await switchChain({ chainId: CHAIN.id });
     } catch (error) {
-      console.error(`Failed to switch to ${CHAIN.name}:`, error);
       setError(`Failed to switch to ${CHAIN.name} network`);
     }
   };
@@ -192,9 +196,6 @@ export function FundingModal({
         value: parseEther(ethAmount.toString()),
       });
 
-      console.log("✅ Funding transaction sent:", hash);
-      console.log("⏳ Waiting for transaction confirmation...");
-
       // Set the transaction hash to trigger waiting for confirmation
       setTxHash(hash);
     } catch (err) {
@@ -205,7 +206,7 @@ export function FundingModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-md w-full" ref={modalRef}>
         <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[0px_4px_0px_0px_#000000]">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">

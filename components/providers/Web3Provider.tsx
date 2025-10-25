@@ -26,13 +26,10 @@ export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initMiniApp = async () => {
       try {
-        console.log("🚀 Initializing Farcaster Mini App...");
-
         await sdk.actions.ready();
 
         const isInMiniApp = await sdk.isInMiniApp();
         if (isInMiniApp) {
-          console.log("🟣 Configuring Farcaster Mini App wallet connector...");
           const newConfig = createConfig({
             chains: [CHAIN],
             connectors: [miniAppConnector()],
@@ -40,12 +37,9 @@ export function Providers({ children }: { children: ReactNode }) {
               [CHAIN.id]: http(),
             },
           });
-          console.log("🟣 Mini App config created:", newConfig);
           setConfig(newConfig);
-          console.log("🟣 Mini App config set successfully");
         }
       } catch (error) {
-        console.log("ℹ️ Not in Farcaster context, using base config:", error);
       } finally {
         // setIsInitialized(true);
       }

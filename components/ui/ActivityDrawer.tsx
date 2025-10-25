@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -19,6 +19,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useEthPrice } from "@/hooks/useEthPrice";
 import { ProvablyFairVerification } from "@/components/game/ProvablyFairVerification";
 import { useQuery } from "@tanstack/react-query";
+import { useOnClickOutside } from "usehooks-ts";
 
 interface ActivityDrawerProps {
   isOpen: boolean;
@@ -76,6 +77,16 @@ export function ActivityDrawer({
   const [verifyingBetId, setVerifyingBetId] = useState<string | null>(null);
   const [showVerification, setShowVerification] = useState(false);
 
+  // Ref for click outside detection
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Close drawer when clicking outside (only on the drawer itself, not backdrop)
+  useOnClickOutside(drawerRef as React.RefObject<HTMLElement>, () => {
+    if (isOpen) {
+      onClose();
+    }
+  });
+
   // Fetch off-chain bets using React Query
   const {
     data: offchainBetsData,
@@ -85,27 +96,18 @@ export function ActivityDrawer({
     queryKey: ["betHistory", userAddress],
     queryFn: async () => {
       if (!userAddress) {
-        console.log("⚠️ No userAddress (custodial wallet) provided");
         return { bets: [], count: 0 };
       }
 
-      console.log(
-        "📥 Fetching bets for custodial address (playerId):",
-        userAddress
-      );
       const response = await fetch(
         `/api/wallet/bet-history?playerId=${userAddress}`
       );
-      console.log("📥 Bet history response status:", response.status);
 
       if (!response.ok) {
-        console.error("❌ Bet history request failed:", response.status);
         throw new Error("Failed to fetch bet history");
       }
 
       const data = await response.json();
-      console.log("📥 Bet history data:", data);
-      console.log("📥 Number of bets:", data.bets?.length || 0);
       return data;
     },
     enabled: !!userAddress && isOpen, // Only fetch when drawer is open and we have an address
@@ -213,6 +215,7 @@ export function ActivityDrawer({
 
           {/* Drawer */}
           <motion.div
+            ref={drawerRef}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -349,16 +352,21 @@ export function ActivityDrawer({
                         <div className="flex items-center justify-center gap-1.5">
                           <Clock className="w-3 h-3" />
                           Active
-                          {offchainBets.filter((b) => b.status === "pending")
-                            .length > 0 && (
-                            <span className="ml-1 px-1.5 py-0.5 bg-black text-white rounded-full text-[10px]">
-                              {
-                                offchainBets.filter(
-                                  (b) => b.status === "pending"
-                                ).length
-                              }
-                            </span>
-                          )}
+                          {(() => {
+                            const activeBetsCount = offchainBets.filter(
+                              (b) =>
+                                b.status === "pending" ||
+                                (b.status === "processing" && b.outcome !== "loss") ||
+                                b.status === "pending_payout" ||
+                                (b.status === "resolved" && !b.txHash && b.outcome === "win") ||
+                                (b.status === "complete" && !b.txHash && b.outcome === "win")
+                            ).length;
+                            return activeBetsCount > 0 ? (
+                              <span className="ml-1 px-1.5 py-0.5 bg-black text-white rounded-full text-[10px]">
+                                {activeBetsCount}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                       </button>
                       <button
@@ -385,27 +393,32 @@ export function ActivityDrawer({
                         </div>
                       ) : (
                         (() => {
-                          const filteredBets = offchainBets.filter((b) =>
-                            betSubTab === "active"
-                              ? b.status === "pending" ||
-                                b.status === "pending_payout"
-                              : b.status === "resolved" ||
-                                b.status === "complete" ||
-                                b.status === "processing" ||
+                          const filteredBets = offchainBets.filter((b) => {
+                            if (betSubTab === "active") {
+                              // Active tab: Show bets that are still processing (no txHash and not a loss)
+                              // Losses are immediately final and go to resolved tab
+                              return (
+                                b.status === "pending" ||
+                                (b.status === "processing" && b.outcome !== "loss") ||
+                                b.status === "pending_payout" ||
+                                // Only show resolved/complete wins without txHash (awaiting payout)
+                                (b.status === "resolved" && !b.txHash && b.outcome === "win") ||
+                                (b.status === "complete" && !b.txHash && b.outcome === "win")
+                              );
+                            } else {
+                              // Resolved tab: Show completed bets
+                              // - Wins with txHash (payout confirmed)
+                              // - All losses (don't need txHash, no payout)
+                              // - Any other final states
+                              return (
+                                (b.status === "resolved" && b.txHash) ||
+                                (b.status === "complete" && b.txHash) ||
+                                (b.status === "processing" && b.outcome === "loss") ||
+                                (b.status === "complete" && b.outcome === "loss") ||
                                 b.status === "paid_out"
-                          );
-
-                          console.log("🔍 Total bets:", offchainBets.length);
-                          console.log("🔍 Active tab:", betSubTab);
-                          console.log("🔍 Filtered bets:", filteredBets.length);
-                          console.log(
-                            "🔍 All bet statuses:",
-                            offchainBets.map((b) => ({
-                              id: b.id,
-                              status: b.status,
-                              outcome: b.outcome,
-                            }))
-                          );
+                              );
+                            }
+                          });
 
                           return filteredBets.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">

@@ -53,7 +53,6 @@ export function GameResult({
           setPayoutUsd(payoutUsdValue);
         }
       } catch (error) {
-        console.error("Error calculating USD values:", error);
       }
     };
 

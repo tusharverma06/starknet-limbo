@@ -6,192 +6,10 @@ import { MIN_BET_USD } from "@/lib/constants";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
 import { prisma } from "@/lib/db/prisma";
 import { generateBetResult } from "@/lib/utils/provablyFair";
-import {
-  sendFromHouseWallet,
-  getHouseWalletBalance,
-  sendToHouseWallet,
-} from "@/lib/security/houseWallet";
 import { createBetMessage, signBetMessage } from "@/lib/utils/messageSigning";
 
 // Import cached price for reuse
 let cachedEthPrice: number | null = null;
-
-/**
- * Process blockchain transactions in the background
- * This runs asynchronously after returning the bet result to the user
- */
-async function processBlockchainTransactions(
-  betId: string,
-  userId: string,
-  encryptedPrivateKey: string,
-  userWalletAddress: string,
-  betAmount: bigint,
-  outcome: string,
-  payout: string
-) {
-  let betTxHash: string | null = null;
-  let payoutTxHash: string | null = null;
-
-  try {
-    console.log(
-      "🔄 [Background] Starting blockchain transaction processing for bet:",
-      betId
-    );
-
-    // Step 1: Send bet amount FROM user's wallet TO house wallet
-    try {
-      betTxHash = await sendToHouseWallet(encryptedPrivateKey, betAmount);
-      console.log("✅ [Background] Bet transaction sent:", betTxHash);
-      console.log("⏳ [Background] Waiting for bet transaction confirmation...");
-
-      // Wait for transaction confirmation
-      const { JsonRpcProvider } = await import("ethers");
-      const rpcUrl =
-        process.env.NEXT_PUBLIC_RPC_URL ||
-        `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-      const provider = new JsonRpcProvider(rpcUrl);
-
-      const receipt = await provider.waitForTransaction(betTxHash, 1); // Wait for 1 confirmation
-
-      if (!receipt || receipt.status === 0) {
-        throw new Error("Bet transaction failed on-chain");
-      }
-
-      console.log("✅ [Background] Bet transaction confirmed:", betTxHash);
-
-      // Record bet transaction
-      await prisma.walletTransaction.create({
-        data: {
-          userId: userId,
-          txHash: betTxHash,
-          txType: "bet_placed",
-          amount: betAmount.toString(),
-          status: "confirmed",
-          confirmedAt: new Date(),
-        },
-      });
-    } catch (error) {
-      console.error(
-        "❌ [Background] Failed to send bet to house wallet:",
-        error
-      );
-      // Update bet status to failed
-      await prisma.bet.update({
-        where: { id: betId },
-        data: {
-          status: "failed",
-          // No txHash for failed bets
-        },
-      });
-      throw error;
-    }
-
-    // Step 2: If win, send payout FROM house wallet BACK to user
-    if (outcome === "win") {
-      const payoutAmount = BigInt(payout);
-
-      console.log(
-        "💰 [Background] User won! Sending payout from house wallet:",
-        {
-          to: userWalletAddress,
-          amount: payoutAmount.toString(),
-        }
-      );
-
-      // Check house wallet balance
-      const houseBalance = await getHouseWalletBalance();
-      console.log(
-        "🏦 [Background] House wallet balance:",
-        houseBalance.toString()
-      );
-
-      if (houseBalance < payoutAmount) {
-        console.error(
-          "❌ [Background] Insufficient house wallet balance for payout"
-        );
-        // Mark as pending payout to be processed later
-        await prisma.bet.update({
-          where: { id: betId },
-          data: {
-            status: "pending_payout",
-            // Don't set txHash yet - will be set when payout is actually sent
-          },
-        });
-        return;
-      }
-
-      try {
-        payoutTxHash = await sendFromHouseWallet(
-          userWalletAddress,
-          payoutAmount
-        );
-        console.log("✅ [Background] Payout transaction sent:", payoutTxHash);
-        console.log("⏳ [Background] Waiting for payout transaction confirmation...");
-
-        // Wait for transaction confirmation
-        const { JsonRpcProvider } = await import("ethers");
-        const rpcUrl =
-          process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-        const provider = new JsonRpcProvider(rpcUrl);
-
-        const receipt = await provider.waitForTransaction(payoutTxHash, 1); // Wait for 1 confirmation
-
-        if (!receipt || receipt.status === 0) {
-          throw new Error("Payout transaction failed on-chain");
-        }
-
-        console.log("✅ [Background] Payout transaction confirmed:", payoutTxHash);
-
-        // Record payout transaction
-        await prisma.walletTransaction.create({
-          data: {
-            userId: userId,
-            txHash: payoutTxHash,
-            txType: "payout",
-            amount: payout,
-            status: "confirmed",
-            confirmedAt: new Date(),
-          },
-        });
-      } catch (error) {
-        console.error("❌ [Background] Failed to send payout:", error);
-        console.error("❌ [Background] Error details:", error instanceof Error ? error.message : "Unknown error");
-
-        // Mark as pending payout to retry later
-        await prisma.bet.update({
-          where: { id: betId },
-          data: {
-            status: "pending_payout",
-            // Don't set txHash yet - will be set when payout is actually sent
-          },
-        });
-        throw error;
-      }
-    }
-
-    // Step 3: Mark bet as fully resolved
-    console.log("✅ [Background] Bet fully resolved:", {
-      betId,
-      outcome,
-      betTxHash,
-      payoutTxHash,
-    });
-
-    await prisma.bet.update({
-      where: { id: betId },
-      data: {
-        status: outcome === "win" ? "resolved" : "complete",
-        // IMPORTANT: Only save payout transaction hash (house → user)
-        // For losses, txHash should be null since there's no payout to verify
-        txHash: payoutTxHash,
-      },
-    });
-  } catch (error) {
-    console.error("❌ [Background] Blockchain processing error:", error);
-    // Error status already updated in individual catch blocks
-  }
-}
 
 /**
  * POST /api/wallet/place-bet
@@ -438,19 +256,23 @@ export async function POST(req: NextRequest) {
       "⚡ Returning instant result to user (blockchain processing in background)"
     );
 
-    // Step 3: Process blockchain transactions asynchronously
-    // Don't await this - let it run in the background
-    processBlockchainTransactions(
-      bet.id,
-      user.id,
-      walletData.encryptedPrivateKey,
-      walletData.address,
-      betAmountWei,
-      result.outcome,
-      result.payout
-    ).catch((error) => {
-      console.error("❌ Background blockchain processing failed:", error);
-      // Errors are handled within the function and bet status is updated accordingly
+    // Step 3: Trigger blockchain transactions asynchronously via separate API
+    // Don't await this - fire and forget to keep response fast
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/wallet/process-bet-transactions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        betId: bet.id,
+        userId: user.id,
+        encryptedPrivateKey: walletData.encryptedPrivateKey,
+        userWalletAddress: walletData.address,
+        betAmount: betAmountWei.toString(),
+        outcome: result.outcome,
+        payout: result.payout,
+      }),
+    }).catch((error) => {
+      console.error("❌ Failed to trigger blockchain processing:", error);
+      // Errors are handled by the processing endpoint and bet status is updated accordingly
     });
 
     return NextResponse.json({

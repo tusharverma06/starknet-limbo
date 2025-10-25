@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, ArrowUpRight, AlertTriangle } from "lucide-react";
 import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
 import { useWaitForTransactionReceipt } from "wagmi";
+import { useOnClickOutside } from "usehooks-ts";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -28,6 +29,16 @@ export function WithdrawModal({
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [ethAmount, setEthAmount] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+
+  // Ref for click outside detection
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Close modal when clicking outside (only if not withdrawing)
+  useOnClickOutside(modalRef as React.RefObject<HTMLElement>, () => {
+    if (!isWithdrawing && isOpen) {
+      onClose();
+    }
+  });
 
   // Wait for transaction confirmation
   const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
@@ -71,8 +82,6 @@ export function WithdrawModal({
   // Handle transaction confirmation
   useEffect(() => {
     if (isTxConfirmed && txHash) {
-      console.log("✅ Withdrawal transaction confirmed! Refreshing balance...");
-
       // Call onSuccess callback to refresh balance
       if (onSuccess) {
         onSuccess();
@@ -118,9 +127,6 @@ export function WithdrawModal({
     try {
       const result = await onWithdraw(amount, toAddress);
 
-      console.log("✅ Withdrawal transaction sent:", result.txHash);
-      console.log("⏳ Waiting for transaction confirmation...");
-
       // Set the transaction hash to trigger waiting for confirmation
       setTxHash(result.txHash as `0x${string}`);
     } catch (err) {
@@ -139,7 +145,7 @@ export function WithdrawModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="max-w-md w-full">
+      <div className="max-w-md w-full" ref={modalRef}>
         <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[0px_4px_0px_0px_#000000]">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">

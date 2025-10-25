@@ -19,6 +19,7 @@ import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
 import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useConnect } from "wagmi";
+import { Button } from "../ui/Button";
 
 /**
  * Combined bet result type used in the game board
@@ -142,7 +143,6 @@ export function MiniappGameBoard() {
   // Handle bet resolution from polling
   useEffect(() => {
     if (latestBet) {
-      console.log("🎉 RESULT FOUND from polling!", latestBet);
       stopPolling();
 
       // Show animated result multiplier in mountain bg
@@ -222,27 +222,23 @@ export function MiniappGameBoard() {
 
     // If balance is less than $0.10, open funding modal
     if (balanceInUsd < 0.1) {
-      console.log("💰 Balance too low (< $0.10), opening funding modal...");
       setShowFundingModal(true);
       return;
     }
 
     // If bet amount exceeds balance, open funding modal
     if (betAmountNum > 0 && betAmountNum > balanceInUsd) {
-      console.log("💰 Insufficient balance, opening funding modal...");
       setShowFundingModal(true);
       return;
     }
 
     // Check for amount validation errors first
     if (amountError) {
-      console.log("⚠️ Amount validation error:", amountError);
       return;
     }
 
     // Check for zero or invalid bet amount
     if (betAmountNum <= 0) {
-      console.log("⚠️ Invalid bet amount");
       return;
     }
 
@@ -252,13 +248,11 @@ export function MiniappGameBoard() {
 
   const handlePlaceBet = async () => {
     if (!wallet || !userId) {
-      console.warn("⚠️ No wallet found");
       return;
     }
 
     // Safety check: Ensure SIWE authentication is valid
     if (!isSiweAuthenticated) {
-      console.error("❌ Cannot place bet: SIWE authentication required");
       setBetError("Please sign in with your wallet to place bets");
       return;
     }
@@ -282,19 +276,15 @@ export function MiniappGameBoard() {
     setMultiplierError("");
     setTargetMultiplier(multiplierValue);
 
-    console.log("🎲 Starting bet placement with server wallet...");
     setIsPlacingBet(true);
     setBetError(null);
 
     // Optimistic update: immediately deduct bet amount
     const betAmountNum = parseFloat(betAmount);
     deductBet(betAmountNum);
-    console.log("💸 Optimistically deducted bet amount:", betAmountNum);
 
     try {
       const result = await placeBetWithServerWallet(betAmount, multiplierValue);
-
-      console.log("✅ Bet result received instantly:", result);
 
       // Handle instant result from off-chain provably fair system
       if (result.result) {
@@ -315,11 +305,6 @@ export function MiniappGameBoard() {
           const payoutUsd = (result.result as any).payoutInUsd;
           if (payoutUsd) {
             addPayout(payoutUsd);
-            console.log("🎉 Optimistically added payout:", payoutUsd, "USD");
-          } else {
-            console.error(
-              "⚠️ Backend did not return payoutInUsd, skipping optimistic payout update"
-            );
           }
         }
 
@@ -342,31 +327,22 @@ export function MiniappGameBoard() {
         // Refetch balance after bet to sync optimistic with actual balance
         // This ensures the balance is accurate after any bet (win or loss)
         setTimeout(async () => {
-          console.log("🔄 Syncing balance after bet completion...");
           await refetchBalance();
         }, 500); // Small delay to ensure backend has processed
       } else {
         // Legacy on-chain betting flow (if still needed)
-        console.log("📝 Request ID:", result.requestId);
         if (result.requestId) {
-          console.log("👀 Starting to watch for bet result...");
           watchForResult(result.requestId);
         } else {
           startPolling();
         }
       }
     } catch (error) {
-      console.error("❌ Place bet error:", error);
-
       // Revert optimistic update by refreshing balance
       try {
         await refetchBalance();
       } catch (refreshError) {
         // If refresh fails, manually revert the deduction
-        console.error(
-          "⚠️ Balance refresh failed, manually reverting:",
-          refreshError
-        );
         addPayout(betAmountNum); // Add back the deducted amount
       }
 
@@ -380,8 +356,6 @@ export function MiniappGameBoard() {
   // Handle watched bet result (instant result from event watching)
   useEffect(() => {
     if (watchedBetResult) {
-      console.log("🎉 Bet result received from watcher!", watchedBetResult);
-
       // Convert BetResult to BetResultDisplay
       const betResult: BetResultDisplay = {
         win: watchedBetResult.win,
@@ -404,8 +378,6 @@ export function MiniappGameBoard() {
 
       setLastResult(betResult.win, betResult.payout);
       setIsPlacingBet(false);
-
-      console.log("🎲 Result:", betResult);
     }
   }, [watchedBetResult, setLastResult]);
 
@@ -416,63 +388,43 @@ export function MiniappGameBoard() {
 
     try {
       const result = await withdrawFromServerWallet(toAddress, amount);
-      console.log("✅ Withdrawal successful:", result.txHash);
       return result;
     } catch (error) {
-      console.error("❌ Withdrawal failed:", error);
       throw error;
     }
   };
 
   const handleSignIn = async () => {
     if (!userId) {
-      console.error("Missing userId (Farcaster FID)");
       return;
     }
 
     try {
-      console.log("🔐 Starting sign-in flow...");
-
       // Step 1: Check if external wallet is connected
       if (!isExternalWalletConnected || !externalWalletAddress) {
-        console.log(
-          "⚠️ External wallet not connected - RainbowKit will handle connection"
-        );
         // RainbowKit ConnectButton will handle opening the modal
         return;
       }
 
-      console.log("✅ External wallet connected:", externalWalletAddress);
-
       // Step 2: Sign SIWE message to authorize custodial wallet
       if (!isSiweAuthenticated) {
-        console.log("📝 Requesting SIWE signature...");
         const siweSuccess = await siweSignIn();
 
         if (!siweSuccess) {
-          console.error("❌ SIWE signature failed");
           setBetError("Failed to authorize wallet. Please try again.");
           return;
         }
-
-        console.log("✅ SIWE signature completed");
-      } else {
-        console.log("✅ Already have SIWE authorization");
       }
 
       // Step 3: Complete Quick Auth flow (creates/links custodial wallet)
-      console.log("🔑 Completing Quick Auth...");
       const success = await signIn();
 
       if (success) {
-        console.log("✅ Sign-in flow completed successfully");
         setBetError(null); // Clear any previous errors
       } else {
-        console.error("❌ Quick Auth failed");
         setBetError("Sign-in failed. Please try again.");
       }
     } catch (error) {
-      console.error("❌ Sign in failed:", error);
       setBetError(error instanceof Error ? error.message : "Sign-in failed");
     }
   };
@@ -540,13 +492,13 @@ export function MiniappGameBoard() {
             {isSiweAuthenticated && (
               <>
                 {/* Activity Button */}
-                <button
+                <Button
                   onClick={() => setIsActivityDrawerOpen(true)}
-                  className="w-[30px] h-[30px] border-2 border-white rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                  className="bg-transparent px-2 !h-[38px] border-2 border-white rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
                   title="Activity"
                 >
-                  <span className="text-white text-xs">⋯</span>
-                </button>
+                  <span className="text-white text-sm">⋯</span>
+                </Button>
               </>
             )}
 
@@ -585,7 +537,7 @@ export function MiniappGameBoard() {
                           handleSignIn();
                         }
                       }}
-                      className="border-2 border-white rounded-lg px-4 py-1 h-[38px] hover:bg-white/10 transition-colors"
+                      className="border-2 border-white rounded-lg px-4 py-1 h-8 hover:bg-white/10 transition-colors"
                     >
                       <span
                         className="text-base text-white leading-[0.9]"
@@ -677,7 +629,6 @@ export function MiniappGameBoard() {
                         <button
                           onClick={() => {
                             if (!wallet || isWalletLoading) {
-                              console.log("⏳ Wallet is still loading...");
                               return;
                             }
                             setShowFundingModal(true);
@@ -693,7 +644,6 @@ export function MiniappGameBoard() {
                         <button
                           onClick={() => {
                             if (!wallet || isWalletLoading) {
-                              console.log("⏳ Wallet is still loading...");
                               return;
                             }
                             setShowWithdrawModal(true);
@@ -1104,7 +1054,6 @@ export function MiniappGameBoard() {
                   <button
                     onClick={() => {
                       if (!wallet || isWalletLoading) {
-                        console.log("⏳ Wallet is still loading...");
                         return;
                       }
                       setShowFundingModal(true);

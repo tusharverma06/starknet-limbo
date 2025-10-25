@@ -182,7 +182,6 @@ export function ProvablyFairVerification({
         setVerification(data);
       }
     } catch (error) {
-      console.error("Verification failed:", error);
       setError("Failed to verify bet. Please try again.");
       setVerification(null);
     } finally {

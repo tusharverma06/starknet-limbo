@@ -14,7 +14,7 @@ const lilitaOne = Lilita_One({
 
 const frame = {
   version: "1",
-  imageUrl: "https://limbo-app.vercel.app/",
+  imageUrl: "https://limbo-app.vercel.app/og.png",
   button: {
     title: "Play!",
     action: {

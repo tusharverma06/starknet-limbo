@@ -256,24 +256,24 @@ export async function POST(req: NextRequest) {
       "⚡ Returning instant result to user (blockchain processing in background)"
     );
 
-    // Step 3: Trigger blockchain transactions asynchronously via separate API
-    // Don't await this - fire and forget to keep response fast
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/wallet/process-bet-transactions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        betId: bet.id,
-        userId: user.id,
-        encryptedPrivateKey: walletData.encryptedPrivateKey,
-        userWalletAddress: walletData.address,
-        betAmount: betAmountWei.toString(),
-        outcome: result.outcome,
-        payout: result.payout,
-      }),
-    }).catch((error) => {
-      console.error("❌ Failed to trigger blockchain processing:", error);
-      // Errors are handled by the processing endpoint and bet status is updated accordingly
-    });
+    // Step 3: Trigger blockchain transactions asynchronously in background
+    // Fire and forget - no await, process happens independently
+    import("@/lib/blockchain/processBetTransactions").then(
+      ({ processBlockchainTransactions }) => {
+        processBlockchainTransactions({
+          betId: bet.id,
+          userId: user.id,
+          encryptedPrivateKey: walletData.encryptedPrivateKey,
+          userWalletAddress: walletData.address,
+          betAmount: betAmountWei.toString(),
+          outcome: result.outcome,
+          payout: result.payout,
+        }).catch((error) => {
+          console.error("❌ Failed to process blockchain transactions:", error);
+          // Errors are logged and bet status is updated in the processing function
+        });
+      }
+    );
 
     return NextResponse.json({
       success: true,

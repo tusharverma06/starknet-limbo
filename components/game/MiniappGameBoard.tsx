@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ActivityDrawer } from "@/components/ui/ActivityDrawer";
 import { FundingModal } from "@/components/ui/FundingModal";
 import { WithdrawModal } from "@/components/ui/WithdrawModal";
+import { TransactionsSheet } from "@/components/ui/TransactionsSheet";
 import { useServerWallet } from "@/hooks/useServerWallet";
 import { useBalance } from "@/hooks/useBalance";
 import { useBetResultPoller } from "@/hooks/useBetResultPoller";
@@ -20,6 +21,9 @@ import Image from "next/image";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useConnect } from "wagmi";
 import { Button } from "../ui/Button";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils/cn";
 
 /**
  * Combined bet result type used in the game board
@@ -111,6 +115,7 @@ export function MiniappGameBoard() {
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showTransactionsSheet, setShowTransactionsSheet] = useState(false);
   const [potentialPayoutUsd, setPotentialPayoutUsd] = useState<number | null>(
     null
   );
@@ -122,6 +127,30 @@ export function MiniappGameBoard() {
     "green" | "red"
   >("green");
   const { connect, connectors } = useConnect();
+
+  // Ref for wallet dropdown to handle click outside
+  const walletDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside for wallet dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        walletDropdownRef.current &&
+        !walletDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowWalletDropdown(false);
+      }
+    };
+
+    if (showWalletDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showWalletDropdown]);
+
   // const [commitmentHash, setCommitmentHash] = useState<string>("");
   // const [showCommitmentTooltip, setShowCommitmentTooltip] = useState(false);
 
@@ -324,11 +353,8 @@ export function MiniappGameBoard() {
         setLastResult(betResult.win, betResult.payout);
         setIsPlacingBet(false);
 
-        // Refetch balance after bet to sync optimistic with actual balance
-        // This ensures the balance is accurate after any bet (win or loss)
-        setTimeout(async () => {
-          await refetchBalance();
-        }, 500); // Small delay to ensure backend has processed
+        // Refetch balance immediately after bet to sync optimistic with actual balance
+        await refetchBalance();
       } else {
         // Legacy on-chain betting flow (if still needed)
         if (result.requestId) {
@@ -488,20 +514,6 @@ export function MiniappGameBoard() {
 
           {/* Right side buttons */}
           <div className="flex items-center gap-2">
-            {/* Only show Verify & Activity buttons when SIWE authenticated */}
-            {isSiweAuthenticated && (
-              <>
-                {/* Activity Button */}
-                <Button
-                  onClick={() => setIsActivityDrawerOpen(true)}
-                  className="bg-transparent px-2 !h-[38px] border-2 border-white rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
-                  title="Activity"
-                >
-                  <span className="text-white text-sm">⋯</span>
-                </Button>
-              </>
-            )}
-
             {/* Sign In / Wallet Button */}
             {!isSiweAuthenticated ? (
               <ConnectButton.Custom>
@@ -560,72 +572,102 @@ export function MiniappGameBoard() {
                 }}
               </ConnectButton.Custom>
             ) : (
-              <div className="relative">
+              <div className="relative" ref={walletDropdownRef}>
                 <button
                   onClick={() => setShowWalletDropdown(!showWalletDropdown)}
-                  className="border-2 border-white rounded-lg px-3 py-1 h-[38px] flex items-center gap-2 hover:bg-white/10 transition-colors"
+                  className={cn(
+                    `border-2 border-white rounded-lg px-[10px] py-[10px] h-[38px] flex items-center gap-[4px] hover:bg-white/10 transition-colors`,
+                    showWalletDropdown &&
+                      "bg-white hover:bg-white text-[#2574ff]!"
+                  )}
                 >
+                  <Image
+                    src={showWalletDropdown ? "/eth-active.svg" : "/eth.svg"}
+                    alt="ETH"
+                    width={18}
+                    height={18}
+                  />
                   <span
-                    className="text-base text-white leading-[0.9]"
+                    className={cn(
+                      "text-base leading-[0.9] text-white",
+                      showWalletDropdown &&
+                        "text-[#2574ff]! hover:text-[#2574ff]!"
+                    )}
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
                     {isBalanceLoading ? "..." : `$${balanceInUsd.toFixed(2)}`}
                   </span>
-                  <span
-                    className={`text-white text-xs transition-transform ${
-                      showWalletDropdown ? "rotate-180" : ""
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`transition-transform ${
+                      showWalletDropdown
+                        ? "rotate-180 text-[#2574ff]!"
+                        : "text-white"
                     }`}
                   >
-                    ▼
-                  </span>
+                    <path
+                      d="M3.5 5.25L7 8.75L10.5 5.25"
+                      stroke={showWalletDropdown ? "#2574ff" : "white"}
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </button>
 
-                {/* Dropdown Menu - Only shown when authenticated */}
+                {/* Dropdown Menu - Menu items */}
                 <AnimatePresence>
                   {showWalletDropdown && (
                     <motion.div
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full right-0 mt-2 w-64 bg-white border-2 border-black rounded-lg shadow-[0px_4px_0px_0px_#000000] z-50"
+                      className="absolute top-full right-0 mt-2 w-[200px] bg-white border-2 border-black rounded-lg shadow-[0px_4px_0px_0px_#000000] z-50"
                     >
-                      <div className="p-3 space-y-2">
-                        {/* Balance */}
-                        <div className="pb-2 border-b-2 border-gray-200">
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-xs text-gray-600">
-                              Custodial Wallet Balance
-                            </p>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRefreshBalance();
-                              }}
-                              disabled={isRefreshingBalance}
-                              className="p-1 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
-                              title="Refresh balance"
-                            >
-                              <RefreshCw
-                                className={`w-3.5 h-3.5 text-gray-600 ${
-                                  isRefreshingBalance ? "animate-spin" : ""
-                                }`}
-                              />
-                            </button>
-                          </div>
+                      <div className="pt-[10px] pb-[12px] px-[10px] flex flex-col gap-[12px]">
+                        {/* Wallet Address with Disconnect */}
+                        <div className="bg-[rgba(0,0,0,0.06)] rounded-lg px-[6px] py-[8px] flex items-center justify-between">
                           <p
-                            className="text-lg font-bold text-black"
+                            className="text-[16px] text-black leading-[0.9]"
                             style={{ fontFamily: "var(--font-lilita-one)" }}
                           >
-                            {balanceInUsd
-                              ? `$${balanceInUsd.toFixed(2)}`
-                              : "$0.00"}
+                            {custodialWallet
+                              ? `${custodialWallet.slice(
+                                  0,
+                                  2
+                                )}...${custodialWallet.slice(-6)}`
+                              : "Loading..."}
                           </p>
-                          <p className="text-xs text-gray-500">
-                            {balanceInEth || "0"} ETH
-                          </p>
+                          <button
+                            onClick={() => {
+                              signOut();
+                              setShowWalletDropdown(false);
+                            }}
+                            className="flex items-center justify-center"
+                          >
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 14 14"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M5.25 12.25H3.5C3.23478 12.25 2.98043 12.1446 2.79289 11.9571C2.60536 11.7696 2.5 11.5152 2.5 11.25V2.75C2.5 2.48478 2.60536 2.23043 2.79289 2.04289C2.98043 1.85536 3.23478 1.75 3.5 1.75H5.25M9.625 9.625L12.25 7L9.625 4.375M12.25 7H5.25"
+                                stroke="#E9452D"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
                         </div>
 
-                        {/* Actions */}
+                        {/* Add Funds */}
                         <button
                           onClick={() => {
                             if (!wallet || isWalletLoading) {
@@ -635,12 +677,32 @@ export function MiniappGameBoard() {
                             setShowWalletDropdown(false);
                           }}
                           disabled={!wallet || isWalletLoading}
-                          className="w-full py-2 px-3 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-px hover:shadow-[0px_1px_0px_0px_#000000] transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                          className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
-                          {isWalletLoading ? "Loading..." : "Fund Wallet"}
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M7 2.91667V11.0833M2.91667 7H11.0833"
+                              stroke="black"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <p
+                            className="text-[16px] text-black leading-[1.2]"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            Add Funds
+                          </p>
                         </button>
 
+                        {/* Withdraw Funds */}
                         <button
                           onClick={() => {
                             if (!wallet || isWalletLoading) {
@@ -650,33 +712,61 @@ export function MiniappGameBoard() {
                             setShowWalletDropdown(false);
                           }}
                           disabled={!wallet || isWalletLoading}
-                          className="w-full py-2 px-3 bg-white text-black rounded-lg border-2 border-black hover:bg-gray-50 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                          className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
-                          {isWalletLoading ? "Loading..." : "Withdraw"}
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M11.0833 7C11.0833 7 9.33333 9.04167 7 9.04167C4.66667 9.04167 2.91667 7 2.91667 7M7 2.91667V9.04167M7 9.04167L5.25 7M7 9.04167L8.75 7"
+                              stroke="black"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <p
+                            className="text-[16px] text-black leading-[1.2]"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            Withdraw Funds
+                          </p>
                         </button>
 
-                        {/* Custodial Wallet Address */}
-                        <div className="pt-2 border-t-2 border-gray-200">
-                          <p className="text-xs text-gray-600 mb-1">
-                            Custodial Wallet
-                          </p>
-                          <p className="font-mono text-[10px] text-black break-all">
-                            {custodialWallet}
-                          </p>
-                        </div>
-
-                        {/* Sign Out */}
-                        {/* <button
+                        {/* View Transactions */}
+                        <button
                           onClick={() => {
-                            signOut();
+                            setShowTransactionsSheet(true);
                             setShowWalletDropdown(false);
                           }}
-                          className="w-full py-2 px-3 bg-gray-100 text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-200 transition-colors text-xs"
-                          style={{ fontFamily: "var(--font-lilita-one)" }}
+                          className="flex items-center gap-[8px] w-full"
                         >
-                          Sign Out
-                        </button> */}
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 14 14"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M11.0833 4.08333L7.58333 7.58333L5.83333 5.83333L2.91667 8.75M11.0833 4.08333H8.16667M11.0833 4.08333V7"
+                              stroke="black"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          <p
+                            className="text-[16px] text-black leading-[1.2]"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            View Trx
+                          </p>
+                        </button>
                       </div>
                     </motion.div>
                   )}
@@ -761,14 +851,33 @@ export function MiniappGameBoard() {
               >
                 Bet Amount
               </p>
-              <div className="border-2 border-black rounded-xl h-[44px] flex items-center justify-between px-3 py-2">
+              <div
+                className={`border-2 ${
+                  parseFloat(betAmount || "0") > balanceInUsd &&
+                  balanceInUsd >= 0.1
+                    ? "border-[#e9452d]"
+                    : "border-black"
+                } rounded-xl h-[44px] flex items-center justify-between px-3 py-2`}
+              >
                 <div className="flex items-center gap-0">
-                  <span className="text-base text-black leading-[0.9] font-bold">
+                  <span
+                    className={`text-base leading-[0.9] font-bold ${
+                      parseFloat(betAmount || "0") > balanceInUsd &&
+                      balanceInUsd >= 0.1
+                        ? "text-[#e9452d]"
+                        : "text-black"
+                    }`}
+                  >
                     $
                   </span>
                   <input
                     type="text"
-                    className="text-base text-black leading-[0.9] bg-transparent focus:outline-none focus:ring-0"
+                    className={`text-base leading-[0.9] bg-transparent focus:outline-none focus:ring-0 ${
+                      parseFloat(betAmount || "0") > balanceInUsd &&
+                      balanceInUsd >= 0.1
+                        ? "text-[#e9452d]"
+                        : "text-black"
+                    }`}
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                     value={betAmount}
                     onChange={(e) => setBetAmount(e.target.value)}
@@ -785,10 +894,20 @@ export function MiniappGameBoard() {
                       type="button"
                       onClick={() => handleQuickAmount(item.multiplier)}
                       disabled={isDisabled}
-                      className="border-2 border-black rounded-lg h-[24px] px-[6px] py-[8px] flex items-center justify-center disabled:opacity-50"
+                      className={`border-2 ${
+                        parseFloat(betAmount || "0") > balanceInUsd &&
+                        balanceInUsd >= 0.1
+                          ? "border-[#e9452d]"
+                          : "border-black"
+                      } rounded-lg h-[24px] px-[6px] py-[8px] flex items-center justify-center disabled:opacity-50`}
                     >
                       <p
-                        className="text-[12px] text-black tracking-[-1px] leading-[0.9]"
+                        className={`text-[12px] tracking-[-1px] leading-[0.9] ${
+                          parseFloat(betAmount || "0") > balanceInUsd &&
+                          balanceInUsd >= 0.1
+                            ? "text-[#e9452d]"
+                            : "text-black"
+                        }`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
                         {item.label}
@@ -797,6 +916,40 @@ export function MiniappGameBoard() {
                   ))}
                 </div>
               </div>
+              {/* Insufficient balance error message */}
+              {parseFloat(betAmount || "0") > balanceInUsd &&
+                balanceInUsd >= 0.1 && (
+                  <div className="flex items-center gap-[6px]">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="8"
+                        cy="8"
+                        r="6"
+                        stroke="#e9452d"
+                        strokeWidth="1.5"
+                        fill="none"
+                      />
+                      <path
+                        d="M8 5V9M8 11V11.5"
+                        stroke="#e9452d"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <p
+                      className="text-[#e9452d] text-[16px] leading-[0.9]"
+                      style={{ fontFamily: "var(--font-lilita-one)" }}
+                    >
+                      You don&apos;t have enough balance
+                    </p>
+                  </div>
+                )}
             </div>
 
             {/* Multiplier Input */}
@@ -978,7 +1131,7 @@ export function MiniappGameBoard() {
                   className="text-gray-800 font-bold text-center"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  🔐 Authorization Required
+                  Authorization Required
                 </p>
                 <p className="text-gray-700 text-xs text-center">
                   {!isExternalWalletConnected
@@ -1067,6 +1220,34 @@ export function MiniappGameBoard() {
                 </div>
               )}
           </motion.div>
+
+          {/* View All Bets Button */}
+          <button
+            onClick={() => setIsActivityDrawerOpen(true)}
+            className="w-full bg-white border-2 border-black rounded-xl h-[43px] px-[12px] py-[10px] flex items-center justify-center gap-[8px] shadow-[0px_2px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all hover:bg-gray-50"
+          >
+            <p
+              className="text-[16px] text-black uppercase leading-normal"
+              style={{ fontFamily: "var(--font-lilita-one)" }}
+            >
+              View All Bets
+            </p>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 10L8 6L12 10"
+                stroke="black"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -1112,6 +1293,13 @@ export function MiniappGameBoard() {
         currentBalance={balanceInEth?.toString() || "0"}
         onWithdraw={handleWithdraw}
         onSuccess={handleRefreshBalance}
+      />
+
+      {/* Transactions Sheet */}
+      <TransactionsSheet
+        isOpen={showTransactionsSheet}
+        onClose={() => setShowTransactionsSheet(false)}
+        userId={userId}
       />
     </div>
   );

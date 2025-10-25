@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { getOrCreateUser } from '@/lib/getOrCreateUser';
+import { formatEther } from 'ethers';
+import { getUsdValueFromEth } from '@/lib/utils/price';
 
 /**
  * GET /api/wallet/transactions?userId=xxx
@@ -33,18 +35,46 @@ export async function GET(req: NextRequest) {
       take: 50, // Limit to last 50 transactions
     });
 
+    // Convert amounts from wei to USD
+    const transactionsWithUsd = await Promise.all(
+      transactions.map(async (tx) => {
+        try {
+          // Convert wei to ETH
+          const ethAmount = parseFloat(formatEther(tx.amount));
+          // Convert ETH to USD
+          const usdAmount = await getUsdValueFromEth(ethAmount);
+
+          return {
+            id: tx.id,
+            txHash: tx.txHash,
+            txType: tx.txType,
+            amount: usdAmount.toFixed(2), // Return USD amount as string
+            status: tx.status,
+            blockNumber: tx.blockNumber?.toString(),
+            gasUsed: tx.gasUsed,
+            createdAt: tx.createdAt.toISOString(),
+            confirmedAt: tx.confirmedAt?.toISOString(),
+          };
+        } catch (error) {
+          console.error('Error converting transaction amount:', error);
+          // Fallback to 0 if conversion fails
+          return {
+            id: tx.id,
+            txHash: tx.txHash,
+            txType: tx.txType,
+            amount: '0.00',
+            status: tx.status,
+            blockNumber: tx.blockNumber?.toString(),
+            gasUsed: tx.gasUsed,
+            createdAt: tx.createdAt.toISOString(),
+            confirmedAt: tx.confirmedAt?.toISOString(),
+          };
+        }
+      })
+    );
+
     return NextResponse.json({
-      transactions: transactions.map(tx => ({
-        id: tx.id,
-        txHash: tx.txHash,
-        txType: tx.txType,
-        amount: tx.amount,
-        status: tx.status,
-        blockNumber: tx.blockNumber?.toString(),
-        gasUsed: tx.gasUsed,
-        createdAt: tx.createdAt.toISOString(),
-        confirmedAt: tx.confirmedAt?.toISOString(),
-      }))
+      transactions: transactionsWithUsd
     });
   } catch (error) {
     console.error('Get wallet transactions error:', error);

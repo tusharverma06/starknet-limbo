@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Copy, X, ArrowDown, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import {
   useAccount,
   useSendTransaction,
@@ -12,7 +12,8 @@ import {
 import { parseEther, formatEther } from "viem";
 import { CHAIN } from "@/lib/constants";
 import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
-import { useOnClickOutside } from "usehooks-ts";
+import { ModalWrapper } from "./ModalWrapper";
+import Image from "next/image";
 
 interface FundingModalProps {
   isOpen: boolean;
@@ -34,12 +35,8 @@ export function FundingModal({
   const [amount, setAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
   const [error, setError] = useState("");
-  const [copied, setCopied] = useState(false);
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [ethAmount, setEthAmount] = useState<number | null>(null);
-  const [currentBalanceUsd, setCurrentBalanceUsd] = useState<number | null>(
-    null
-  );
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { address: userAddress, isConnected, chainId } = useAccount();
@@ -47,16 +44,6 @@ export function FundingModal({
   const { switchChain } = useSwitchChain();
   const { data: userBalance } = useBalance({
     address: userAddress,
-  });
-
-  // Ref for click outside detection
-  const modalRef = useRef<HTMLDivElement>(null);
-
-  // Close modal when clicking outside (only if not funding)
-  useOnClickOutside(modalRef as React.RefObject<HTMLElement>, () => {
-    if (!isFunding && isOpen) {
-      onClose();
-    }
   });
 
   // Wait for transaction confirmation
@@ -75,18 +62,6 @@ export function FundingModal({
       setUsdBalance(null);
     }
   }, [userBalance]);
-
-  // Convert current balance to USD
-  useEffect(() => {
-    if (currentBalance) {
-      const ethBalance = parseFloat(currentBalance);
-      getUsdValueFromEth(ethBalance)
-        .then(setCurrentBalanceUsd)
-        .catch(() => setCurrentBalanceUsd(null));
-    } else {
-      setCurrentBalanceUsd(null);
-    }
-  }, [currentBalance]);
 
   // Convert USD amount to ETH when amount changes
   useEffect(() => {
@@ -127,8 +102,10 @@ export function FundingModal({
           });
 
           if (!response.ok) {
+            console.error("Failed to log deposit");
           }
-        } catch (error) {
+        } catch (err) {
+          console.error("Error logging deposit:", err);
         }
       };
 
@@ -139,26 +116,17 @@ export function FundingModal({
         onSuccess();
       }
 
-      // Reset state and close modal
-      setAmount("");
-      setTxHash(undefined);
+      // Stop loading state but don't close modal - let user close it manually
       setIsFunding(false);
-      onClose();
     }
-  }, [isTxConfirmed, txHash, userId, ethAmount, onSuccess, onClose]);
+  }, [isTxConfirmed, txHash, userId, ethAmount, onSuccess]);
 
   if (!isOpen) return null;
-
-  const handleCopyAddress = async () => {
-    await navigator.clipboard.writeText(walletAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleSwitchToBaseSepolia = async () => {
     try {
       await switchChain({ chainId: CHAIN.id });
-    } catch (error) {
+    } catch {
       setError(`Failed to switch to ${CHAIN.name} network`);
     }
   };
@@ -204,66 +172,87 @@ export function FundingModal({
     }
   };
 
+  const handleClose = () => {
+    // Reset all state when closing
+    setAmount("");
+    setEthAmount(null);
+    setTxHash(undefined);
+    setIsFunding(false);
+    setError("");
+    onClose();
+  };
+
+  // Check if user has insufficient balance
+  const numAmount = parseFloat(amount);
+  const hasInsufficientBalance =
+    usdBalance && !isNaN(numAmount) && numAmount > 0 && numAmount > usdBalance
+      ? true
+      : false;
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="max-w-md w-full" ref={modalRef}>
-        <div className="p-4 bg-white border-2 border-black rounded-xl shadow-[0px_4px_0px_0px_#000000]">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h2
-              className="text-lg font-bold text-black"
-              style={{ fontFamily: "var(--font-lilita-one)" }}
+    <ModalWrapper
+      isOpen={isOpen}
+      onClose={handleClose}
+      preventClose={isFunding && !isTxConfirmed}
+    >
+      <div className="border-2 border-black rounded-xl overflow-hidden">
+        {/* Header */}
+        <div className="bg-[#2574ff] border-b-2 border-black px-4 py-4 flex items-center justify-between">
+          <h2
+            className="text-base text-white uppercase leading-normal"
+            style={{
+              fontFamily: "var(--font-lilita-one)",
+              textShadow: "0px 1.6px 0px #000000",
+            }}
+          >
+            {isTxConfirmed ? "Funding Successful!" : "Fund Wallet"}
+          </h2>
+          <button
+            onClick={handleClose}
+            disabled={isFunding && !isTxConfirmed}
+            className="flex items-center justify-center disabled:opacity-50"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              Fund Wallet
-            </h2>
-            <button
-              onClick={onClose}
-              disabled={isFunding}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors border border-black disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+              <path
+                d="M15 5L5 15M5 5L15 15"
+                stroke="white"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
 
-          {/* Current Balance */}
-          <div className="p-3 bg-white rounded-lg border-2 border-black mb-4 shadow-[0px_2px_0px_0px_#000000]">
-            <div
-              className="text-xs text-gray-600 mb-1"
+        {/* Body */}
+        <div className="bg-white p-4 flex flex-col gap-4">
+          {/* Wallet Address */}
+          <div className="bg-[rgba(0,0,0,0.06)] rounded-lg px-[6px] py-[8px] h-[40px] flex items-center justify-between">
+            <p
+              className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[0.9]"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
-              Current Balance
-            </div>
-            <div
-              className="text-lg font-bold text-black"
+              Wallet:
+            </p>
+            <p
+              className="text-[16px] text-black leading-[0.9]"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
-              {currentBalanceUsd !== null
-                ? `$${currentBalanceUsd.toFixed(2)}`
-                : "$0.00"}
-            </div>
-            <div className="text-xs text-gray-500">
-              {parseFloat(currentBalance).toFixed(4)} ETH
-            </div>
+              {currentBalance
+                ? `${parseFloat(currentBalance).toFixed(4)} ETH`
+                : "0.0000 ETH"}
+            </p>
           </div>
-
-          {/* Wallet Connection Status */}
-          {!isConnected && (
-            <div className="p-3 bg-yellow-100 border-2 border-black rounded-lg mb-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-black" />
-                <span
-                  className="text-sm text-black"
-                  style={{ fontFamily: "var(--font-lilita-one)" }}
-                >
-                  Connect your wallet to fund
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Network Status */}
           {isConnected && chainId !== CHAIN.id && (
-            <div className="p-3 bg-red-100 border-2 border-black rounded-lg mb-4">
+            <div className="p-3 bg-red-100 border-2 border-black rounded-lg">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-black" />
@@ -285,70 +274,78 @@ export function FundingModal({
             </div>
           )}
 
-          {/* Amount Input */}
-          <div className="space-y-2 mb-4">
+          {/* Fund Amount */}
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <div
-                className="text-sm font-semibold text-black"
+              <p
+                className="text-[16px] text-black leading-[1.2]"
                 style={{ fontFamily: "var(--font-lilita-one)" }}
               >
-                Amount to Fund (USD)
-              </div>
-              {usdBalance !== null && (
-                <div className="text-xs text-gray-600">
-                  Balance: ${usdBalance.toFixed(2)}
-                </div>
-              )}
+                Fund Amount
+              </p>
+              <p
+                className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[1.2]"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
+                {usdBalance ? `$${usdBalance.toFixed(2)}` : "$0.00"} Balance
+              </p>
             </div>
-            <input
-              type="number"
-              placeholder="10.00"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              step="0.01"
-              min="0"
-              className="w-full px-3 py-2 border-2 border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2574ff]"
-            />
-            {ethAmount !== null && (
-              <div className="text-xs text-gray-600">
-                ≈ {ethAmount.toFixed(6)} ETH
+            <div
+              className={`border-2 ${
+                hasInsufficientBalance ? "border-red-500" : "border-black"
+              } rounded-xl h-[44px] px-3 py-[10px] flex items-center justify-between transition-colors`}
+            >
+              <div className="flex items-center gap-2 flex-1">
+                <Image src="/eth-black.svg" alt="ETH" width={20} height={20} />
+                <input
+                  type="number"
+                  placeholder="0.0234"
+                  value={ethAmount !== null ? ethAmount.toFixed(6) : ""}
+                  onChange={(e) => {
+                    const ethVal = parseFloat(e.target.value);
+                    if (!isNaN(ethVal) && ethVal > 0) {
+                      setEthAmount(ethVal);
+                      getUsdValueFromEth(ethVal).then((usdVal) => {
+                        setAmount(usdVal.toFixed(2));
+                      });
+                    } else if (e.target.value === "") {
+                      setEthAmount(null);
+                      setAmount("");
+                    }
+                  }}
+                  disabled={isFunding}
+                  className="text-[16px] text-black leading-[0.9] bg-transparent focus:outline-none w-full disabled:opacity-50"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <p
+                  className={`text-[16px] leading-[0.9] ${
+                    hasInsufficientBalance
+                      ? "text-red-500"
+                      : "text-[rgba(0,0,0,0.32)]"
+                  }`}
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  ~${amount || "0.00"}
+                </p>
+              </div>
+            </div>
+
+            {/* Insufficient Balance Warning */}
+            {hasInsufficientBalance && (
+              <div className="flex items-center gap-2 text-red-500">
+                <AlertTriangle className="w-3 h-3" />
+                <span className="text-xs">
+                  Insufficient balance in your connected wallet
+                </span>
               </div>
             )}
           </div>
 
-          {/* Server Wallet Address */}
-          <div className="space-y-2 mb-4">
-            <div
-              className="text-sm font-semibold text-black"
-              style={{ fontFamily: "var(--font-lilita-one)" }}
-            >
-              Server Wallet
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 p-2 bg-white rounded text-xs text-gray-800 overflow-hidden text-ellipsis border-2 border-black">
-                {walletAddress}
-              </code>
-              <button
-                onClick={handleCopyAddress}
-                className="px-2 py-2 border-2 border-black rounded hover:bg-gray-100 transition-colors"
-              >
-                {copied ? (
-                  <span
-                    className="text-xs text-green-600"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    Copied!
-                  </span>
-                ) : (
-                  <Copy className="w-3 h-3" />
-                )}
-              </button>
-            </div>
-          </div>
-
           {/* Error Message */}
           {error && (
-            <div className="p-2 bg-red-100 border-2 border-black rounded-lg mb-4">
+            <div className="p-2 bg-red-100 border-2 border-black rounded-lg">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-3 h-3 text-black" />
                 <span className="text-xs text-black">{error}</span>
@@ -357,8 +354,8 @@ export function FundingModal({
           )}
 
           {/* Transaction Status Message */}
-          {txHash && isFunding && (
-            <div className="p-3 bg-blue-50 border-2 border-black rounded-lg mb-4">
+          {txHash && !isTxConfirmed && (
+            <div className="p-3 bg-blue-50 border-2 border-black rounded-lg">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -377,39 +374,115 @@ export function FundingModal({
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              disabled={isFunding}
-              className="flex-1 py-2 px-4 bg-white text-black rounded-lg border-2 border-black hover:bg-gray-100 disabled:opacity-50 transition-colors"
-              style={{ fontFamily: "var(--font-lilita-one)" }}
-            >
-              Cancel
-            </button>
+          {/* Success Message with Explorer Link */}
+          {txHash && isTxConfirmed && (
+            <div className="p-3 bg-green-50 border-2 border-green-500 rounded-lg">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="w-4 h-4 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span
+                    className="text-sm text-green-900 font-semibold"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Transaction Confirmed!
+                  </span>
+                </div>
+                <p className="text-xs text-green-700">
+                  Your funds have been successfully deposited to your wallet.
+                </p>
+                <a
+                  href={`https://sepolia.basescan.org/tx/${txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full h-[36px] bg-green-600 hover:bg-green-700 text-white border-2 border-black rounded-lg transition-colors"
+                >
+                  <span
+                    className="text-sm"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    View on Explorer
+                  </span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Fund Button - Hide when transaction is confirmed */}
+          {!isTxConfirmed && (
             <button
               onClick={handleFund}
               disabled={
-                isFunding || !amount || !isConnected || chainId !== CHAIN.id
+                isFunding ||
+                !amount ||
+                !isConnected ||
+                chainId !== CHAIN.id ||
+                hasInsufficientBalance
               }
-              className="flex-1 py-2 px-4 bg-[#2574ff] text-white rounded-lg border-2 border-black shadow-[0px_2px_0px_0px_#000000] hover:translate-y-px hover:shadow-[0px_1px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              style={{ fontFamily: "var(--font-lilita-one)" }}
+              className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >
-              {isFunding ? (
-                <span className="flex items-center justify-center gap-2">
-                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  {txHash ? "Confirming..." : "Funding..."}
-                </span>
-              ) : (
-                <span className="flex items-center justify-center gap-2">
-                  <ArrowDown className="w-3 h-3" />
-                  Fund
-                </span>
-              )}
+              <p
+                className="text-base text-white uppercase leading-normal"
+                style={{
+                  textShadow: "0px 1.6px 0px #000000",
+                  fontFamily: "var(--font-lilita-one)",
+                }}
+              >
+                {isFunding ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    {txHash ? "Confirming..." : "Funding..."}
+                  </span>
+                ) : (
+                  "Fund Wallet"
+                )}
+              </p>
             </button>
-          </div>
+          )}
+
+          {/* Close Button - Show when transaction is confirmed */}
+          {isTxConfirmed && (
+            <button
+              onClick={handleClose}
+              className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all"
+            >
+              <p
+                className="text-base text-white uppercase leading-normal"
+                style={{
+                  textShadow: "0px 1.6px 0px #000000",
+                  fontFamily: "var(--font-lilita-one)",
+                }}
+              >
+                Close
+              </p>
+            </button>
+          )}
         </div>
       </div>
-    </div>
+    </ModalWrapper>
   );
 }

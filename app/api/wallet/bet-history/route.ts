@@ -12,14 +12,7 @@ export async function GET(req: NextRequest) {
     const playerId = searchParams.get("playerId");
     const limit = parseInt(searchParams.get("limit") || "50");
 
-    if (!userId && !playerId) {
-      return NextResponse.json(
-        { error: "userId or playerId is required" },
-        { status: 400 }
-      );
-    }
-
-    // Build where clause
+    // Build where clause (empty object if no filters = fetch all bets)
     const where: {
       userId?: string;
       playerId?: string;
@@ -53,11 +46,11 @@ export async function GET(req: NextRequest) {
       playerId: bet.playerId,
       playerName: bet.user.farcaster_username,
       playerPfp: bet.user.farcaster_pfp,
-      wager: bet.wager,
+      wager: bet.wagerUsd || "0", // Use USD amount instead of wei
       targetMultiplier: bet.targetMultiplier,
       limboMultiplier: bet.limboMultiplier,
       outcome: bet.outcome,
-      payout: bet.payout,
+      payout: bet.payoutUsd || "0", // Use USD amount instead of wei
       status: bet.status,
       txHash: bet.txHash,
       createdAt: bet.createdAt.toISOString(),

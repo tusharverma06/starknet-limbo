@@ -146,7 +146,7 @@ export function useSiweAuth() {
       await fetch("/api/auth/signout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ fid: userId }),
       });
 
       setIsAuthenticated(false);

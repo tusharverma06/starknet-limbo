@@ -8,18 +8,15 @@ import { prisma } from "@/lib/db/prisma";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId } = body;
+    const { fid } = body;
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: "userId is required" },
-        { status: 400 }
-      );
+    if (!fid) {
+      return NextResponse.json({ error: "fid is required" }, { status: 400 });
     }
 
-    // Clear SIWE data
+    // Clear signer details
     await prisma.user.update({
-      where: { id: userId },
+      where: { farcaster_id: fid.toString() },
       data: {
         siweSignature: null,
         siweMessage: null,
@@ -27,14 +24,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log("✅ User signed out:", userId);
+    console.log("✅ User signed out:", fid);
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Sign out error:", error);
-    return NextResponse.json(
-      { error: "Failed to sign out" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to sign out" }, { status: 500 });
   }
 }

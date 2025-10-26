@@ -75,6 +75,7 @@ export function MiniappGameBoard() {
   const {
     isAuthenticated: isSiweAuthenticated,
     signIn: siweSignIn,
+    signOut: siweSignOut,
     isSigning: isSiweSigning,
     error: siweError,
   } = useSiweAuth();
@@ -126,6 +127,7 @@ export function MiniappGameBoard() {
   const [resultMultiplierColor, setResultMultiplierColor] = useState<
     "green" | "red"
   >("green");
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { connect, connectors } = useConnect();
 
   // Ref for wallet dropdown to handle click outside
@@ -515,7 +517,7 @@ export function MiniappGameBoard() {
           {/* Right side buttons */}
           <div className="flex items-center gap-2">
             {/* Sign In / Wallet Button */}
-            {!isSiweAuthenticated ? (
+            {!isSiweAuthenticated || isSigningOut ? (
               <ConnectButton.Custom>
                 {({
                   account,
@@ -536,6 +538,7 @@ export function MiniappGameBoard() {
                   return (
                     <button
                       onClick={() => {
+                        if (isSigningOut) return;
                         if (
                           !connected ||
                           !externalWalletAddress ||
@@ -549,15 +552,20 @@ export function MiniappGameBoard() {
                           handleSignIn();
                         }
                       }}
-                      className="border-2 border-white rounded-lg px-4 py-1 h-8 hover:bg-white/10 transition-colors"
+                      disabled={isSigningOut}
+                      className={`border-2 border-white rounded-lg px-4 py-1 h-8 hover:bg-white/10 transition-colors ${
+                        isSigningOut ? "animate-pulse cursor-not-allowed" : ""
+                      }`}
                     >
                       <span
                         className="text-base text-white leading-[0.9]"
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
-                        {!connected ||
-                        !externalWalletAddress ||
-                        !isExternalWalletConnected
+                        {isSigningOut
+                          ? "Signing Out..."
+                          : !connected ||
+                            !externalWalletAddress ||
+                            !isExternalWalletConnected
                           ? "Connect Wallet"
                           : chain.unsupported
                           ? "Wrong Network"
@@ -643,11 +651,15 @@ export function MiniappGameBoard() {
                               : "Loading..."}
                           </p>
                           <button
-                            onClick={() => {
-                              signOut();
+                            onClick={async () => {
+                              setIsSigningOut(true);
+                              await signOut();
+                              await siweSignOut();
                               setShowWalletDropdown(false);
+                              setIsSigningOut(false);
                             }}
-                            className="flex items-center justify-center"
+                            disabled={isSigningOut}
+                            className="flex items-center justify-center disabled:opacity-50"
                           >
                             <svg
                               width="14"

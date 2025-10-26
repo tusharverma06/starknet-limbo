@@ -95,9 +95,13 @@ export function useQuickAuth() {
    * Sign out - clears authentication
    */
   const signOut = useCallback(async () => {
+    if (!user?.fid) return;
+
     try {
-      await sdk.quickAuth.fetch("/api/auth/signout", {
+      await fetch("/api/auth/signout", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fid: user.fid }),
       });
 
       setIsAuthenticated(false);
@@ -105,7 +109,7 @@ export function useQuickAuth() {
     } catch (err) {
       console.error("Error signing out:", err);
     }
-  }, []);
+  }, [user?.fid]);
 
   return {
     isAuthenticated,

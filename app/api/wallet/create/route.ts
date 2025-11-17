@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { walletDb } from "@/lib/db/wallets";
 import { getOrCreateUser } from "@/lib/getOrCreateUser";
+import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
  * POST /api/wallet/create
@@ -93,28 +94,20 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * GET /api/wallet/create?userId=xxx
- * Get wallet info for a user
+ * GET /api/wallet/create
+ * Get wallet info for authenticated user
  */
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
+    // CRITICAL: Require authentication - only return user's OWN wallet
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
     }
 
-    // Get user from database (userId is Farcaster FID)
-    const user = await getOrCreateUser(userId);
-    if (!user) {
-      return NextResponse.json(
-        { error: "Failed to get or create user" },
-        { status: 500 }
-      );
-    }
+    const { user } = authResult.data;
+
+    console.log("✅ Fetching wallet for authenticated user:", user.id);
 
     const wallet = await walletDb.getWallet(user.id);
 

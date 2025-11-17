@@ -162,7 +162,7 @@ export function TransactionsSheet({
                       </p>
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full ${
-                          tx.status === "confirmed" || tx.txHash.startsWith("0x")
+                          tx.status === "confirmed" || (tx.txHash && tx.txHash.startsWith("0x"))
                             ? "bg-green-100 text-green-700"
                             : tx.status === "pending"
                             ? "bg-yellow-100 text-yellow-700"
@@ -170,13 +170,13 @@ export function TransactionsSheet({
                         }`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
-                        {tx.txHash.startsWith("0x") ? "Success" : tx.status}
+                        {tx.txHash && tx.txHash.startsWith("0x") ? "Success" : tx.status}
                       </span>
                     </div>
                   </div>
 
                   {/* Transaction Hash */}
-                  {tx.txHash.startsWith("0x") && (
+                  {tx.txHash && tx.txHash.startsWith("0x") && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <a
                         href={`https://basescan.org/tx/${tx.txHash}`}

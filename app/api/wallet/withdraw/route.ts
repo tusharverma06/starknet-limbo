@@ -5,31 +5,62 @@ import { decryptPrivateKey } from "@/lib/utils/encryption";
 import { getEthValueFromUsd } from "@/lib/utils/price";
 import { CHAIN } from "@/lib/constants";
 import { estimateGas } from "@/lib/utils/gas";
-import { getOrCreateUser } from "@/lib/getOrCreateUser";
 import { prisma } from "@/lib/db/prisma";
+import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
  * POST /api/wallet/withdraw
- * Withdraw funds from server wallet to external address
+ * Withdraw funds from custodial wallet to external address
+ * Requires JWT authentication (session cookie)
  */
 export async function POST(req: NextRequest) {
   try {
+    // Require JWT authentication
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+
+    const { user } = authResult.data;
+
     const body = await req.json();
-    const { userId, toAddress, usdAmount } = body;
+    const { toAddress, usdAmount } = body;
 
     // Validate inputs
-    if (!userId || !toAddress || !usdAmount) {
+    if (!toAddress || !usdAmount) {
       return NextResponse.json(
-        { error: "userId, toAddress, and usdAmount are required" },
+        { error: "toAddress and usdAmount are required" },
         { status: 400 }
       );
     }
+
+    // Validate recipient address format
+    if (
+      typeof toAddress !== "string" ||
+      toAddress.length !== 42 ||
+      !toAddress.startsWith("0x")
+    ) {
+      return NextResponse.json(
+        { error: "Invalid Ethereum address format" },
+        { status: 400 }
+      );
+    }
+
+    console.log("✅ JWT authentication valid, processing withdrawal for user:", user.id);
 
     // Validate amount
     const usdAmountNum = parseFloat(usdAmount);
     if (isNaN(usdAmountNum) || usdAmountNum <= 0) {
       return NextResponse.json(
         { error: "Invalid USD amount" },
+        { status: 400 }
+      );
+    }
+
+    // Check minimum amount
+    if (usdAmountNum < 0.01) {
+      return NextResponse.json(
+        { error: "Minimum withdrawal amount is $0.01" },
         { status: 400 }
       );
     }
@@ -43,39 +74,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get user from database (userId is Farcaster FID)
-    const user = await getOrCreateUser(userId);
-    if (!user) {
-      return NextResponse.json(
-        { error: "Failed to get or create user" },
-        { status: 500 }
-      );
-    }
-
-    // Enforce SIWE authorization - REQUIRED for withdrawals
-    if (!user.siweSignature || !user.siweMessage || !user.siweExpiresAt) {
-      console.error("❌ Withdrawal rejected: Missing SIWE signature");
-      return NextResponse.json(
-        { error: "Authorization required. Please sign in with your wallet." },
-        { status: 401 }
-      );
-    }
-
-    // Check if SIWE signature has expired
-    const now = new Date();
-    const expiresAt = new Date(user.siweExpiresAt);
-    if (now > expiresAt) {
-      console.error(
-        "❌ Withdrawal rejected: SIWE signature expired:",
-        user.siweExpiresAt
-      );
-      return NextResponse.json(
-        { error: "Your session has expired. Please sign in again." },
-        { status: 401 }
-      );
-    }
-
-    console.log("✅ SIWE authorization valid, processing withdrawal...");
+    console.log(`💸 Processing withdrawal: $${usdAmountNum} (~${ethAmount} ETH) to ${toAddress}`);
 
     // Get wallet from database
     const walletData = await walletDb.getWallet(user.id);

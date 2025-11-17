@@ -32,11 +32,12 @@ export function FundingModal({
   userId,
   onSuccess,
 }: FundingModalProps) {
-  const [amount, setAmount] = useState("");
+  const [ethAmount, setEthAmount] = useState("");
+  const [usdEquivalent, setUsdEquivalent] = useState<string>("0.00");
   const [isFunding, setIsFunding] = useState(false);
   const [error, setError] = useState("");
+  const [inputError, setInputError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
-  const [ethAmount, setEthAmount] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { address: userAddress, isConnected, chainId } = useAccount();
@@ -63,27 +64,21 @@ export function FundingModal({
     }
   }, [userBalance]);
 
-  // Convert USD amount to ETH when amount changes
+  // Update USD equivalent when ETH amount changes
   useEffect(() => {
-    if (amount && !isNaN(parseFloat(amount))) {
-      const usdValue = parseFloat(amount);
-      if (usdValue > 0 && isFinite(usdValue)) {
-        getEthValueFromUsd(usdValue)
-          .then((ethValue) => {
-            if (isFinite(ethValue) && ethValue > 0) {
-              setEthAmount(ethValue);
-            } else {
-              setEthAmount(null);
-            }
-          })
-          .catch(() => setEthAmount(null));
+    if (ethAmount && !isNaN(parseFloat(ethAmount))) {
+      const ethVal = parseFloat(ethAmount);
+      if (ethVal > 0) {
+        getUsdValueFromEth(ethVal)
+          .then((usdVal) => setUsdEquivalent(usdVal.toFixed(2)))
+          .catch(() => setUsdEquivalent("0.00"));
       } else {
-        setEthAmount(null);
+        setUsdEquivalent("0.00");
       }
     } else {
-      setEthAmount(null);
+      setUsdEquivalent("0.00");
     }
-  }, [amount]);
+  }, [ethAmount]);
 
   // Handle transaction confirmation
   useEffect(() => {
@@ -132,8 +127,14 @@ export function FundingModal({
   };
 
   const handleFund = async () => {
-    if (!amount || !userAddress || !userId || !ethAmount) {
-      setError("Please enter an amount and ensure wallet is connected");
+    // Comprehensive validation before allowing transaction
+    if (!userAddress) {
+      setError("Please connect your wallet");
+      return;
+    }
+
+    if (!userId) {
+      setError("User ID is required");
       return;
     }
 
@@ -143,14 +144,47 @@ export function FundingModal({
       return;
     }
 
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setError("Please enter a valid amount");
+    // Validate ETH amount input
+    if (!ethAmount || ethAmount.trim() === "") {
+      setError("Please enter an amount");
       return;
     }
 
-    if (usdBalance && numAmount > usdBalance) {
-      setError("Insufficient balance");
+    const ethAmountNum = parseFloat(ethAmount);
+    if (isNaN(ethAmountNum)) {
+      setError("Please enter a valid number");
+      return;
+    }
+
+    if (ethAmountNum <= 0) {
+      setError("Amount must be greater than zero");
+      return;
+    }
+
+    // Get USD value for validation
+    let usdAmount: number;
+    try {
+      usdAmount = await getUsdValueFromEth(ethAmountNum);
+    } catch (err) {
+      setError("Failed to get USD price");
+      return;
+    }
+
+    // Check minimum amount (at least $0.01 worth)
+    if (usdAmount < 0.01) {
+      setError("Minimum funding amount is $0.01");
+      return;
+    }
+
+    // Check user balance
+    if (usdBalance && usdAmount > usdBalance) {
+      setError("Insufficient balance in your connected wallet");
+      return;
+    }
+
+    // Check if amount is too large (sanity check)
+    if (usdAmount > 10000) {
+      setError("Amount exceeds maximum limit of $10,000");
       return;
     }
 
@@ -161,7 +195,7 @@ export function FundingModal({
       // Send transaction directly to server wallet with ETH amount
       const hash = await sendTransactionAsync({
         to: walletAddress as `0x${string}`,
-        value: parseEther(ethAmount.toString()),
+        value: parseEther(ethAmount),
       });
 
       // Set the transaction hash to trigger waiting for confirmation
@@ -174,20 +208,23 @@ export function FundingModal({
 
   const handleClose = () => {
     // Reset all state when closing
-    setAmount("");
-    setEthAmount(null);
+    setEthAmount("");
+    setUsdEquivalent("0.00");
     setTxHash(undefined);
     setIsFunding(false);
     setError("");
+    setInputError("");
     onClose();
   };
 
   // Check if user has insufficient balance
-  const numAmount = parseFloat(amount);
-  const hasInsufficientBalance =
-    usdBalance && !isNaN(numAmount) && numAmount > 0 && numAmount > usdBalance
-      ? true
-      : false;
+  const usdEquivalentNum = parseFloat(usdEquivalent);
+  const hasInsufficientBalance = Boolean(
+    usdBalance &&
+      !isNaN(usdEquivalentNum) &&
+      usdEquivalentNum > 0 &&
+      usdEquivalentNum > usdBalance
+  );
 
   return (
     <ModalWrapper
@@ -300,22 +337,12 @@ export function FundingModal({
                 <input
                   type="number"
                   placeholder="0.0234"
-                  value={ethAmount !== null ? ethAmount.toFixed(6) : ""}
-                  onChange={(e) => {
-                    const ethVal = parseFloat(e.target.value);
-                    if (!isNaN(ethVal) && ethVal > 0) {
-                      setEthAmount(ethVal);
-                      getUsdValueFromEth(ethVal).then((usdVal) => {
-                        setAmount(usdVal.toFixed(2));
-                      });
-                    } else if (e.target.value === "") {
-                      setEthAmount(null);
-                      setAmount("");
-                    }
-                  }}
+                  value={ethAmount}
+                  onChange={(e) => setEthAmount(e.target.value)}
                   disabled={isFunding}
                   className="text-[16px] text-black leading-[0.9] bg-transparent focus:outline-none w-full disabled:opacity-50"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
+                  step="any"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -327,7 +354,7 @@ export function FundingModal({
                   }`}
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  ~${amount || "0.00"}
+                  ~${usdEquivalent}
                 </p>
               </div>
             </div>
@@ -438,9 +465,11 @@ export function FundingModal({
               onClick={handleFund}
               disabled={
                 isFunding ||
-                !amount ||
                 !isConnected ||
                 chainId !== CHAIN.id ||
+                !ethAmount ||
+                parseFloat(ethAmount) <= 0 ||
+                isNaN(parseFloat(ethAmount)) ||
                 hasInsufficientBalance
               }
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"

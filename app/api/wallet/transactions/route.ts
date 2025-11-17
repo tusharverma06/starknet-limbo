@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
-import { getOrCreateUser } from '@/lib/getOrCreateUser';
 import { formatEther } from 'ethers';
 import { getUsdValueFromEth } from '@/lib/utils/price';
+import { requireAuth } from '@/lib/auth/requireAuth';
 
 /**
- * GET /api/wallet/transactions?userId=xxx
- * Get wallet transactions for a user
+ * GET /api/wallet/transactions
+ * Get wallet transactions for authenticated user
  */
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
+    // Verify authentication
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
     }
 
-    // Get user from database (userId is Farcaster FID)
-    const user = await getOrCreateUser(userId);
+    const { user } = authResult.data;
+
+    // Get transactions for authenticated user
     if (!user) {
       return NextResponse.json(
         { error: 'Failed to get or create user' },

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
-import { useWaitForTransactionReceipt } from "wagmi";
+import { useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { ModalWrapper } from "./ModalWrapper";
 import Image from "next/image";
 
@@ -26,13 +26,14 @@ export function WithdrawModal({
   onWithdraw,
   onSuccess,
 }: WithdrawModalProps) {
-  const [amount, setAmount] = useState("");
+  const [ethAmount, setEthAmount] = useState("");
+  const [usdEquivalent, setUsdEquivalent] = useState<string>("0.00");
   const [toAddress, setToAddress] = useState("");
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
-  const [ethAmount, setEthAmount] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const { address: connectedAddress } = useAccount();
 
   // Wait for transaction confirmation
   const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
@@ -51,27 +52,21 @@ export function WithdrawModal({
     }
   }, [currentBalance]);
 
-  // Convert USD amount to ETH when amount changes
+  // Update USD equivalent when ETH amount changes
   useEffect(() => {
-    if (amount && !isNaN(parseFloat(amount))) {
-      const usdValue = parseFloat(amount);
-      if (usdValue > 0 && isFinite(usdValue)) {
-        getEthValueFromUsd(usdValue)
-          .then((ethValue) => {
-            if (isFinite(ethValue) && ethValue > 0) {
-              setEthAmount(ethValue);
-            } else {
-              setEthAmount(null);
-            }
-          })
-          .catch(() => setEthAmount(null));
+    if (ethAmount && !isNaN(parseFloat(ethAmount))) {
+      const ethVal = parseFloat(ethAmount);
+      if (ethVal > 0) {
+        getUsdValueFromEth(ethVal)
+          .then((usdVal) => setUsdEquivalent(usdVal.toFixed(2)))
+          .catch(() => setUsdEquivalent("0.00"));
       } else {
-        setEthAmount(null);
+        setUsdEquivalent("0.00");
       }
     } else {
-      setEthAmount(null);
+      setUsdEquivalent("0.00");
     }
-  }, [amount]);
+  }, [ethAmount]);
 
   // Handle transaction confirmation
   useEffect(() => {
@@ -89,20 +84,47 @@ export function WithdrawModal({
   if (!isOpen) return null;
 
   const handleWithdraw = async () => {
-    if (!amount || !toAddress) {
-      setError("Please fill in all fields");
+    // Validate ETH amount
+    if (!ethAmount || ethAmount.trim() === "") {
+      setError("Please enter an amount");
       return;
     }
 
-    const numAmount = parseFloat(amount);
-
-    if (isNaN(numAmount) || numAmount <= 0) {
-      setError("Please enter a valid amount");
+    const ethAmountNum = parseFloat(ethAmount);
+    if (isNaN(ethAmountNum)) {
+      setError("Please enter a valid number");
       return;
     }
 
-    if (usdBalance && numAmount > usdBalance) {
+    if (ethAmountNum <= 0) {
+      setError("Amount must be greater than zero");
+      return;
+    }
+
+    // Get USD value for validation
+    let usdAmount: number;
+    try {
+      usdAmount = await getUsdValueFromEth(ethAmountNum);
+    } catch (err) {
+      setError("Failed to get USD price");
+      return;
+    }
+
+    // Check minimum amount
+    if (usdAmount < 0.01) {
+      setError("Minimum withdrawal amount is $0.01");
+      return;
+    }
+
+    // Check balance
+    if (usdBalance && usdAmount > usdBalance) {
       setError("Insufficient balance");
+      return;
+    }
+
+    // Validate recipient address
+    if (!toAddress || toAddress.trim() === "") {
+      setError("Please enter a recipient address");
       return;
     }
 
@@ -115,7 +137,8 @@ export function WithdrawModal({
     setIsWithdrawing(true);
 
     try {
-      const result = await onWithdraw(amount, toAddress);
+      // Call withdraw API (requires JWT authentication)
+      const result = await onWithdraw(usdAmount.toFixed(2), toAddress);
 
       // Set the transaction hash to trigger waiting for confirmation
       setTxHash(result.txHash as `0x${string}`);
@@ -125,19 +148,19 @@ export function WithdrawModal({
     }
   };
 
-  const handleMaxAmount = () => {
-    // Leave some USD for gas fees (roughly $1-2)
-    if (usdBalance) {
-      const maxAmount = Math.max(0, usdBalance - 2);
-      setAmount(maxAmount.toFixed(2));
+  const handleMaxAmount = async () => {
+    if (currentBalance) {
+      // Set max to current balance (user can withdraw all from custodial wallet)
+      const ethBalance = parseFloat(currentBalance);
+      setEthAmount(ethBalance.toString());
     }
   };
 
   const handleClose = () => {
     // Reset all state when closing
-    setAmount("");
+    setEthAmount("");
+    setUsdEquivalent("0.00");
     setToAddress("");
-    setEthAmount(null);
     setTxHash(undefined);
     setIsWithdrawing(false);
     setError("");
@@ -145,11 +168,13 @@ export function WithdrawModal({
   };
 
   // Check if user has insufficient balance
-  const numAmount = parseFloat(amount);
-  const hasInsufficientBalance =
-    usdBalance && !isNaN(numAmount) && numAmount > 0 && numAmount > usdBalance
-      ? true
-      : false;
+  const usdEquivalentNum = parseFloat(usdEquivalent);
+  const hasInsufficientBalance = Boolean(
+    usdBalance &&
+      !isNaN(usdEquivalentNum) &&
+      usdEquivalentNum > 0 &&
+      usdEquivalentNum > usdBalance
+  );
 
   return (
     <ModalWrapper
@@ -238,22 +263,12 @@ export function WithdrawModal({
                 <input
                   type="number"
                   placeholder="0.0234"
-                  value={ethAmount !== null ? ethAmount.toFixed(6) : ""}
-                  onChange={(e) => {
-                    const ethVal = parseFloat(e.target.value);
-                    if (!isNaN(ethVal) && ethVal > 0) {
-                      setEthAmount(ethVal);
-                      getUsdValueFromEth(ethVal).then((usdVal) => {
-                        setAmount(usdVal.toFixed(2));
-                      });
-                    } else if (e.target.value === "") {
-                      setEthAmount(null);
-                      setAmount("");
-                    }
-                  }}
+                  value={ethAmount}
+                  onChange={(e) => setEthAmount(e.target.value)}
                   disabled={isWithdrawing}
                   className="text-[16px] text-black leading-[0.9] bg-transparent focus:outline-none w-full disabled:opacity-50"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
+                  step="any"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -265,7 +280,7 @@ export function WithdrawModal({
                   }`}
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  ~${amount || "0.00"}
+                  ~${usdEquivalent}
                 </p>
                 <button
                   onClick={handleMaxAmount}
@@ -299,7 +314,7 @@ export function WithdrawModal({
               className="text-[16px] text-black leading-[1.2]"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
-              Recipient Address
+              Recipient Address (any valid address)
             </p>
             <div className="border-2 border-black rounded-xl h-[44px] px-3 py-[10px] flex items-center">
               <input
@@ -312,14 +327,19 @@ export function WithdrawModal({
                 style={{ fontFamily: "var(--font-lilita-one)" }}
               />
             </div>
+            <p className="text-xs text-gray-600">
+              Enter any valid Ethereum address to receive the funds.
+            </p>
           </div>
 
           {/* Error Message */}
           {error && (
             <div className="p-2 bg-red-100 border-2 border-black rounded-lg">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-3 h-3 text-black" />
-                <span className="text-xs text-black">{error}</span>
+                <AlertTriangle className="w-4 h-4 text-black" />
+                <span className="text-xs text-black">
+                  {error.slice(0, 25)}...
+                </span>
               </div>
             </div>
           )}
@@ -403,12 +423,17 @@ export function WithdrawModal({
             </div>
           )}
 
-          {/* Withdraw Button - Hide when transaction is confirmed */}
+          {/* Withdraw Button */}
           {!isTxConfirmed && (
             <button
               onClick={handleWithdraw}
               disabled={
-                isWithdrawing || !amount || !toAddress || hasInsufficientBalance
+                isWithdrawing ||
+                !ethAmount ||
+                parseFloat(ethAmount) <= 0 ||
+                isNaN(parseFloat(ethAmount)) ||
+                !toAddress ||
+                hasInsufficientBalance
               }
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >

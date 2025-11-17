@@ -31,10 +31,25 @@ model User {
 
   wallet Wallet?
   bets   Bet[]
+  sessions Session[]
 
   @@index([farcaster_id])
   @@index([server_wallet_address])
   @@map("users")
+}
+
+// Session model for cookie-based authentication
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
 }
 
 // Server-side wallet management (separate from Ponder's onchain data)
@@ -53,6 +68,9 @@ model Wallet {
 
   // Cached balance in wei (as string to handle big numbers)
   balance String @default("0") @db.VarChar(78)
+
+  // Locked balance (funds committed to pending bets) in wei
+  lockedBalance String @default("0") @map("locked_balance") @db.VarChar(78)
 
   // Unix timestamp (milliseconds) of last transaction
   lastUsed BigInt? @map("last_used")
@@ -87,8 +105,8 @@ model Wallet {
 model WalletTransaction {
   id          Int       @id @default(autoincrement())
   userId      String    @map("user_id") @db.VarChar(255)
-  txHash      String    @map("tx_hash") @db.VarChar(66)
-  txType      String    @map("tx_type") @db.VarChar(50) // 'bet', 'withdraw', 'deposit'
+  txHash      String?   @map("tx_hash") @db.VarChar(66)
+  txType      String    @map("tx_type") @db.VarChar(50) // 'bet', 'withdraw', 'deposit', 'payout'
   amount      String    @db.VarChar(78)
   status      String    @db.VarChar(20) // 'pending', 'confirmed', 'failed'
   blockNumber BigInt?   @map("block_number")

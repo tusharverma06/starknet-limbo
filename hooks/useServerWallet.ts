@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { formatEther } from "viem";
+import { getAuthHeaders } from "./useSimpleSiwe";
+import { useAccount, useSignMessage } from "wagmi";
 
 interface WalletInfo {
   address: string;
@@ -15,9 +17,11 @@ interface UseServerWalletReturn {
   balanceInUsd: number | null;
   isLoading: boolean;
   isInitialLoading: boolean;
+  isWithdrawing: boolean;
+  isPlacingBet: boolean;
   error: string | null;
   createWallet: () => Promise<void>;
-  refreshBalance: () => Promise<void>;
+  refreshBalance: (isBackgroundRefresh?: boolean) => Promise<void>;
   withdraw: (
     toAddress: string,
     usdAmount: string
@@ -45,11 +49,17 @@ interface UseServerWalletReturn {
  * @param userId - User identifier (e.g., Farcaster FID)
  */
 export function useServerWallet(userId: string | null): UseServerWalletReturn {
+  const { address: connectedAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
+
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [balanceInUsd, setBalanceInUsd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
@@ -122,10 +132,15 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
   /**
    * Refresh wallet balance
    */
-  const refreshBalance = useCallback(async () => {
+  const refreshBalance = useCallback(async (isBackgroundRefresh = false) => {
     if (!userId) return;
 
-    setIsLoading(true);
+    // Use isRefreshing for background auto-refresh, isLoading for manual refresh
+    if (isBackgroundRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
     setError(null);
 
     try {
@@ -145,14 +160,22 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
       }
     } catch (err) {
       console.error("Error fetching balance:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch balance");
+      // Don't show error for background refresh
+      if (!isBackgroundRefresh) {
+        setError(err instanceof Error ? err.message : "Failed to fetch balance");
+      }
     } finally {
-      setIsLoading(false);
+      if (isBackgroundRefresh) {
+        setIsRefreshing(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   }, [userId, wallet]);
 
   /**
-   * Withdraw funds from wallet
+   * Withdraw funds from custodial wallet to any address
+   * Requires JWT authentication (session cookie)
    */
   const withdraw = useCallback(
     async (toAddress: string, usdAmount: string) => {
@@ -160,14 +183,22 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         throw new Error("User ID is required");
       }
 
-      setIsLoading(true);
+      setIsWithdrawing(true);
       setError(null);
 
       try {
+        console.log(`💸 Initiating withdrawal: $${usdAmount} to ${toAddress}`);
+
         const response = await fetch("/api/wallet/withdraw", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, toAddress, usdAmount }),
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(connectedAddress || undefined),
+          },
+          body: JSON.stringify({
+            toAddress,
+            usdAmount,
+          }),
         });
 
         const data = await response.json();
@@ -175,6 +206,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         if (!response.ok) {
           throw new Error(data.error || "Withdrawal failed");
         }
+
+        console.log("✅ Withdrawal successful:", data.txHash);
+
         // Update balance
         setBalance(data.newBalance);
         if (wallet) {
@@ -187,10 +221,10 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         setError(err instanceof Error ? err.message : "Withdrawal failed");
         throw err;
       } finally {
-        setIsLoading(false);
+        setIsWithdrawing(false);
       }
     },
-    [userId, wallet]
+    [userId, wallet, connectedAddress]
   );
 
   /**
@@ -206,14 +240,17 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         throw new Error("Wallet not found. Please create a wallet first.");
       }
 
-      setIsLoading(true);
+      setIsPlacingBet(true);
       setError(null);
 
       try {
         const response = await fetch("/api/wallet/place-bet", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, usdBetAmount, targetMultiplier }),
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(connectedAddress || undefined),
+          },
+          body: JSON.stringify({ usdBetAmount, targetMultiplier }),
         });
 
         const data = await response.json();
@@ -244,10 +281,10 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
         setError(err instanceof Error ? err.message : "Bet placement failed");
         throw err;
       } finally {
-        setIsLoading(false);
+        setIsPlacingBet(false);
       }
     },
-    [userId, wallet]
+    [userId, wallet, connectedAddress]
   );
 
   // Fetch wallet on mount and when userId changes
@@ -260,7 +297,7 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     if (!wallet) return;
 
     const interval = setInterval(() => {
-      refreshBalance();
+      refreshBalance(true); // Pass true for background refresh
     }, 30000);
 
     return () => clearInterval(interval);
@@ -276,6 +313,8 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     balanceInUsd,
     isLoading,
     isInitialLoading,
+    isWithdrawing,
+    isPlacingBet,
     error,
     createWallet,
     refreshBalance,

@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
 import { useEffect } from "react";
+import { getAuthHeaders } from "./useSimpleSiwe";
+import { useAccount } from "wagmi";
 
 interface BalanceData {
   balance: string; // in wei
@@ -14,22 +16,29 @@ interface BalanceData {
  * Fetches directly from blockchain via API
  * Only refetches on manual trigger or window focus
  * Supports optimistic updates for instant UI feedback
+ * Requires session authentication
  */
-export function useBalance(userId: string | null) {
+export function useBalance(userId: string | null, isAuthenticated: boolean) {
+  const { address: connectedAddress } = useAccount();
   const { optimisticBalanceUsd, setOptimisticBalance } = useGameStore();
+
+  const queryEnabled = !!userId && isAuthenticated;
 
   const { data, isLoading, error, refetch, isRefetching } =
     useQuery<BalanceData>({
-      queryKey: ["balance", userId],
+      queryKey: ["balance", userId, isAuthenticated],
       queryFn: async () => {
         if (!userId) {
           throw new Error("User ID is required");
         }
 
-        const response = await fetch(`/api/wallet/balance?userId=${userId}`);
+        const response = await fetch("/api/wallet/balance", {
+          headers: getAuthHeaders(connectedAddress || undefined),
+        });
 
         if (!response.ok) {
           const errorData = await response.json();
+          console.error("❌ Balance fetch failed:", errorData);
           throw new Error(errorData.error || "Failed to fetch balance");
         }
 
@@ -42,10 +51,11 @@ export function useBalance(userId: string | null) {
           address: data.address,
         };
       },
-      enabled: !!userId,
+      enabled: queryEnabled, // Only fetch if user is authenticated
       refetchInterval: false, // Disable auto-refetch - rely on manual refetch after transactions
       refetchOnWindowFocus: true, // Still refetch when user returns to tab
       staleTime: 30000, // Consider data stale after 30 seconds
+      retry: false, // Don't retry failed requests
     });
 
   // Sync optimistic balance with fetched data
@@ -59,11 +69,6 @@ export function useBalance(userId: string | null) {
       // sync them (this handles async blockchain transaction completion)
       else if (Math.abs(optimisticBalanceUsd - data.balanceInUsd) > 0.01) {
         // Only sync if the difference is significant (>$0.01) to avoid unnecessary updates from rounding
-        console.log("🔄 Syncing optimistic balance with fetched balance:", {
-          optimistic: optimisticBalanceUsd,
-          fetched: data.balanceInUsd,
-          difference: Math.abs(optimisticBalanceUsd - data.balanceInUsd),
-        });
         setOptimisticBalance(data.balanceInUsd);
       }
     }

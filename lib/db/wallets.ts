@@ -11,6 +11,7 @@ export interface WalletData {
   encryptedPrivateKey: string; // Encrypted private key
   createdAt: number; // Timestamp
   balance?: string; // Optional cached balance
+  lockedBalance?: string; // Locked balance (pending bets)
   lastUsed?: number; // Last transaction timestamp
 }
 
@@ -64,6 +65,7 @@ class WalletDatabase {
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
         balance: wallet.balance,
+        lockedBalance: wallet.lockedBalance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
     } catch (error) {
@@ -142,6 +144,7 @@ class WalletDatabase {
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
         balance: wallet.balance,
+        lockedBalance: wallet.lockedBalance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
     } catch (error) {
@@ -169,6 +172,7 @@ class WalletDatabase {
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
         balance: wallet.balance,
+        lockedBalance: wallet.lockedBalance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
     } catch (error) {
@@ -209,6 +213,7 @@ class WalletDatabase {
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
         balance: wallet.balance,
+        lockedBalance: wallet.lockedBalance,
         lastUsed: wallet.lastUsed ? Number(wallet.lastUsed) : undefined,
       };
     } catch (error) {

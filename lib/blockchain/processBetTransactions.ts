@@ -67,19 +67,43 @@ export async function processBlockchainTransactions({
 
       console.log(`✅ Bet transaction confirmed: ${betTxHash}`);
 
-      // Record bet transaction
-      await prisma.walletTransaction.create({
-        data: {
+      // Update existing pending bet transaction with tx hash
+      const existingBetTx = await prisma.walletTransaction.findFirst({
+        where: {
           userId: userId,
-          txHash: betTxHash,
           txType: "bet_placed",
-          amount: betAmount,
-          status: "confirmed",
-          confirmedAt: new Date(),
+          status: "pending",
+          txHash: null,
         },
+        orderBy: { createdAt: "desc" },
       });
 
-      console.log(`✅ Bet transaction recorded in database`);
+      if (existingBetTx) {
+        await prisma.walletTransaction.update({
+          where: { id: existingBetTx.id },
+          data: {
+            txHash: betTxHash,
+            status: "confirmed",
+            confirmedAt: new Date(),
+            blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+          },
+        });
+        console.log(`✅ Bet transaction updated in database`);
+      } else {
+        // Fallback: create new transaction if pending one doesn't exist
+        await prisma.walletTransaction.create({
+          data: {
+            userId: userId,
+            txHash: betTxHash,
+            txType: "bet_placed",
+            amount: betAmount,
+            status: "confirmed",
+            confirmedAt: new Date(),
+            blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+          },
+        });
+        console.log(`✅ Bet transaction created in database`);
+      }
     } catch (error) {
       console.error(`❌ Bet transaction failed:`, error);
       // Update bet status to failed
@@ -140,19 +164,43 @@ export async function processBlockchainTransactions({
 
         console.log(`✅ Payout transaction confirmed: ${payoutTxHash}`);
 
-        // Record payout transaction
-        await prisma.walletTransaction.create({
-          data: {
+        // Update existing pending payout transaction with tx hash
+        const existingPayoutTx = await prisma.walletTransaction.findFirst({
+          where: {
             userId: userId,
-            txHash: payoutTxHash,
             txType: "payout",
-            amount: payout,
-            status: "confirmed",
-            confirmedAt: new Date(),
+            status: "pending",
+            txHash: null,
           },
+          orderBy: { createdAt: "desc" },
         });
 
-        console.log(`✅ Payout transaction recorded in database`);
+        if (existingPayoutTx) {
+          await prisma.walletTransaction.update({
+            where: { id: existingPayoutTx.id },
+            data: {
+              txHash: payoutTxHash,
+              status: "confirmed",
+              confirmedAt: new Date(),
+              blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+            },
+          });
+          console.log(`✅ Payout transaction updated in database`);
+        } else {
+          // Fallback: create new transaction if pending one doesn't exist
+          await prisma.walletTransaction.create({
+            data: {
+              userId: userId,
+              txHash: payoutTxHash,
+              txType: "payout",
+              amount: payout,
+              status: "confirmed",
+              confirmedAt: new Date(),
+              blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+            },
+          });
+          console.log(`✅ Payout transaction created in database`);
+        }
       } catch (error) {
         console.error(`❌ Payout transaction failed:`, error);
         // Mark as pending payout to retry later

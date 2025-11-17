@@ -3,6 +3,7 @@ import { Inter, Lilita_One } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers/Web3Provider";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
+import { Toaster } from "sonner";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -59,6 +60,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${lilitaOne.variable}`}>
         <FarcasterProvider>
           <Providers>{children}</Providers>
+          <Toaster position="top-center" richColors />
         </FarcasterProvider>
       </body>
     </html>

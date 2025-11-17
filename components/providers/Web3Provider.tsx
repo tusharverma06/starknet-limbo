@@ -21,7 +21,6 @@ const baseConfig = createConfig({
 
 export function Providers({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<Config>(baseConfig);
-  // const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const initMiniApp = async () => {
@@ -37,11 +36,12 @@ export function Providers({ children }: { children: ReactNode }) {
               [CHAIN.id]: http(),
             },
           });
+          console.log("🟣 Mini App config created:", newConfig);
           setConfig(newConfig);
+          console.log("🟣 Mini App config set successfully");
         }
       } catch (error) {
-      } finally {
-        // setIsInitialized(true);
+        console.error("MiniApp init error:", error);
       }
     };
 

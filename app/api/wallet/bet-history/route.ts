@@ -1,28 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
  * GET /api/wallet/bet-history
- * Get bet history for a user or player address
+ * Get bet history for authenticated user
  */
 export async function GET(req: NextRequest) {
   try {
+    // Verify authentication
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+
+    const { user } = authResult.data;
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const playerId = searchParams.get("playerId");
     const limit = parseInt(searchParams.get("limit") || "50");
 
-    // Build where clause (empty object if no filters = fetch all bets)
-    const where: {
-      userId?: string;
-      playerId?: string;
-    } = {};
-
-    if (userId) {
-      where.userId = userId;
-    }
-    if (playerId) {
-      where.playerId = playerId.toLowerCase();
+    // Get bets for authenticated user only
+    const where = {
+      userId: user.id,
     }
 
     // Fetch bets

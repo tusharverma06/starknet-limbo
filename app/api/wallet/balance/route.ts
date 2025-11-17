@@ -2,31 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { JsonRpcProvider, formatEther } from "ethers";
 import { walletDb } from "@/lib/db/wallets";
 import { getUsdValueFromEth } from "@/lib/utils/price";
-import { getOrCreateUser } from "@/lib/getOrCreateUser";
+import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
- * GET /api/wallet/balance?userId=xxx
- * Get the current balance of a user's wallet
+ * GET /api/wallet/balance
+ * Get the current balance of authenticated user's wallet
+ * Requires JWT authentication (verified by middleware)
  */
 export async function GET(req: NextRequest) {
   try {
-    const userId = req.nextUrl.searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
+    // Require JWT authentication
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
     }
 
-    // Get user from database (userId is Farcaster FID)
-    const user = await getOrCreateUser(userId);
-    if (!user) {
-      return NextResponse.json(
-        { error: "Failed to get or create user" },
-        { status: 500 }
-      );
-    }
+    const { user } = authResult.data;
+
+    console.log("✅ JWT authentication valid, fetching balance for user:", user.id);
 
     const wallet = await walletDb.getWallet(user.id);
 
@@ -48,20 +41,40 @@ export async function GET(req: NextRequest) {
     }
 
     const provider = new JsonRpcProvider(rpcUrl);
-    const balance = await provider.getBalance(wallet.address);
+    const blockchainBalance = await provider.getBalance(wallet.address);
 
-    // Update cached balance
-    await walletDb.updateBalance(user.id, balance.toString());
+    // Get locked balance from DB (funds committed to pending bets)
+    const lockedBalance = BigInt(wallet.lockedBalance || "0");
+
+    // Available balance = blockchain balance - locked balance
+    const availableBalance = blockchainBalance - lockedBalance;
+
+    // DON'T cache blockchain balance - always fetch fresh from chain
+    // Only use DB for locked balance tracking
 
     // Convert to USD
-    const ethBalance = parseFloat(formatEther(balance));
-    const usdBalance = await getUsdValueFromEth(ethBalance);
+    const blockchainEth = parseFloat(formatEther(blockchainBalance));
+    const availableEth = parseFloat(formatEther(availableBalance));
+    const lockedEth = parseFloat(formatEther(lockedBalance));
+
+    const blockchainUsd = await getUsdValueFromEth(blockchainEth);
+    const availableUsd = await getUsdValueFromEth(availableEth);
+    const lockedUsd = await getUsdValueFromEth(lockedEth);
 
     return NextResponse.json({
       address: wallet.address,
-      balance: balance.toString(),
-      balanceInEth: ethBalance,
-      balanceInUsd: usdBalance,
+      // Blockchain balance (total on-chain)
+      balance: blockchainBalance.toString(),
+      balanceInEth: blockchainEth,
+      balanceInUsd: blockchainUsd,
+      // Available balance (what user can bet with)
+      availableBalance: availableBalance.toString(),
+      availableBalanceInEth: availableEth,
+      availableBalanceInUsd: availableUsd,
+      // Locked balance (committed to pending bets)
+      lockedBalance: lockedBalance.toString(),
+      lockedBalanceInEth: lockedEth,
+      lockedBalanceInUsd: lockedUsd,
     });
   } catch (error) {
     console.error("Get balance error:", error);

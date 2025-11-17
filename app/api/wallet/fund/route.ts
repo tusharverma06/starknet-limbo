@@ -1,20 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { walletDb } from "@/lib/db/wallets";
 import { getEthValueFromUsd } from "@/lib/utils/price";
+import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
  * POST /api/wallet/fund
  * Fund server wallet with ETH (converted from USD amount)
+ * Requires authentication
  */
 export async function POST(req: NextRequest) {
   try {
+    // Verify authentication
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
+    }
+
+    const { user } = authResult.data;
     const body = await req.json();
-    const { userId, usdAmount } = body;
+    const { usdAmount } = body;
 
     // Validate inputs
-    if (!userId || !usdAmount) {
+    if (!usdAmount) {
       return NextResponse.json(
-        { error: "userId and usdAmount are required" },
+        { error: "usdAmount is required" },
         { status: 400 }
       );
     }
@@ -38,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get wallet from database
-    const walletData = await walletDb.getWallet(userId);
+    const walletData = await walletDb.getWallet(user.id);
     if (!walletData) {
       return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }

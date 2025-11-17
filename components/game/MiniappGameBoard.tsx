@@ -381,6 +381,9 @@ export function MiniappGameBoard() {
     if (!wallet) return "Create Wallet";
     return "Place Bet";
   };
+  console.log("isInitialLoading", isInitialLoading);
+  console.log("isAuthenticated", isAuthenticated);
+  console.log("isAuthLoading", isAuthLoading);
 
   // Show loading state while wallet is being initialized
   if (isInitialLoading) {

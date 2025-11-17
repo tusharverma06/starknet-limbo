@@ -17,7 +17,7 @@ export function useBlockchainBalance(walletAddress: string | null) {
       // Get balance from blockchain
       const rpcUrl =
         process.env.NEXT_PUBLIC_RPC_URL ||
-        `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+        `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
       const provider = new JsonRpcProvider(rpcUrl);
       const balanceWei = await provider.getBalance(walletAddress);

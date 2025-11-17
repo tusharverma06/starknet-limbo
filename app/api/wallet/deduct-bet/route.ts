@@ -23,13 +23,8 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const {
-      betId,
-      userId,
-      encryptedPrivateKey,
-      userWalletAddress,
-      betAmount,
-    } = body;
+    const { betId, userId, encryptedPrivateKey, userWalletAddress, betAmount } =
+      body;
 
     // Validate inputs
     if (
@@ -55,17 +50,14 @@ export async function POST(req: NextRequest) {
 
     try {
       // Send bet amount FROM user's wallet TO house wallet
-      betTxHash = await sendToHouseWallet(
-        encryptedPrivateKey,
-        betAmountWei
-      );
+      betTxHash = await sendToHouseWallet(encryptedPrivateKey, betAmountWei);
 
       console.log(`✅ Bet deduction transaction sent: ${betTxHash}`);
 
       // Wait for transaction confirmation
       const rpcUrl =
         process.env.NEXT_PUBLIC_RPC_URL ||
-        `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+        `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
       const provider = new JsonRpcProvider(rpcUrl);
 
       console.log(`⏳ Waiting for bet deduction confirmation...`);
@@ -95,7 +87,9 @@ export async function POST(req: NextRequest) {
             txHash: betTxHash,
             status: "confirmed",
             confirmedAt: new Date(),
-            blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+            blockNumber: receipt?.blockNumber
+              ? BigInt(receipt.blockNumber)
+              : null,
           },
         });
         console.log(`✅ Bet transaction updated in database`);
@@ -109,7 +103,9 @@ export async function POST(req: NextRequest) {
             amount: betAmount,
             status: "confirmed",
             confirmedAt: new Date(),
-            blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+            blockNumber: receipt?.blockNumber
+              ? BigInt(receipt.blockNumber)
+              : null,
           },
         });
         console.log(`✅ Bet transaction created in database`);

@@ -20,10 +20,7 @@ export async function GET(req: NextRequest) {
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       console.error("❌ Unauthorized cron request");
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     console.log("🔄 [CRON] Starting payout processing job...");
@@ -109,7 +106,7 @@ export async function GET(req: NextRequest) {
         const { JsonRpcProvider } = await import("ethers");
         const rpcUrl =
           process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+          `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
         const provider = new JsonRpcProvider(rpcUrl);
 
         console.log(`⏳ [CRON] Waiting for confirmation...`);

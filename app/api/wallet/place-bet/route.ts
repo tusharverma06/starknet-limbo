@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     // Check blockchain balance (source of truth)
     const rpcUrl =
       process.env.NEXT_PUBLIC_RPC_URL ||
-      `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
     const provider = new JsonRpcProvider(rpcUrl);
     const blockchainBalance = await provider.getBalance(walletData.address);
     const lockedBalance = BigInt(walletData.lockedBalance || "0");
@@ -182,7 +182,8 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-internal-api-key": process.env.INTERNAL_API_KEY || "dev-internal-key",
+          "x-internal-api-key":
+            process.env.INTERNAL_API_KEY || "dev-internal-key",
         },
         body: JSON.stringify({
           betId: tempBetId,
@@ -266,7 +267,9 @@ export async function POST(req: NextRequest) {
           createdAt: new Date(),
         },
       });
-      console.log("✅ Bet transaction recorded (pending blockchain confirmation)");
+      console.log(
+        "✅ Bet transaction recorded (pending blockchain confirmation)"
+      );
 
       // If win, also record payout transaction immediately
       if (result.outcome === "win") {
@@ -280,7 +283,9 @@ export async function POST(req: NextRequest) {
             createdAt: new Date(),
           },
         });
-        console.log("✅ Payout transaction recorded (pending blockchain confirmation)");
+        console.log(
+          "✅ Payout transaction recorded (pending blockchain confirmation)"
+        );
       }
     } catch (txError) {
       console.error("⚠️ Failed to record bet transaction:", txError);
@@ -313,7 +318,8 @@ export async function POST(req: NextRequest) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-internal-api-key": process.env.INTERNAL_API_KEY || "dev-internal-key",
+            "x-internal-api-key":
+              process.env.INTERNAL_API_KEY || "dev-internal-key",
           },
           body: JSON.stringify({
             betId: bet.id,

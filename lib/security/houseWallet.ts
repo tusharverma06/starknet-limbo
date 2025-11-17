@@ -61,7 +61,7 @@ export async function withHouseWallet<T>(
     // Create provider
     const rpcUrl =
       process.env.NEXT_PUBLIC_RPC_URL ||
-      `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
     if (!rpcUrl || rpcUrl.includes("undefined")) {
       throw new Error("RPC URL not configured");
@@ -173,7 +173,7 @@ export async function sendToHouseWallet(
     // Create provider
     const rpcUrl =
       process.env.NEXT_PUBLIC_RPC_URL ||
-      `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
     if (!rpcUrl || rpcUrl.includes("undefined")) {
       throw new Error("RPC URL not configured");

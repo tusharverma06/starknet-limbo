@@ -19,7 +19,10 @@ export async function GET(req: NextRequest) {
 
     const { user } = authResult.data;
 
-    console.log("✅ JWT authentication valid, fetching balance for user:", user.id);
+    console.log(
+      "✅ JWT authentication valid, fetching balance for user:",
+      user.id
+    );
 
     const wallet = await walletDb.getWallet(user.id);
 
@@ -30,7 +33,7 @@ export async function GET(req: NextRequest) {
     // Get balance from blockchain
     const rpcUrl =
       process.env.NEXT_PUBLIC_RPC_URL ||
-      `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
     if (!rpcUrl || rpcUrl.includes("undefined")) {
       console.error("No valid RPC URL configured");

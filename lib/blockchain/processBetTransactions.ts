@@ -45,17 +45,14 @@ export async function processBlockchainTransactions({
   amount: '${betAmount}'
 }`);
 
-      betTxHash = await sendToHouseWallet(
-        encryptedPrivateKey,
-        betAmountWei
-      );
+      betTxHash = await sendToHouseWallet(encryptedPrivateKey, betAmountWei);
 
       console.log(`✅ Bet transaction sent: ${betTxHash}`);
 
       // Wait for transaction confirmation
       const rpcUrl =
         process.env.NEXT_PUBLIC_RPC_URL ||
-        `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+        `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
       const provider = new JsonRpcProvider(rpcUrl);
 
       console.log(`⏳ Waiting for bet transaction confirmation...`);
@@ -85,7 +82,9 @@ export async function processBlockchainTransactions({
             txHash: betTxHash,
             status: "confirmed",
             confirmedAt: new Date(),
-            blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+            blockNumber: receipt?.blockNumber
+              ? BigInt(receipt.blockNumber)
+              : null,
           },
         });
         console.log(`✅ Bet transaction updated in database`);
@@ -99,7 +98,9 @@ export async function processBlockchainTransactions({
             amount: betAmount,
             status: "confirmed",
             confirmedAt: new Date(),
-            blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+            blockNumber: receipt?.blockNumber
+              ? BigInt(receipt.blockNumber)
+              : null,
           },
         });
         console.log(`✅ Bet transaction created in database`);
@@ -128,7 +129,9 @@ export async function processBlockchainTransactions({
       console.log(`🏦 House wallet balance: ${houseBalance}`);
 
       if (houseBalance < payoutAmount) {
-        console.log(`⚠️ Insufficient house balance - marking as pending payout`);
+        console.log(
+          `⚠️ Insufficient house balance - marking as pending payout`
+        );
         // Mark as pending payout to be processed later
         await prisma.bet.update({
           where: { id: betId },
@@ -140,7 +143,9 @@ export async function processBlockchainTransactions({
       }
 
       try {
-        console.log(`📤 Sending payout from house to user: ${userWalletAddress}`);
+        console.log(
+          `📤 Sending payout from house to user: ${userWalletAddress}`
+        );
 
         payoutTxHash = await sendFromHouseWallet(
           userWalletAddress,
@@ -152,7 +157,7 @@ export async function processBlockchainTransactions({
         // Wait for transaction confirmation
         const rpcUrl =
           process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+          `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
         const provider = new JsonRpcProvider(rpcUrl);
 
         console.log(`⏳ Waiting for payout transaction confirmation...`);
@@ -182,7 +187,9 @@ export async function processBlockchainTransactions({
               txHash: payoutTxHash,
               status: "confirmed",
               confirmedAt: new Date(),
-              blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+              blockNumber: receipt?.blockNumber
+                ? BigInt(receipt.blockNumber)
+                : null,
             },
           });
           console.log(`✅ Payout transaction updated in database`);
@@ -196,7 +203,9 @@ export async function processBlockchainTransactions({
               amount: payout,
               status: "confirmed",
               confirmedAt: new Date(),
-              blockNumber: receipt?.blockNumber ? BigInt(receipt.blockNumber) : null,
+              blockNumber: receipt?.blockNumber
+                ? BigInt(receipt.blockNumber)
+                : null,
             },
           });
           console.log(`✅ Payout transaction created in database`);
@@ -215,7 +224,9 @@ export async function processBlockchainTransactions({
     }
 
     // Step 3: Mark bet as fully resolved
-    console.log(`✅ Updating bet status to ${outcome === "win" ? "resolved" : "complete"}`);
+    console.log(
+      `✅ Updating bet status to ${outcome === "win" ? "resolved" : "complete"}`
+    );
 
     await prisma.bet.update({
       where: { id: betId },

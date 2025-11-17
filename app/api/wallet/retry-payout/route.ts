@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
         const { JsonRpcProvider } = await import("ethers");
         const rpcUrl =
           process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+          `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
         const provider = new JsonRpcProvider(rpcUrl);
 
         console.log(`⏳ Waiting for payout transaction confirmation...`);
@@ -130,8 +130,7 @@ export async function POST(req: NextRequest) {
         console.log(`✅ Successfully processed payout for bet ${bet.id}`);
       } catch (error) {
         console.error(`❌ Failed to process payout for bet ${bet.id}:`, error);
-        result.error =
-          error instanceof Error ? error.message : "Unknown error";
+        result.error = error instanceof Error ? error.message : "Unknown error";
         results.push(result);
       }
     }

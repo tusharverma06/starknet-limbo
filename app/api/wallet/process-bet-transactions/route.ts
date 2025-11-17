@@ -53,10 +53,7 @@ export async function POST(req: NextRequest) {
 
       // Step 1: Send bet amount FROM user's wallet TO house wallet
       try {
-        betTxHash = await sendToHouseWallet(
-          encryptedPrivateKey,
-          betAmountWei
-        );
+        betTxHash = await sendToHouseWallet(encryptedPrivateKey, betAmountWei);
         console.log("✅ [BLOCKCHAIN] Bet transaction sent:", betTxHash);
         console.log(
           "⏳ [BLOCKCHAIN] Waiting for bet transaction confirmation..."
@@ -66,7 +63,7 @@ export async function POST(req: NextRequest) {
         const { JsonRpcProvider } = await import("ethers");
         const rpcUrl =
           process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+          `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
         const provider = new JsonRpcProvider(rpcUrl);
 
         const receipt = await provider.waitForTransaction(betTxHash, 1);
@@ -135,7 +132,8 @@ export async function POST(req: NextRequest) {
           });
           return NextResponse.json({
             success: true,
-            message: "Bet confirmed, payout pending (insufficient house balance)",
+            message:
+              "Bet confirmed, payout pending (insufficient house balance)",
             betTxHash,
             status: "pending_payout",
           });
@@ -146,10 +144,7 @@ export async function POST(req: NextRequest) {
             userWalletAddress,
             payoutAmount
           );
-          console.log(
-            "✅ [BLOCKCHAIN] Payout transaction sent:",
-            payoutTxHash
-          );
+          console.log("✅ [BLOCKCHAIN] Payout transaction sent:", payoutTxHash);
           console.log(
             "⏳ [BLOCKCHAIN] Waiting for payout transaction confirmation..."
           );
@@ -158,7 +153,7 @@ export async function POST(req: NextRequest) {
           const { JsonRpcProvider } = await import("ethers");
           const rpcUrl =
             process.env.NEXT_PUBLIC_RPC_URL ||
-            `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+            `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
           const provider = new JsonRpcProvider(rpcUrl);
 
           const receipt = await provider.waitForTransaction(payoutTxHash, 1);

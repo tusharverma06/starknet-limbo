@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
         // Fetch payout transaction from RPC provider
         const rpcUrl =
           process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+          `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
 
         if (rpcUrl && !rpcUrl.includes("undefined")) {
           console.log("🔍 Fetching transaction details for:", bet.txHash);

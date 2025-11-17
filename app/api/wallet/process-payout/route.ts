@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
       // Wait for transaction confirmation
       const rpcUrl =
         process.env.NEXT_PUBLIC_RPC_URL ||
-        `https://base-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+        `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
       const provider = new JsonRpcProvider(rpcUrl);
 
       console.log(`⏳ Waiting for payout transaction confirmation...`);

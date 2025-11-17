@@ -611,7 +611,9 @@ export function MiniappGameBoard() {
                             setShowFundingModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          disabled={!wallet || !isAuthenticated || isInitialLoading}
+                          disabled={
+                            !wallet || !isAuthenticated || isInitialLoading
+                          }
                           className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
                           <svg
@@ -646,7 +648,12 @@ export function MiniappGameBoard() {
                             setShowWithdrawModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          disabled={!wallet || !isAuthenticated || isInitialLoading || isWithdrawing}
+                          disabled={
+                            !wallet ||
+                            !isAuthenticated ||
+                            isInitialLoading ||
+                            isWithdrawing
+                          }
                           className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
                           <svg

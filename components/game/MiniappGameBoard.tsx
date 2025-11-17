@@ -605,13 +605,13 @@ export function MiniappGameBoard() {
                         {/* Add Funds */}
                         <button
                           onClick={() => {
-                            if (!wallet) {
+                            if (!wallet || !isAuthenticated) {
                               return;
                             }
                             setShowFundingModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          disabled={!wallet}
+                          disabled={!wallet || !isAuthenticated || isInitialLoading}
                           className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
                           <svg
@@ -640,13 +640,13 @@ export function MiniappGameBoard() {
                         {/* Withdraw Funds */}
                         <button
                           onClick={() => {
-                            if (!wallet) {
+                            if (!wallet || !isAuthenticated) {
                               return;
                             }
                             setShowWithdrawModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          disabled={!wallet || isWithdrawing}
+                          disabled={!wallet || !isAuthenticated || isInitialLoading || isWithdrawing}
                           className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
                           <svg
@@ -1078,7 +1078,9 @@ export function MiniappGameBoard() {
                 isPlacingBetViaWallet ||
                 isBalanceLoading ||
                 isSigning ||
-                isSigningOut
+                isSigningOut ||
+                isInitialLoading ||
+                (!wallet && isAuthenticated)
               }
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >

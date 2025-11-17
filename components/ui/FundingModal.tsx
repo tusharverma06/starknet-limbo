@@ -117,7 +117,7 @@ export function FundingModal({
 
   if (!isOpen) return null;
 
-  const handleSwitchToBaseSepolia = async () => {
+  const handleSwitchToBase = async () => {
     try {
       await switchChain({ chainId: CHAIN.id });
     } catch {
@@ -299,7 +299,7 @@ export function FundingModal({
                   </span>
                 </div>
                 <button
-                  onClick={handleSwitchToBaseSepolia}
+                  onClick={handleSwitchToBase}
                   className="text-xs px-3 py-1 bg-black text-white rounded-lg border-2 border-black hover:bg-gray-800 transition-colors"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >

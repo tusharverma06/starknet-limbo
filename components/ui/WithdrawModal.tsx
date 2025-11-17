@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
-import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
-import { useWaitForTransactionReceipt, useAccount } from "wagmi";
+import { getUsdValueFromEth } from "@/lib/utils/price";
+import { useWaitForTransactionReceipt } from "wagmi";
 import { ModalWrapper } from "./ModalWrapper";
 import Image from "next/image";
 
@@ -33,7 +33,6 @@ export function WithdrawModal({
   const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
-  const { address: connectedAddress } = useAccount();
 
   // Wait for transaction confirmation
   const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
@@ -105,7 +104,7 @@ export function WithdrawModal({
     let usdAmount: number;
     try {
       usdAmount = await getUsdValueFromEth(ethAmountNum);
-    } catch (err) {
+    } catch {
       setError("Failed to get USD price");
       return;
     }

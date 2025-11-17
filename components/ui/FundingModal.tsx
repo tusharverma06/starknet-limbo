@@ -11,7 +11,7 @@ import {
 } from "wagmi";
 import { parseEther, formatEther } from "viem";
 import { CHAIN } from "@/lib/constants";
-import { getEthValueFromUsd, getUsdValueFromEth } from "@/lib/utils/price";
+import { getUsdValueFromEth } from "@/lib/utils/price";
 import { ModalWrapper } from "./ModalWrapper";
 import Image from "next/image";
 
@@ -36,7 +36,6 @@ export function FundingModal({
   const [usdEquivalent, setUsdEquivalent] = useState<string>("0.00");
   const [isFunding, setIsFunding] = useState(false);
   const [error, setError] = useState("");
-  const [inputError, setInputError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
 
@@ -165,7 +164,7 @@ export function FundingModal({
     let usdAmount: number;
     try {
       usdAmount = await getUsdValueFromEth(ethAmountNum);
-    } catch (err) {
+    } catch {
       setError("Failed to get USD price");
       return;
     }
@@ -213,7 +212,6 @@ export function FundingModal({
     setTxHash(undefined);
     setIsFunding(false);
     setError("");
-    setInputError("");
     onClose();
   };
 

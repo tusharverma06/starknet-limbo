@@ -47,8 +47,9 @@ interface UseServerWalletReturn {
 /**
  * Hook for managing server-side wallets
  * @param userId - User identifier (e.g., Farcaster FID)
+ * @param isAuthenticated - Whether user is authenticated (triggers wallet fetch)
  */
-export function useServerWallet(userId: string | null): UseServerWalletReturn {
+export function useServerWallet(userId: string | null, isAuthenticated?: boolean): UseServerWalletReturn {
   const { address: connectedAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
@@ -72,11 +73,18 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     }
 
     try {
-      const response = await fetch(`/api/wallet/create?userId=${userId}`, {
+      // GET endpoint uses session auth, no userId param needed
+      const response = await fetch(`/api/wallet/create`, {
         credentials: 'include', // Required for cookies in cross-origin contexts
       });
 
       if (response.status === 404) {
+        setWallet(null);
+        return;
+      }
+
+      if (response.status === 401) {
+        console.log("⚠️ Not authenticated - wallet fetch requires sign in");
         setWallet(null);
         return;
       }
@@ -147,7 +155,8 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     setError(null);
 
     try {
-      const response = await fetch(`/api/wallet/balance?userId=${userId}`, {
+      // Balance endpoint uses session auth, no userId param needed
+      const response = await fetch(`/api/wallet/balance`, {
         credentials: 'include', // Required for cookies in cross-origin contexts
       });
 
@@ -294,10 +303,10 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     [userId, wallet, connectedAddress]
   );
 
-  // Fetch wallet on mount and when userId changes
+  // Fetch wallet on mount, when userId changes, or when authentication changes
   useEffect(() => {
     fetchWallet();
-  }, [fetchWallet]);
+  }, [fetchWallet, isAuthenticated]);
 
   // Auto-refresh balance every 30 seconds if wallet exists
   useEffect(() => {

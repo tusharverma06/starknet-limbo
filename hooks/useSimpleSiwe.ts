@@ -51,7 +51,7 @@ export function useSimpleSiwe(): UseSimpleSiweReturn {
         params.append("userId", user.fid.toString());
 
         const response = await fetch(`/api/auth/status?${params.toString()}`, {
-          credentials: 'include', // Required for cookies in cross-origin contexts
+          credentials: "include", // Required for cookies in cross-origin contexts
         });
 
         if (response.ok) {
@@ -104,7 +104,7 @@ export function useSimpleSiwe(): UseSimpleSiweReturn {
       const custodialResponse = await fetch("/custodial-wallet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include', // Required for cookies in cross-origin contexts
+        credentials: "include", // Required for cookies in cross-origin contexts
         body: JSON.stringify({
           address: address.toLowerCase(),
           fid: user?.fid || null,
@@ -129,9 +129,10 @@ export function useSimpleSiwe(): UseSimpleSiweReturn {
       const message = `Based Limbo wants you to sign in with your Ethereum account:
 ${address}
 
-By signing, you authorize custodial wallet ${custodialWalletAddress} to place bets on your behalf until ${expiresAt.toISOString().replace("T", " ").substring(0, 19)}.
-
-Withdrawals can only be sent back to ${address}.
+By signing, you authorize custodial wallet ${custodialWalletAddress} to place bets and send withdrawals back on your behalf until ${expiresAt
+        .toISOString()
+        .replace("T", " ")
+        .substring(0, 19)}.
 
 URI: https://${domain}
 Version: 1
@@ -151,7 +152,7 @@ Expiration Time: ${expiresAt.toISOString()}`;
       const response = await fetch("/siwe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include', // Required for cookies to be set in cross-origin contexts
+        credentials: "include", // Required for cookies to be set in cross-origin contexts
         body: JSON.stringify({
           address: address.toLowerCase(),
           signature,
@@ -191,7 +192,7 @@ Expiration Time: ${expiresAt.toISOString()}`;
       await fetch("/signout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include', // Required for cookies in cross-origin contexts
+        credentials: "include", // Required for cookies in cross-origin contexts
         body: JSON.stringify({
           address: address?.toLowerCase(),
           fid: user?.fid || null,
@@ -234,7 +235,7 @@ export function getAuthHeaders(_connectedAddress?: string): HeadersInit {
  */
 export function getAuthFetchOptions(headers?: HeadersInit): RequestInit {
   return {
-    credentials: 'include', // Required for cookies in cross-origin contexts
+    credentials: "include", // Required for cookies in cross-origin contexts
     headers: {
       "Content-Type": "application/json",
       ...headers,

@@ -61,7 +61,7 @@ export function MiniappGameBoard() {
     isInitialLoading,
     isWithdrawing,
     isPlacingBet: isPlacingBetViaWallet,
-  } = useServerWallet(userId);
+  } = useServerWallet(userId, isAuthenticated);
 
   const handleRefreshBalance = async () => {
     await refetchBalance();

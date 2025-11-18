@@ -25,7 +25,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log("🔐 SIWE sign-in request:", { address, fid });
+    console.log("🔐 SIWE sign-in request:", {
+      address,
+      fid,
+      origin: req.headers.get('origin'),
+      referer: req.headers.get('referer'),
+      userAgent: req.headers.get('user-agent'),
+      host: req.headers.get('host')
+    });
 
     // Verify the signature
     let recoveredAddress: string;
@@ -142,19 +149,8 @@ export async function POST(req: NextRequest) {
 
     console.log("🎟️ Session created:", session.id);
 
-    // Set session cookie (SameSite=None for iframe/miniapp compatibility)
-    const cookieStore = await cookies();
-    cookieStore.set("session_id", session.id, {
-      httpOnly: true,
-      secure: true, // Must be true when SameSite=None
-      sameSite: "none", // Required for cross-site contexts (iframes)
-      path: "/",
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-    });
-
-    console.log("🍪 Session cookie set with SameSite=None for iframe compatibility");
-
-    return NextResponse.json({
+    // Create response first
+    const response = NextResponse.json({
       success: true,
       user: {
         fid: updatedUser.farcaster_id,
@@ -162,6 +158,36 @@ export async function POST(req: NextRequest) {
         custodialWalletAddress: updatedUser.server_wallet_address,
       },
     });
+
+    // Determine if we're on HTTPS (production/ngrok) or HTTP (local dev)
+    const protocol = req.headers.get('x-forwarded-proto') || 'http';
+    const isSecure = protocol === 'https';
+
+    // Set session cookie with environment-aware settings
+    // For HTTPS (Vercel/ngrok): Use Secure, SameSite=None, Partitioned for iframe support
+    // For HTTP (local dev): Use SameSite=Lax without Secure
+    const cookieParts = [
+      `session_id=${session.id}`,
+      'Path=/',
+      'HttpOnly',
+      ...(isSecure ? ['Secure', 'SameSite=None', 'Partitioned'] : ['SameSite=Lax']),
+      `Max-Age=${7 * 24 * 60 * 60}`
+    ];
+    const cookieValue = cookieParts.join('; ');
+    response.headers.set('Set-Cookie', cookieValue);
+
+    console.log("🍪 Session cookie set:", {
+      sessionId: session.id,
+      protocol,
+      isSecure,
+      maxAge: "7 days",
+      sameSite: isSecure ? "None" : "Lax",
+      secure: isSecure,
+      partitioned: isSecure,
+      httpOnly: true
+    });
+
+    return response;
   } catch (error) {
     console.error("❌ SIWE authentication error:", error);
     return NextResponse.json(

@@ -78,7 +78,9 @@ export function ActivityDrawer({
   } = useQuery<{ bets: BetDisplay[]; count: number }>({
     queryKey: ["allBets"],
     queryFn: async () => {
-      const response = await fetch(`/api/wallet/bet-history?limit=100`);
+      const response = await fetch(`/api/wallet/bet-history?limit=100`, {
+        credentials: 'include', // Required for cookies in cross-origin contexts
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch all bets");

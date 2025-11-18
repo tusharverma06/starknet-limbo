@@ -37,7 +37,9 @@ export function TransactionsSheet({
       if (!userId) {
         return { transactions: [] };
       }
-      const response = await fetch(`/api/wallet/transactions?userId=${userId}`);
+      const response = await fetch(`/api/wallet/transactions?userId=${userId}`, {
+        credentials: 'include', // Required for cookies in cross-origin contexts
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
       }

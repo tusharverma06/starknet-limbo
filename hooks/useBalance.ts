@@ -33,6 +33,7 @@ export function useBalance(userId: string | null, isAuthenticated: boolean) {
         }
 
         const response = await fetch("/api/wallet/balance", {
+          credentials: 'include', // Required for cookies in cross-origin contexts
           headers: getAuthHeaders(connectedAddress || undefined),
         });
 

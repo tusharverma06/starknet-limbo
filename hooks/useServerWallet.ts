@@ -72,7 +72,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     }
 
     try {
-      const response = await fetch(`/api/wallet/create?userId=${userId}`);
+      const response = await fetch(`/api/wallet/create?userId=${userId}`, {
+        credentials: 'include', // Required for cookies in cross-origin contexts
+      });
 
       if (response.status === 404) {
         setWallet(null);
@@ -109,6 +111,7 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     try {
       const response = await fetch("/api/wallet/create", {
         method: "POST",
+        credentials: 'include', // Required for cookies in cross-origin contexts
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
       });
@@ -144,7 +147,9 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
     setError(null);
 
     try {
-      const response = await fetch(`/api/wallet/balance?userId=${userId}`);
+      const response = await fetch(`/api/wallet/balance?userId=${userId}`, {
+        credentials: 'include', // Required for cookies in cross-origin contexts
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch balance");
@@ -191,6 +196,7 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
 
         const response = await fetch("/api/wallet/withdraw", {
           method: "POST",
+          credentials: 'include', // Required for cookies in cross-origin contexts
           headers: {
             "Content-Type": "application/json",
             ...getAuthHeaders(connectedAddress || undefined),
@@ -246,6 +252,7 @@ export function useServerWallet(userId: string | null): UseServerWalletReturn {
       try {
         const response = await fetch("/api/wallet/place-bet", {
           method: "POST",
+          credentials: 'include', // Required for cookies in cross-origin contexts
           headers: {
             "Content-Type": "application/json",
             ...getAuthHeaders(connectedAddress || undefined),

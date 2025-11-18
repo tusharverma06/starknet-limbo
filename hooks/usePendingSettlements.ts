@@ -27,7 +27,9 @@ export function usePendingSettlements() {
 
   const fetchPendingSettlements = useCallback(async () => {
     try {
-      const response = await fetch("/api/wallet/pending-settlements");
+      const response = await fetch("/api/wallet/pending-settlements", {
+        credentials: 'include', // Required for cookies in cross-origin contexts
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch pending settlements");
       }

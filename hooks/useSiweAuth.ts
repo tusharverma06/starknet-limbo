@@ -24,7 +24,9 @@ export function useSiweAuth() {
       }
 
       try {
-        const response = await fetch(`/api/auth/status?userId=${userId}`);
+        const response = await fetch(`/api/auth/status?userId=${userId}`, {
+          credentials: 'include', // Required for cookies in cross-origin contexts
+        });
         if (response.ok) {
           const data = await response.json();
           // Only set as authenticated if signature exists AND is not expired
@@ -69,6 +71,7 @@ export function useSiweAuth() {
       const walletResponse = await fetch("/api/wallet/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Required for cookies in cross-origin contexts
         body: JSON.stringify({ userId }),
       });
 
@@ -109,6 +112,7 @@ export function useSiweAuth() {
       const response = await fetch("/api/auth/siwe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Required for cookies to be set in cross-origin contexts
         body: JSON.stringify({
           userId,
           message,
@@ -146,6 +150,7 @@ export function useSiweAuth() {
       await fetch("/api/auth/signout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Required for cookies in cross-origin contexts
         body: JSON.stringify({ fid: userId }),
       });
 

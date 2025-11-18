@@ -100,6 +100,7 @@ export function useQuickAuth() {
     try {
       await fetch("/api/auth/signout", {
         method: "POST",
+        credentials: 'include', // Required for cookies in cross-origin contexts
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fid: user.fid }),
       });

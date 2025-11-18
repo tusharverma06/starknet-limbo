@@ -87,6 +87,7 @@ export function FundingModal({
         try {
           const response = await fetch("/api/wallet/log-deposit", {
             method: "POST",
+            credentials: 'include', // Required for cookies in cross-origin contexts
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               userId,

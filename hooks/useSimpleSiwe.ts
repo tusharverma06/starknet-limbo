@@ -50,7 +50,9 @@ export function useSimpleSiwe(): UseSimpleSiweReturn {
         const params = new URLSearchParams();
         params.append("userId", user.fid.toString());
 
-        const response = await fetch(`/api/auth/status?${params.toString()}`);
+        const response = await fetch(`/api/auth/status?${params.toString()}`, {
+          credentials: 'include', // Required for cookies in cross-origin contexts
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -102,6 +104,7 @@ export function useSimpleSiwe(): UseSimpleSiweReturn {
       const custodialResponse = await fetch("/custodial-wallet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Required for cookies in cross-origin contexts
         body: JSON.stringify({
           address: address.toLowerCase(),
           fid: user?.fid || null,
@@ -148,6 +151,7 @@ Expiration Time: ${expiresAt.toISOString()}`;
       const response = await fetch("/siwe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Required for cookies to be set in cross-origin contexts
         body: JSON.stringify({
           address: address.toLowerCase(),
           signature,
@@ -187,6 +191,7 @@ Expiration Time: ${expiresAt.toISOString()}`;
       await fetch("/signout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include', // Required for cookies in cross-origin contexts
         body: JSON.stringify({
           address: address?.toLowerCase(),
           fid: user?.fid || null,
@@ -215,10 +220,24 @@ Expiration Time: ${expiresAt.toISOString()}`;
 
 /**
  * Helper function to get auth headers for API requests
- * Cookies are sent automatically by the browser
+ * Cookies are sent automatically by the browser when credentials: 'include' is used
  */
 export function getAuthHeaders(_connectedAddress?: string): HeadersInit {
   return {
     "Content-Type": "application/json",
+  };
+}
+
+/**
+ * Helper function to get fetch options with credentials for API requests
+ * Use this for all authenticated API calls to ensure cookies are sent
+ */
+export function getAuthFetchOptions(headers?: HeadersInit): RequestInit {
+  return {
+    credentials: 'include', // Required for cookies in cross-origin contexts
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
   };
 }

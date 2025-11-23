@@ -3,7 +3,7 @@
 // Define database connection via the `DATABASE_URL` env var
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_PRISMA_DATABASE_URL")
+  url      = env("DATABASE_POSTGRES_URL")
 }
 
 // Define custom output path for generated Prisma Client
@@ -26,12 +26,17 @@ model User {
   siweMessage           String?  @map("siwe_message") @db.Text         // SIWE message that was signed
   siweExpiresAt         DateTime? @map("siwe_expires_at") // Expiration of SIWE authorization
 
+  // Waitlist & Gamification
+  totalPoints                Int      @default(0) @map("total_points")
+  farcasterNotificationData  String?  @map("farcaster_notification_data") @db.Text // JSON: {url, token}
+
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
   wallet Wallet?
   bets   Bet[]
   sessions Session[]
+  userTasks UserTask[]
 
   @@index([farcaster_id])
   @@index([server_wallet_address])
@@ -160,4 +165,22 @@ model Bet {
   @@index([createdAt])
   @@index([status])
   @@map("bets")
+}
+
+// User task completion tracking
+model UserTask {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  taskId      String   @map("task_id") @db.VarChar(50) // 'follow', 'cast', 'join', 'add_miniapp'
+  completed   Boolean  @default(false)
+  points      Int      @default(0)
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, taskId])
+  @@index([userId])
+  @@index([taskId])
+  @@map("user_tasks")
 }

@@ -349,10 +349,23 @@ function VerifyPageContent() {
                   }`}
                 </div>
                 <div>
-                  <span className="text-white/50">Random Value:</span>
-                  <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
-                    {verificationData.steps.step3.randomValue}
-                  </code>
+                  <span className="text-white/50">Random Value Calculation:</span>
+                  <div className="mt-2 space-y-2">
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">Formula:</p>
+                      <code className="block font-mono text-xs text-blue-300">
+                        randomValue = SHA256(serverSeed + playerId + betId)
+                      </code>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">
+                        Calculated Random Value:
+                      </p>
+                      <code className="block font-mono text-xs break-all">
+                        {verificationData.steps.step3.randomValue}
+                      </code>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <span className="text-white/50">Random Float (0-1):</span>

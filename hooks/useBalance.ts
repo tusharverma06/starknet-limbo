@@ -5,9 +5,15 @@ import { getAuthHeaders } from "./useSimpleSiwe";
 import { useAccount } from "wagmi";
 
 interface BalanceData {
-  balance: string; // in wei
+  balance: string; // in wei (blockchain balance)
   balanceInEth: number;
   balanceInUsd: number;
+  availableBalance: string; // in wei (available = blockchain - locked)
+  availableBalanceInEth: number;
+  availableBalanceInUsd: number;
+  lockedBalance: string; // in wei
+  lockedBalanceInEth: number;
+  lockedBalanceInUsd: number;
   address: string;
 }
 
@@ -39,7 +45,6 @@ export function useBalance(userId: string | null, isAuthenticated: boolean) {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error("❌ Balance fetch failed:", errorData);
           throw new Error(errorData.error || "Failed to fetch balance");
         }
 
@@ -49,45 +54,59 @@ export function useBalance(userId: string | null, isAuthenticated: boolean) {
           balance: data.balance,
           balanceInEth: data.balanceInEth,
           balanceInUsd: data.balanceInUsd || 0,
+          availableBalance: data.availableBalance || data.balance,
+          availableBalanceInEth: data.availableBalanceInEth || data.balanceInEth,
+          availableBalanceInUsd: data.availableBalanceInUsd || data.balanceInUsd || 0,
+          lockedBalance: data.lockedBalance || "0",
+          lockedBalanceInEth: data.lockedBalanceInEth || 0,
+          lockedBalanceInUsd: data.lockedBalanceInUsd || 0,
           address: data.address,
         };
       },
       enabled: queryEnabled, // Only fetch if user is authenticated
-      refetchInterval: false, // Disable auto-refetch - rely on manual refetch after transactions
+      refetchInterval: 3000, // Refetch every 3 seconds to keep available balance updated (locked balance changes after bets)
       refetchOnWindowFocus: true, // Still refetch when user returns to tab
-      staleTime: 30000, // Consider data stale after 30 seconds
+      staleTime: 1000, // Consider data stale after 1 second
       retry: false, // Don't retry failed requests
     });
 
-  // Sync optimistic balance with fetched data
+  // Sync optimistic balance with fetched available balance (not total balance)
   useEffect(() => {
-    if (data?.balanceInUsd !== undefined) {
+    if (data?.availableBalanceInUsd !== undefined) {
       // Initialize optimistic balance if null
       if (optimisticBalanceUsd === null) {
-        setOptimisticBalance(data.balanceInUsd);
+        setOptimisticBalance(data.availableBalanceInUsd);
       }
       // If there's a significant difference between optimistic and fetched balance,
       // sync them (this handles async blockchain transaction completion)
-      else if (Math.abs(optimisticBalanceUsd - data.balanceInUsd) > 0.01) {
+      else if (Math.abs(optimisticBalanceUsd - data.availableBalanceInUsd) > 0.01) {
         // Only sync if the difference is significant (>$0.01) to avoid unnecessary updates from rounding
-        setOptimisticBalance(data.balanceInUsd);
+        setOptimisticBalance(data.availableBalanceInUsd);
       }
     }
-  }, [data?.balanceInUsd, optimisticBalanceUsd, setOptimisticBalance]);
+  }, [data?.availableBalanceInUsd, optimisticBalanceUsd, setOptimisticBalance]);
 
-  // Use optimistic balance if available, otherwise use fetched balance
-  const displayBalanceUsd = optimisticBalanceUsd ?? data?.balanceInUsd ?? 0;
+  // Use optimistic balance if available, otherwise use fetched available balance
+  // This is what the user can actually bet with
+  const displayBalanceUsd = optimisticBalanceUsd ?? data?.availableBalanceInUsd ?? 0;
 
   return {
     balance: data?.balance || "0",
     balanceInEth: data?.balanceInEth || 0,
-    balanceInUsd: displayBalanceUsd,
+    balanceInUsd: data?.balanceInUsd || 0,
+    availableBalance: data?.availableBalance || data?.balance || "0",
+    availableBalanceInEth: data?.availableBalanceInEth || 0,
+    availableBalanceInUsd: displayBalanceUsd,
+    lockedBalance: data?.lockedBalance || "0",
+    lockedBalanceInEth: data?.lockedBalanceInEth || 0,
+    lockedBalanceInUsd: data?.lockedBalanceInUsd || 0,
     address: data?.address || "",
     isLoading,
     isRefetching,
     error: error ? (error as Error).message : null,
     refetch,
-    // Expose the actual fetched balance for comparison
+    // Expose the actual fetched balances for comparison
     fetchedBalanceUsd: data?.balanceInUsd || 0,
+    fetchedAvailableBalanceUsd: data?.availableBalanceInUsd || 0,
   };
 }

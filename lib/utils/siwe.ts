@@ -11,13 +11,7 @@ export function createSiweMessage(params: {
   domain: string;
   issuedAt: Date;
 }): string {
-  const message = `
-You are approving wallet ${
-    params.custodialWalletAddress
-  } to login and sign bets until ${params.expiresAt
-    .toISOString()
-    .replace("T", " ")
-    .substring(0, 19)}.
+  const message = `You are approving wallet ${params.custodialWalletAddress} to login and sign bets until ${params.expiresAt.toISOString()}.
 Allowed to initiate withdrawals back to ${params.userWalletAddress}.
 
 URI: https://${params.domain}

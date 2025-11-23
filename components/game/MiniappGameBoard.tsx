@@ -7,7 +7,7 @@ import { FundingModal } from "@/components/ui/FundingModal";
 import { WithdrawModal } from "@/components/ui/WithdrawModal";
 import { TransactionsSheet } from "@/components/ui/TransactionsSheet";
 import { useServerWallet } from "@/hooks/useServerWallet";
-import { useBlockchainBalance } from "@/hooks/useBlockchainBalance";
+import { useBalance } from "@/hooks/useBalance";
 import { useGameState } from "@/hooks/useGameState";
 import { useFarcaster } from "@/hooks/useFarcaster";
 import { useSimpleSiwe } from "@/hooks/useSimpleSiwe";
@@ -35,23 +35,15 @@ export function MiniappGameBoard() {
     signOut,
   } = useSimpleSiwe();
 
-  // Use simple blockchain balance hook - fetches directly from chain
+  // Use balance hook - shows available balance (total - locked)
+  // This is what user can actually bet with
   const {
-    balanceEth,
-    balanceUsd,
+    availableBalanceInEth: balanceEth,
+    availableBalanceInUsd: balanceUsd,
+    lockedBalanceInUsd,
     isLoading: isBalanceLoading,
     refetch: refetchBalance,
-  } = useBlockchainBalance(custodialWallet);
-
-  // Debug: Log balance state
-  useEffect(() => {
-    console.log("💰 Balance Debug:", {
-      custodialWallet,
-      balanceUsd,
-      balanceEth,
-      isBalanceLoading,
-    });
-  }, [custodialWallet, balanceUsd, balanceEth, isBalanceLoading]);
+  } = useBalance(userId, isAuthenticated);
 
   // Keep useServerWallet for wallet operations (placeBet, withdraw)
   const {
@@ -134,6 +126,55 @@ export function MiniappGameBoard() {
 
   // Ref for wallet dropdown to handle click outside
   const walletDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Audio refs for win and lose sounds
+  const winAudioRef = useRef<HTMLAudioElement | null>(null);
+  const loseAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio elements
+  useEffect(() => {
+    winAudioRef.current = new Audio("/win_audio.wav");
+    loseAudioRef.current = new Audio("/loose_audio.wav");
+
+    // Set audio properties
+    if (winAudioRef.current) {
+      winAudioRef.current.preload = "auto";
+      winAudioRef.current.volume = 0.7;
+    }
+    if (loseAudioRef.current) {
+      loseAudioRef.current.preload = "auto";
+      loseAudioRef.current.volume = 0.7;
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (winAudioRef.current) {
+        winAudioRef.current.pause();
+        winAudioRef.current = null;
+      }
+      if (loseAudioRef.current) {
+        loseAudioRef.current.pause();
+        loseAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Play audio when animation changes
+  useEffect(() => {
+    if (currentAnimation === "win" && winAudioRef.current) {
+      // Reset and play win sound
+      winAudioRef.current.currentTime = 0;
+      winAudioRef.current.play().catch((error) => {
+        // Silently fail
+      });
+    } else if (currentAnimation === "lose" && loseAudioRef.current) {
+      // Reset and play lose sound
+      loseAudioRef.current.currentTime = 0;
+      loseAudioRef.current.play().catch((error) => {
+        // Silently fail
+      });
+    }
+  }, [currentAnimation, animationKey]);
 
   // Handle click outside for wallet dropdown
   useEffect(() => {
@@ -309,7 +350,7 @@ export function MiniappGameBoard() {
         setCurrentAnimation(isWin ? "win" : "lose");
         setShowBanner(false);
 
-        // Show banner after Rive animation starts (approx 2 seconds)
+        // Show banner after Rive animation starts (approx 1 second)
         setTimeout(() => {
           setShowBanner(true);
 
@@ -318,7 +359,7 @@ export function MiniappGameBoard() {
             setShowBanner(false);
             setCurrentAnimation("idle");
           }, 3000);
-        }, 2000);
+        }, 1000);
 
         setLastResult(result.result.win, BigInt(result.result.payout));
         setIsPlacingBet(false);
@@ -381,9 +422,6 @@ export function MiniappGameBoard() {
     if (!wallet) return "Create Wallet";
     return "Place Bet";
   };
-  console.log("isInitialLoading", isInitialLoading);
-  console.log("isAuthenticated", isAuthenticated);
-  console.log("isAuthLoading", isAuthLoading);
 
   // Show loading state while wallet is being initialized
   if (isInitialLoading) {
@@ -1206,7 +1244,7 @@ export function MiniappGameBoard() {
         isOpen={showFundingModal && !!wallet}
         onClose={() => setShowFundingModal(false)}
         walletAddress={wallet?.address || ""}
-        currentBalance={balanceEth?.toString() || "0"}
+        currentBalance={balanceEth ? balanceEth.toString() : "0"}
         userId={userId}
         onSuccess={handleRefreshBalance}
       />
@@ -1216,7 +1254,7 @@ export function MiniappGameBoard() {
         isOpen={showWithdrawModal && !!wallet}
         onClose={() => setShowWithdrawModal(false)}
         walletAddress={wallet?.address || ""}
-        currentBalance={balanceEth?.toString() || "0"}
+        currentBalance={balanceEth ? balanceEth.toString() : "0"}
         onWithdraw={handleWithdraw}
         onSuccess={handleRefreshBalance}
       />

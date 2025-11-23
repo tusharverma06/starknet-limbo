@@ -35,7 +35,6 @@ export function usePonderBets(): UsePonderBetsReturn {
       setBets(allBets);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch bets");
-      console.error("Failed to refresh bets:", err);
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +56,6 @@ export function usePonderBets(): UsePonderBetsReturn {
       setError(
         err instanceof Error ? err.message : "Failed to fetch user bets"
       );
-      console.error("Failed to refresh user bets:", err);
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +77,6 @@ export function usePonderBets(): UsePonderBetsReturn {
       setError(
         err instanceof Error ? err.message : "Failed to fetch user stats"
       );
-      console.error("Failed to refresh user stats:", err);
     } finally {
       setIsLoading(false);
     }
@@ -96,8 +93,7 @@ export function usePonderBets(): UsePonderBetsReturn {
           (bet) => bet.placedAt > lastTimestamp
         );
         return newBets;
-      } catch (err) {
-        console.error("Failed to poll for new bets:", err);
+      } catch {
         return [];
       }
     },
@@ -147,8 +143,8 @@ export function useBetPolling(
           onNewBets(latestBets);
           setCurrentTimestamp(latestBets[0].placedAt);
         }
-      } catch (error) {
-        console.error("Polling error:", error);
+      } catch {
+        // Silently fail
       }
     };
 
@@ -203,7 +199,6 @@ export function useUserBets(address: string | null) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch user data"
       );
-      console.error("Failed to refresh user data:", err);
     } finally {
       setIsLoading(false);
     }

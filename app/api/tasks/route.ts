@@ -40,6 +40,11 @@ export async function GET(req: NextRequest) {
     // Find or create user based on FID (Farcaster ID)
     let user = await prisma.user.findUnique({
       where: { farcaster_id: fid },
+      include: {
+        _count: {
+          select: { referralsGiven: true },
+        },
+      },
     });
 
     if (!user) {
@@ -51,6 +56,11 @@ export async function GET(req: NextRequest) {
           farcaster_username: username,
           farcaster_pfp: pfp,
           totalPoints: 0,
+        },
+        include: {
+          _count: {
+            select: { referralsGiven: true },
+          },
         },
       });
     }
@@ -90,6 +100,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       tasks: tasksWithStatus,
       totalPoints: user.totalPoints || 0,
+      referralCount: user._count.referralsGiven,
       user: {
         fid: user.farcaster_id,
         username: user.farcaster_username,

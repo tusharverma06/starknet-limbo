@@ -33,4 +33,12 @@ export const TASKS = [
     icon: "/fc.png",
     action: "sdk",
   },
+  {
+    id: "referral",
+    title: "Invite Friends",
+    description: "Get 50 points per referral (max 50)",
+    points: 50,
+    icon: "🎁",
+    action: "referral",
+  },
 ];

@@ -1,51 +1,67 @@
 "use client";
 
 import { useTasks } from "@/hooks/useTasks";
+import { useFarcaster } from "@/hooks/useFarcaster";
+import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { useReferralProcessor } from "@/hooks/useReferralProcessor";
 import sdk from "@farcaster/miniapp-sdk";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { LeaderboardDrawer } from "@/components/ui/LeaderboardDrawer";
+import { Trophy } from "lucide-react";
 
 export default function WaitlistPage() {
+  const { user } = useFarcaster();
+  const userFid = user?.fid?.toString() || null;
+
   const {
     tasks,
     totalPoints,
+    referralCount,
     isLoading,
     error,
-    refetch,
     completeTask,
     completeMiniapp,
     isCompletingTask,
   } = useTasks();
 
-  const [processingTask, setProcessingTask] = useState<string | null>(null);
+  const { userRank, processReferral } = useLeaderboard(userFid);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
 
-  const handleAddToFarcaster = async () => {
-    setProcessingTask("add_miniapp");
+  // Auto-process referral from URL
+  useReferralProcessor(userFid, processReferral);
 
-    try {
-      const result = await sdk.actions.addMiniApp();
+  const handleAddToFarcaster = useCallback(async () => {
+    const result = await sdk.actions.addMiniApp();
+    if (result === null) return;
 
-      if (result === null) {
+    await completeMiniapp({
+      url: result.notificationDetails?.url || "",
+      token: result.notificationDetails?.token || "",
+    });
+  }, [completeMiniapp]);
+
+  const handleReferral = useCallback(() => {
+    if (!userFid) return;
+
+    const referralUrl = `${window.location.origin}/waitlist?ref=${userFid}`;
+    const text = `Join me on Based Limbo! 🎲 ${referralUrl}`;
+    const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+
+    window.open(composeUrl, "_blank");
+  }, [userFid]);
+
+  const handleTaskClick = useCallback(
+    async (task: { id: string; completed: boolean; action: string }) => {
+      if (task.completed || isCompletingTask) return;
+
+      if (task.id === "add_miniapp") {
+        await handleAddToFarcaster();
         return;
       }
 
-      await completeMiniapp({
-        url: result.notificationDetails?.url || "",
-        token: result.notificationDetails?.token || "",
-      });
-    } finally {
-      setProcessingTask(null);
-    }
-  };
-
-  const handleTaskClick = async (task: (typeof tasks)[0]) => {
-    if (task.completed || isCompletingTask) return;
-
-    setProcessingTask(task.id);
-
-    try {
-      if (task.id === "add_miniapp") {
-        await handleAddToFarcaster();
+      if (task.id === "referral") {
+        handleReferral();
         return;
       }
 
@@ -54,12 +70,37 @@ export default function WaitlistPage() {
       }
 
       await completeTask({ taskId: task.id });
-    } finally {
-      setProcessingTask(null);
-    }
-  };
+    },
+    [completeTask, handleAddToFarcaster, handleReferral, isCompletingTask]
+  );
 
-  const completedCount = tasks.filter((t) => t.completed).length;
+  const completedCount = useMemo(
+    () => tasks.filter((t) => t.completed).length,
+    [tasks]
+  );
+
+  const getTaskButtonState = useCallback(
+    (task: { id: string; completed: boolean }) => {
+      const isReferralTask = task.id === "referral";
+      const isMaxedOut = isReferralTask && referralCount >= 50;
+      const isCompleted = isReferralTask ? isMaxedOut : task.completed;
+
+      return {
+        isDisabled: isCompleted || isCompletingTask,
+        className: isCompleted
+          ? "bg-[#1ec460] text-white cursor-default"
+          : "bg-[#2574ff] text-white hover:bg-[#1e5dd1] active:translate-y-0.5",
+        label: isCompleted
+          ? "✓"
+          : isReferralTask
+          ? "Share"
+          : isCompletingTask
+          ? "..."
+          : "Go",
+      };
+    },
+    [referralCount, isCompletingTask]
+  );
 
   return (
     <div className="min-h-screen bg-[#cfd9ff]">
@@ -86,6 +127,37 @@ export default function WaitlistPage() {
 
         {/* Main Content */}
         <div className="flex flex-col gap-2 p-2 flex-1">
+          {/* Rank & Points Button */}
+          {userFid && (
+            <button
+              onClick={() => setIsLeaderboardOpen(true)}
+              className="bg-white border-2 border-black rounded-xl p-4 shadow-[0px_2px_0px_0px_#000000] hover:bg-gray-50 active:translate-y-0.5 active:shadow-none transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Trophy className="w-6 h-6 text-[#2574ff]" />
+                  <div className="text-left">
+                    <p
+                      className="text-[18px] text-black leading-[1]"
+                      style={{ fontFamily: "var(--font-lilita-one)" }}
+                    >
+                      Rank #{userRank || "—"}
+                    </p>
+                    <p className="text-[12px] text-gray-600">
+                      {totalPoints.toLocaleString()} points
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className="text-[14px] text-[#2574ff]"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  View Leaderboard →
+                </div>
+              </div>
+            </button>
+          )}
+
           {/* Progress Bar */}
           <div className="bg-white border-2 border-black rounded-xl p-4 shadow-[0px_2px_0px_0px_#000000]">
             <div className="flex items-center justify-between mb-2">
@@ -123,13 +195,6 @@ export default function WaitlistPage() {
           ) : error ? (
             <div className="bg-red-500/10 border-2 border-red-500/30 rounded-xl p-6 shadow-[0px_2px_0px_0px_#000000] text-center">
               <p className="text-red-600 font-medium">{error.message}</p>
-              <button
-                onClick={() => refetch()}
-                className="mt-4 px-4 py-2 bg-[#2574ff] text-white rounded-lg hover:bg-[#1e5dd1]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
-              >
-                Try Again
-              </button>
             </div>
           ) : (
             <div className="space-y-2">
@@ -160,12 +225,21 @@ export default function WaitlistPage() {
                         >
                           {task.title}
                         </h3>
-                        <span
-                          className="text-[14px] text-[#2574ff] leading-[1.2]"
-                          style={{ fontFamily: "var(--font-lilita-one)" }}
-                        >
-                          +{task.points}
-                        </span>
+                        {task.id === "referral" ? (
+                          <span
+                            className="text-[14px] text-[#2574ff] leading-[1.2]"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            {referralCount}/50
+                          </span>
+                        ) : (
+                          <span
+                            className="text-[14px] text-[#2574ff] leading-[1.2]"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            +{task.points}
+                          </span>
+                        )}
                       </div>
                       <p className="text-[14px] text-gray-600 leading-[1.2]">
                         {task.description}
@@ -173,21 +247,15 @@ export default function WaitlistPage() {
                     </div>
                     <button
                       onClick={() => handleTaskClick(task)}
-                      disabled={task.completed || processingTask !== null}
+                      disabled={getTaskButtonState(task).isDisabled}
                       className={`border-2 border-black rounded-lg px-4 py-2 transition-all ${
-                        task.completed
-                          ? "bg-[#1ec460] text-white cursor-default"
-                          : "bg-[#2574ff] text-white hover:bg-[#1e5dd1] active:translate-y-0.5"
+                        getTaskButtonState(task).className
                       } disabled:opacity-50 disabled:cursor-not-allowed shadow-[0px_2px_0px_0px_#000000] active:shadow-none`}
                       style={{ fontFamily: "var(--font-lilita-one)" }}
                     >
-                      {task.completed ? (
-                        <span className="text-[16px]">✓</span>
-                      ) : processingTask === task.id ? (
-                        <span className="text-[14px]">...</span>
-                      ) : (
-                        <span className="text-[14px]">Go</span>
-                      )}
+                      <span className="text-[14px]">
+                        {getTaskButtonState(task).label}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -196,6 +264,13 @@ export default function WaitlistPage() {
           )}
         </div>
       </div>
+
+      {/* Leaderboard Drawer */}
+      <LeaderboardDrawer
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        userFid={userFid}
+      />
     </div>
   );
 }

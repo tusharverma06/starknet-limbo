@@ -15,6 +15,7 @@ interface Task {
 interface TasksResponse {
   tasks: Task[];
   totalPoints: number;
+  referralCount: number;
   user: {
     fid: string;
     username: string;
@@ -192,6 +193,7 @@ export function useTasks() {
   return {
     tasks: data?.tasks || [],
     totalPoints: data?.totalPoints || 0,
+    referralCount: data?.referralCount || 0,
     user: data?.user,
     isLoading,
     error: error as Error | null,

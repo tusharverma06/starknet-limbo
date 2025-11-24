@@ -37,9 +37,12 @@ model User {
   bets   Bet[]
   sessions Session[]
   userTasks UserTask[]
+  referralsGiven Referral[] @relation("ReferrerUser")
+  referralsReceived Referral[] @relation("ReferredUser")
 
   @@index([farcaster_id])
   @@index([server_wallet_address])
+  @@index([totalPoints])
   @@map("users")
 }
 
@@ -183,4 +186,21 @@ model UserTask {
   @@index([userId])
   @@index([taskId])
   @@map("user_tasks")
+}
+
+// Referral tracking
+model Referral {
+  id           String   @id @default(cuid())
+  referrerId   String   @map("referrer_id") // User who shared the referral link
+  referredId   String   @map("referred_id") // User who used the referral link
+  points       Int      @default(50) // Points awarded for successful referral
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  referrer User @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred User @relation("ReferredUser", fields: [referredId], references: [id], onDelete: Cascade)
+
+  @@unique([referrerId, referredId]) // Prevent duplicate referrals
+  @@index([referrerId])
+  @@index([referredId])
+  @@map("referrals")
 }

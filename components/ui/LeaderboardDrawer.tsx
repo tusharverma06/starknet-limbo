@@ -48,13 +48,31 @@ export function LeaderboardDrawer({
     staleTime: 10000,
   });
 
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
-    if (rank === 2) return <Medal className="w-5 h-5 text-gray-400" />;
-    if (rank === 3) return <Award className="w-5 h-5 text-amber-600" />;
+  const getRankIcon = (rank: number, isUser?: boolean) => {
+    if (rank === 1)
+      return (
+        <Trophy
+          className={`w-5 h-5 ${isUser ? "text-white" : "text-yellow-500"}`}
+        />
+      );
+    if (rank === 2)
+      return (
+        <Medal
+          className={`w-5 h-5 ${isUser ? "text-white" : "text-gray-400"}`}
+        />
+      );
+    if (rank === 3)
+      return (
+        <Award
+          className={`w-5 h-5 ${isUser ? "text-white" : "text-amber-600"}`}
+        />
+      );
     return null;
   };
 
+  console.log(data);
+  console.log(userFid);
+  console.log("388416" === String(userFid));
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
       <div className="bg-white rounded-t-3xl h-[85vh] flex flex-col overflow-hidden">
@@ -104,20 +122,29 @@ export function LeaderboardDrawer({
               <div className="animate-spin rounded-full h-8 w-8 border-4 border-[#2574ff] border-t-transparent" />
             </div>
           ) : data?.leaderboard && data.leaderboard.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               {data.leaderboard.map((entry) => (
                 <div
                   key={entry.fid}
-                  className={`bg-white border-2 border-black rounded-xl p-3 shadow-[0px_2px_0px_0px_#000000] ${
-                    entry.fid === userFid ? "bg-[#cfd9ff]" : ""
+                  className={` border-2 border-black rounded-xl p-3 shadow-[0px_2px_0px_0px_#000000] ${
+                    entry.fid === String(userFid)
+                      ? "bg-[#2574ff] sticky -top-1"
+                      : "bg-white"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     {/* Rank */}
                     <div className="flex items-center justify-center w-10">
-                      {getRankIcon(entry.rank) || (
+                      {getRankIcon(
+                        entry.rank,
+                        entry.fid === String(userFid)
+                      ) || (
                         <span
-                          className="text-[18px] text-gray-600"
+                          className={`text-[18px] ${
+                            entry.fid === String(userFid)
+                              ? "text-white"
+                              : "text-gray-600"
+                          }`}
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
                           {entry.rank}
@@ -132,12 +159,23 @@ export function LeaderboardDrawer({
                         alt={entry.username}
                         width={40}
                         height={40}
-                        className="rounded-full border-2 border-black"
+                        loader={({ src }) => src}
+                        className="rounded-full object-cover w-10 h-10 border-2 border-black"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-[#2574ff] border-2 border-black flex items-center justify-center">
+                      <div
+                        className={`w-10 h-10 rounded-full border-2 border-black flex items-center justify-center ${
+                          entry.fid === String(userFid)
+                            ? "bg-[#fff]"
+                            : "bg-[#2574ff]"
+                        }`}
+                      >
                         <span
-                          className="text-white text-[16px]"
+                          className={`text-[16px] ${
+                            entry.fid === String(userFid)
+                              ? "text-white"
+                              : "text-black"
+                          }`}
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
                           {entry.username[0].toUpperCase()}
@@ -148,12 +186,22 @@ export function LeaderboardDrawer({
                     {/* User Info */}
                     <div className="flex-1">
                       <p
-                        className="text-[16px] text-black leading-[1.2]"
+                        className={`text-[16px] ${
+                          entry.fid === String(userFid)
+                            ? "text-white/90"
+                            : "text-black"
+                        } leading-[1.2]`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
                         {entry.username}
                       </p>
-                      <p className="text-[12px] text-gray-600">
+                      <p
+                        className={`text-[12px] ${
+                          entry.fid === String(userFid)
+                            ? "text-white/90"
+                            : "text-gray-600"
+                        }`}
+                      >
                         {entry.referrals} referrals
                       </p>
                     </div>
@@ -161,12 +209,24 @@ export function LeaderboardDrawer({
                     {/* Points */}
                     <div className="text-right">
                       <p
-                        className="text-[20px] text-[#2574ff] leading-[1]"
+                        className={`text-[20px] ${
+                          entry.fid === String(userFid)
+                            ? "text-white/90"
+                            : "text-[#2574ff]"
+                        } leading-[1]`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
                         {entry.points.toLocaleString()}
                       </p>
-                      <p className="text-[12px] text-gray-600">points</p>
+                      <p
+                        className={`text-[12px] ${
+                          entry.fid === String(userFid)
+                            ? "text-white/90"
+                            : "text-gray-600"
+                        }`}
+                      >
+                        points
+                      </p>
                     </div>
                   </div>
                 </div>

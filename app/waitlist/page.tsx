@@ -46,7 +46,9 @@ export default function WaitlistPage() {
 
     const referralUrl = `${window.location.origin}/waitlist?ref=${userFid}`;
     const text = `Join me on Based Limbo! 🎲 ${referralUrl}`;
-    const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+    const composeUrl = `https://farcaster.xyz/~/compose?text=${encodeURIComponent(
+      text
+    )}`;
 
     window.open(composeUrl, "_blank");
   }, [userFid]);
@@ -135,13 +137,22 @@ export default function WaitlistPage() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Trophy className="w-6 h-6 text-[#2574ff]" />
+                  {user?.pfpUrl && (
+                    <Image
+                      src={user?.pfpUrl}
+                      alt="Trophy"
+                      width={30}
+                      height={30}
+                      className="rounded-full"
+                      loader={({ src }) => src}
+                    />
+                  )}
                   <div className="text-left">
                     <p
-                      className="text-[18px] text-black leading-[1]"
+                      className="text-[18px] text-black leading-none"
                       style={{ fontFamily: "var(--font-lilita-one)" }}
                     >
-                      Rank #{userRank || "—"}
+                      @{user?.username}
                     </p>
                     <p className="text-[12px] text-gray-600">
                       {totalPoints.toLocaleString()} points
@@ -149,10 +160,16 @@ export default function WaitlistPage() {
                   </div>
                 </div>
                 <div
-                  className="text-[14px] text-[#2574ff]"
+                  className="text-sm text-[#2574ff] flex flex-col items-end justify-start gap-2"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  View Leaderboard →
+                  <p
+                    className="text-sm text-black leading-none"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Rank #{userRank || "—"}
+                  </p>
+                  <span>View Leaderboard →</span>
                 </div>
               </div>
             </button>

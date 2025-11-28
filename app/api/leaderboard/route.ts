@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
             const neynarUsers = neynarData.users || [];
 
             // Update users in database with PFPs and usernames
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const updatePromises = neynarUsers.map((neynarUser: any) => {
               const updateData: {
                 farcaster_pfp?: string;
@@ -87,6 +88,7 @@ export async function GET(req: NextRequest) {
             await Promise.all(updatePromises);
 
             // Update the topUsers array with fresh PFP and username data
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             neynarUsers.forEach((neynarUser: any) => {
               const userIndex = topUsers.findIndex(
                 (u) => u.farcaster_id === String(neynarUser.fid)

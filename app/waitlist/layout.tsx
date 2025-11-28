@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Lilita_One } from "next/font/google";
-import "./globals.css";
+import "@/app/globals.css";
 import { Providers } from "@/components/providers/Web3Provider";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
 import { Toaster } from "sonner";

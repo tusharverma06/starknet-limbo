@@ -8,6 +8,7 @@ import sdk from "@farcaster/miniapp-sdk";
 import Image from "next/image";
 import { useState, useMemo, useCallback } from "react";
 import { LeaderboardDrawer } from "@/components/ui/LeaderboardDrawer";
+import { Share2, Copy, Check } from "lucide-react";
 
 export default function WaitlistPage() {
   const { user } = useFarcaster();
@@ -26,6 +27,7 @@ export default function WaitlistPage() {
 
   const { userRank, processReferral } = useLeaderboard(userFid);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   // Auto-process referral from URL
   useReferralProcessor(userFid, processReferral);
@@ -50,6 +52,20 @@ export default function WaitlistPage() {
     )}`;
 
     window.open(composeUrl, "_blank");
+  }, [userFid]);
+
+  const handleCopyReferral = useCallback(async () => {
+    if (!userFid) return;
+
+    const referralUrl = `https://farcaster.xyz/miniapps/DBqCMqZF1vUd/based-limbo/waitlist?fid=${userFid}`;
+
+    try {
+      await navigator.clipboard.writeText(referralUrl);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
   }, [userFid]);
 
   const handleTaskClick = useCallback(
@@ -261,18 +277,40 @@ export default function WaitlistPage() {
                         {task.description}
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleTaskClick(task)}
-                      disabled={getTaskButtonState(task).isDisabled}
-                      className={`border-2 border-black rounded-lg px-4 py-2 transition-all ${
-                        getTaskButtonState(task).className
-                      } disabled:opacity-50 disabled:cursor-not-allowed shadow-[0px_2px_0px_0px_#000000] active:shadow-none`}
-                      style={{ fontFamily: "var(--font-lilita-one)" }}
-                    >
-                      <span className="text-[14px]">
-                        {getTaskButtonState(task).label}
-                      </span>
-                    </button>
+                    {task.id === "referral" ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleReferral}
+                          disabled={referralCount >= 50 || isCompletingTask}
+                          className={`border-2 border-black rounded-lg p-2 transition-all ${
+                            referralCount >= 50
+                              ? "bg-[#1ec460] text-white cursor-default"
+                              : "bg-[#2574ff] text-white hover:bg-[#1e5dd1] active:translate-y-0.5"
+                          } disabled:opacity-50 disabled:cursor-not-allowed shadow-[0px_2px_0px_0px_#000000] active:shadow-none`}
+                        >
+                          <Share2 size={16} />
+                        </button>
+                        <button
+                          onClick={handleCopyReferral}
+                          className="border-2 border-black rounded-lg p-2 transition-all bg-[#2574ff] text-white hover:bg-[#1e5dd1] active:translate-y-0.5 shadow-[0px_2px_0px_0px_#000000] active:shadow-none"
+                        >
+                          {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleTaskClick(task)}
+                        disabled={getTaskButtonState(task).isDisabled}
+                        className={`border-2 border-black rounded-lg px-4 py-2 transition-all ${
+                          getTaskButtonState(task).className
+                        } disabled:opacity-50 disabled:cursor-not-allowed shadow-[0px_2px_0px_0px_#000000] active:shadow-none`}
+                        style={{ fontFamily: "var(--font-lilita-one)" }}
+                      >
+                        <span className="text-[14px]">
+                          {getTaskButtonState(task).label}
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

@@ -8,7 +8,6 @@ import sdk from "@farcaster/miniapp-sdk";
 import Image from "next/image";
 import { useState, useMemo, useCallback } from "react";
 import { LeaderboardDrawer } from "@/components/ui/LeaderboardDrawer";
-import { Trophy } from "lucide-react";
 
 export default function WaitlistPage() {
   const { user } = useFarcaster();

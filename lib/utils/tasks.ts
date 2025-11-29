@@ -6,7 +6,7 @@ export const TASKS = [
     description: "Get updates on new features",
     points: 100,
     icon: "👤",
-    action: "https://warpcast.com/basedlimbo",
+    action: "https://farcaster.xyz/akshit",
   },
   {
     id: "cast",
@@ -15,15 +15,15 @@ export const TASKS = [
     points: 150,
     icon: "📢",
     action:
-      "https://warpcast.com/~/compose?text=Just found Based Limbo - the ultimate multiplier game on Farcaster! 🎲",
+      "https://farcaster.xyz/~/compose?text=Just found Based Limbo - the ultimate multiplier game on Farcaster! 🎲",
   },
   {
     id: "join",
-    title: "Join our channel",
+    title: "Join on Twitter",
     description: "Connect with the community",
     points: 100,
     icon: "💬",
-    action: "https://warpcast.com/~/channel/limbo",
+    action: "https://x.com/akshit",
   },
   {
     id: "add_miniapp",

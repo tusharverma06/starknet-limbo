@@ -23,7 +23,7 @@ export const TASKS = [
     description: "Connect with the community",
     points: 100,
     icon: "💬",
-    action: "https://x.com/akshit",
+    action: "https://x.com/akshitvrma",
   },
   {
     id: "add_miniapp",

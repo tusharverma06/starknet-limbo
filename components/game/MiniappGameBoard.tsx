@@ -568,7 +568,9 @@ export function MiniappGameBoard() {
                     )}
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    {isBalanceLoading ? "..." : `$${balanceUsd.toFixed(2)}`}
+                    {isBalanceLoading
+                      ? "..."
+                      : `$${balanceUsd < 0 ? "0.00" : balanceUsd.toFixed(2)}`}
                   </span>
                   <svg
                     width="14"

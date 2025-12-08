@@ -127,14 +127,17 @@ export function MiniappGameBoard() {
   // Ref for wallet dropdown to handle click outside
   const walletDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Audio refs for win and lose sounds
+  // Audio refs for win and lose sounds and background music
   const winAudioRef = useRef<HTMLAudioElement | null>(null);
   const loseAudioRef = useRef<HTMLAudioElement | null>(null);
+  const bgMusicRef = useRef<HTMLAudioElement | null>(null);
+  const [bgMusicStarted, setBgMusicStarted] = useState(false);
 
   // Initialize audio elements
   useEffect(() => {
     winAudioRef.current = new Audio("/win_audio.wav");
     loseAudioRef.current = new Audio("/loose_audio.wav");
+    bgMusicRef.current = new Audio("/bg-music.wav");
 
     // Set audio properties
     if (winAudioRef.current) {
@@ -144,6 +147,11 @@ export function MiniappGameBoard() {
     if (loseAudioRef.current) {
       loseAudioRef.current.preload = "auto";
       loseAudioRef.current.volume = 0.7;
+    }
+    if (bgMusicRef.current) {
+      bgMusicRef.current.preload = "auto";
+      bgMusicRef.current.loop = true;
+      bgMusicRef.current.volume = 0.3;
     }
 
     // Cleanup on unmount
@@ -156,25 +164,84 @@ export function MiniappGameBoard() {
         loseAudioRef.current.pause();
         loseAudioRef.current = null;
       }
+      if (bgMusicRef.current) {
+        bgMusicRef.current.pause();
+        bgMusicRef.current = null;
+      }
     };
   }, []);
 
-  // Play audio when animation changes
+  // Function to start background music (needs user interaction)
+  const startBackgroundMusic = () => {
+    if (bgMusicRef.current && !bgMusicStarted) {
+      bgMusicRef.current.play().catch((error) => {
+        console.log("Failed to start background music:", error);
+      });
+      setBgMusicStarted(true);
+    }
+  };
+
+  // Play audio when animation changes and handle background music
   useEffect(() => {
     if (currentAnimation === "win" && winAudioRef.current) {
+      // Pause background music if it's playing
+      if (bgMusicRef.current && bgMusicStarted) {
+        bgMusicRef.current.pause();
+      }
+
       // Reset and play win sound
       winAudioRef.current.currentTime = 0;
       winAudioRef.current.play().catch((error) => {
-        // Silently fail
+        console.log("Failed to play win sound:", error);
       });
+
+      // Resume background music when win audio ends
+      const handleWinEnded = () => {
+        if (bgMusicRef.current && bgMusicStarted) {
+          bgMusicRef.current.play().catch((error) => {
+            console.log("Failed to resume background music:", error);
+          });
+        }
+      };
+      winAudioRef.current.addEventListener("ended", handleWinEnded);
+
+      return () => {
+        winAudioRef.current?.removeEventListener("ended", handleWinEnded);
+      };
     } else if (currentAnimation === "lose" && loseAudioRef.current) {
+      // Pause background music if it's playing
+      if (bgMusicRef.current && bgMusicStarted) {
+        bgMusicRef.current.pause();
+      }
+
       // Reset and play lose sound
       loseAudioRef.current.currentTime = 0;
       loseAudioRef.current.play().catch((error) => {
-        // Silently fail
+        console.log("Failed to play lose sound:", error);
       });
+
+      // Resume background music when lose audio ends
+      const handleLoseEnded = () => {
+        if (bgMusicRef.current && bgMusicStarted) {
+          bgMusicRef.current.play().catch((error) => {
+            console.log("Failed to resume background music:", error);
+          });
+        }
+      };
+      loseAudioRef.current.addEventListener("ended", handleLoseEnded);
+
+      return () => {
+        loseAudioRef.current?.removeEventListener("ended", handleLoseEnded);
+      };
+    } else if (currentAnimation === "idle") {
+      // Ensure background music is playing when returning to idle
+      if (bgMusicRef.current && bgMusicStarted && bgMusicRef.current.paused) {
+        bgMusicRef.current.play().catch((error) => {
+          console.log("Failed to resume background music on idle:", error);
+        });
+      }
     }
-  }, [currentAnimation, animationKey]);
+  }, [currentAnimation, animationKey, bgMusicStarted]);
 
   // Handle click outside for wallet dropdown
   useEffect(() => {
@@ -249,6 +316,9 @@ export function MiniappGameBoard() {
   };
 
   const handlePrimaryAction = async () => {
+    // Start background music on any interaction
+    startBackgroundMusic();
+
     if (!isAuthenticated) {
       signIn();
       return;

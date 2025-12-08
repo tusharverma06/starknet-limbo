@@ -357,6 +357,29 @@ function VerifyPageContent() {
                         randomValue = SHA256(serverSeed + playerId + betId)
                       </code>
                     </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded space-y-3">
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Server Seed:</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {verificationData.steps.step3.serverSeed || "N/A"}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Player ID:</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {verificationData.bet.id ?
+                            JSON.parse(verificationData.steps.step1.betMessage || '{}')?.playerId ||
+                            verificationData.steps.step0.custodialWalletAddress || "N/A"
+                            : "N/A"}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Bet ID:</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {verificationData.bet.id}
+                        </code>
+                      </div>
+                    </div>
                     <div className="bg-[#1a1a1a] p-3 rounded">
                       <p className="text-xs text-white/50 mb-2">
                         Calculated Random Value:
@@ -368,21 +391,122 @@ function VerifyPageContent() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-white/50">Random Float (0-1):</span>
-                  <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
-                    {verificationData.steps.step3.randomFloat.toFixed(10)}
-                  </code>
+                  <span className="text-white/50">Random Float (0-1) Calculation:</span>
+                  <div className="mt-2 space-y-2">
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">Formula:</p>
+                      <code className="block font-mono text-xs text-blue-300">
+                        randomFloat = BigInt(randomValue) / 2^256
+                      </code>
+                      <p className="text-xs text-white/40 mt-2">
+                        Converts full 256-bit hash to float between 0-1
+                      </p>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded space-y-3">
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Full random value (hex):</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {verificationData.steps.step3.randomValue}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Random value as BigInt (decimal):</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {BigInt("0x" + verificationData.steps.step3.randomValue).toLocaleString()}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Max value (2^256):</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          115,792,089,237,316,195,423,570,985,008,687,907,853,269,984,665,640,564,039,457,584,007,913,129,639,936
+                        </code>
+                      </div>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">
+                        Calculated Random Float:
+                      </p>
+                      <code className="block font-mono text-xs text-yellow-300">
+                        {verificationData.steps.step3.randomFloat.toFixed(10)}
+                      </code>
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <span className="text-white/50">
-                    Simulated Limbo Multiplier:
-                  </span>
-                  <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-xs">
-                    {verificationData.steps.step3.simulatedMultiplier.toFixed(
-                      2
-                    )}
-                    x
-                  </code>
+                  <span className="text-white/50">Game Number Calculation:</span>
+                  <div className="mt-2 space-y-2">
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">Formula:</p>
+                      <code className="block font-mono text-xs text-blue-300">
+                        gameNumber = (BigInt(randomValue) % 1,000,000,000) + 1
+                      </code>
+                      <p className="text-xs text-white/40 mt-2">
+                        Converts random value to a number between 1 and 1 billion
+                      </p>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded space-y-3">
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Random value (BigInt):</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {BigInt("0x" + verificationData.steps.step3.randomValue).toLocaleString()}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Modulo 1 billion:</p>
+                        <code className="block font-mono text-xs break-all text-green-300">
+                          {(BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)).toLocaleString()}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Game number (add 1):</p>
+                        <code className="block font-mono text-xs break-all text-yellow-300">
+                          {((BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)) + BigInt(1)).toLocaleString()}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <span className="text-white/50">Limbo Multiplier Calculation:</span>
+                  <div className="mt-2 space-y-2">
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">Formula:</p>
+                      <code className="block font-mono text-xs text-blue-300">
+                        multiplier = (1 - houseEdge) * 1,000,000,000 / gameNumber
+                      </code>
+                      <p className="text-xs text-white/40 mt-2">
+                        Lower game numbers = higher multipliers
+                      </p>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded space-y-3">
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">House edge:</p>
+                        <code className="block font-mono text-xs text-green-300">
+                          {(verificationData.steps.step3.houseEdge * 100).toFixed(0)}% (factor: {1 - verificationData.steps.step3.houseEdge})
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Game number:</p>
+                        <code className="block font-mono text-xs text-green-300">
+                          {((BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)) + BigInt(1)).toLocaleString()}
+                        </code>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/50 mb-1">Calculation:</p>
+                        <code className="block font-mono text-xs text-green-300">
+                          {(1 - verificationData.steps.step3.houseEdge).toFixed(2)} × 1,000,000,000 / {((BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)) + BigInt(1)).toLocaleString()}
+                        </code>
+                      </div>
+                    </div>
+                    <div className="bg-[#1a1a1a] p-3 rounded">
+                      <p className="text-xs text-white/50 mb-2">
+                        Calculated Limbo Multiplier:
+                      </p>
+                      <code className="block font-mono text-lg text-yellow-300 font-bold">
+                        {verificationData.steps.step3.simulatedMultiplier.toFixed(2)}x
+                      </code>
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <span className="text-white/50">Target Multiplier:</span>

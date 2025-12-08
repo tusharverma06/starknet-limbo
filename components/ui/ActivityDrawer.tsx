@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ModalWrapper } from "./ModalWrapper";
+import sdk from "@farcaster/miniapp-sdk";
+import Image from "next/image";
 
 interface ActivityDrawerProps {
   isOpen: boolean;
@@ -79,7 +81,7 @@ export function ActivityDrawer({
     queryKey: ["allBets"],
     queryFn: async () => {
       const response = await fetch(`/api/wallet/bet-history?limit=100`, {
-        credentials: 'include', // Required for cookies in cross-origin contexts
+        credentials: "include", // Required for cookies in cross-origin contexts
       });
 
       if (!response.ok) {
@@ -127,6 +129,29 @@ export function ActivityDrawer({
   const formatWalletAddress = (playerId: string) => {
     // Format wallet address: A7...7tT74
     return `${playerId.slice(0, 2)}...${playerId.slice(-5)}`;
+  };
+
+  // Helper function to calculate PNL
+  const calculatePNL = (bet: BetDisplay) => {
+    if (bet.outcome === "win" && bet.payout) {
+      return {
+        value: `+${formatUSD(bet.payout)}`,
+        color: "text-green-500",
+      };
+    } else {
+      // For losses or any non-win outcome, show negative wager in red
+      return {
+        value: `-${formatUSD(bet.wager)}`,
+        color: "text-red-500",
+      };
+    }
+  };
+
+  // Helper function to handle verify redirect
+  const handleVerify = async (betId: string) => {
+    await sdk.actions.openUrl(
+      `${process.env.NEXT_PUBLIC_APP_URL}/verify?betId=${betId}`
+    );
   };
 
   if (!userAddress) {
@@ -192,62 +217,127 @@ export function ActivityDrawer({
 
           {/* Table Header */}
           <div className="bg-white border-b border-black flex">
-            <div
-              className="flex-1 flex items-center justify-center p-[12px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
-              }}
-            >
-              <p
-                className="text-[16px] text-[rgba(0,0,0,0.4)] text-center leading-[0.9]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
-              >
-                Username
-              </p>
-            </div>
-            <div
-              className="w-[86px] flex items-center justify-center p-[12px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
-              }}
-            >
-              <p
-                className="text-[16px] text-[rgba(0,0,0,0.4)] text-center leading-[0.9]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
-              >
-                $ Bet
-              </p>
-            </div>
-            <div
-              className="w-[86px] flex items-center justify-center p-[12px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
-              }}
-            >
-              <p
-                className="text-[16px] text-[rgba(0,0,0,0.4)] text-center leading-[0.9]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
-              >
-                Multiplier
-              </p>
-            </div>
-            <div
-              className="w-[94px] flex items-center justify-center p-[12px]"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
-              }}
-            >
-              <p
-                className="text-[16px] text-[rgba(0,0,0,0.4)] text-center leading-[0.9]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
-              >
-                Payout
-              </p>
-            </div>
+            {activeTab === "all-bets" ? (
+              <>
+                {/* All Bets: Player, PNL, Multiplier, Verify */}
+                <div
+                  className="flex-1 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Player
+                  </p>
+                </div>
+                <div
+                  className="w-20 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    PNL
+                  </p>
+                </div>
+                <div
+                  className="w-20 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Multiplier
+                  </p>
+                </div>
+                <div
+                  className="w-20 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Verify
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* My Bets: Bet, Multiplier, Payout, Verify */}
+                <div
+                  className="flex-1 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    $ Bet
+                  </p>
+                </div>
+                <div
+                  className="flex-1 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Multiplier
+                  </p>
+                </div>
+                <div
+                  className="flex-1 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Payout
+                  </p>
+                </div>
+                <div
+                  className="w-20 flex items-center justify-center p-3"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.04) 100%)",
+                  }}
+                >
+                  <p
+                    className="text-base text-black/40 text-center leading-tight"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Verify
+                  </p>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Table Body - Scrollable */}
@@ -265,61 +355,143 @@ export function ActivityDrawer({
                 </p>
               </div>
             ) : (
-              currentBets.map((bet, index) => (
-                <div
-                  key={bet.id}
-                  className={`flex border-b border-black ${
-                    index === currentBets.length - 1 ? "" : ""
-                  }`}
-                >
-                  {/* Username */}
-                  <div className="flex-1 bg-white border-r border-[rgba(0,0,0,0.07)] flex items-center justify-center p-[12px]">
-                    <p
-                      className="text-[16px] text-black text-center leading-[0.9]"
-                      style={{ fontFamily: "var(--font-lilita-one)" }}
-                    >
-                      {formatWalletAddress(bet.playerId)}
-                    </p>
-                  </div>
+              currentBets.map((bet, index) => {
+                const pnl = calculatePNL(bet);
+                return (
+                  <div
+                    key={bet.id}
+                    className={`flex border-b border-black ${
+                      index === currentBets.length - 1 ? "" : ""
+                    }`}
+                  >
+                    {activeTab === "all-bets" ? (
+                      <>
+                        {/* Player (PFP + Name) */}
+                        <div className="flex-1 bg-white border-r border-black/10 flex items-center gap-2 p-3">
+                          {bet.playerPfp ? (
+                            <img
+                              src={bet.playerPfp}
+                              alt={bet.playerName || "Player"}
+                              className="w-6 h-6 rounded-full"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
+                              <span className="text-xs text-gray-500">
+                                {bet.playerName?.[0]?.toUpperCase() || "?"}
+                              </span>
+                            </div>
+                          )}
+                          <p
+                            className="text-base text-black leading-tight truncate"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            {bet.playerName ||
+                              formatWalletAddress(bet.playerId)}
+                          </p>
+                        </div>
 
-                  {/* Bet Amount */}
-                  <div className="w-[86px] bg-white border-r border-[rgba(0,0,0,0.07)] flex items-center justify-center p-[12px]">
-                    <p
-                      className="text-[16px] text-black text-center leading-[0.9]"
-                      style={{ fontFamily: "var(--font-lilita-one)" }}
-                    >
-                      {formatUSD(bet.wager)}
-                    </p>
-                  </div>
+                        {/* PNL */}
+                        <div className="w-20 bg-white border-r border-black/10 flex items-center justify-center p-3">
+                          <p
+                            className={`text-base text-center leading-tight ${pnl.color}`}
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            {pnl.value}
+                          </p>
+                        </div>
 
-                  {/* Multiplier */}
-                  <div className="w-[86px] bg-white border-r border-[rgba(0,0,0,0.07)] flex items-center justify-center p-[12px]">
-                    <p
-                      className="potential-payout"
-                      style={{
-                        fontFamily: "var(--font-lilita-one)",
-                        textShadow: "0px 1px 0px #000000",
-                      }}
-                    >
-                      {bet.limboMultiplier
-                        ? `${(bet.limboMultiplier / 100).toFixed(2)}x`
-                        : bet.targetMultiplier
-                        ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
-                        : "—"}
-                    </p>
-                  </div>
+                        {/* Multiplier */}
+                        <div className="w-20 bg-white border-r border-black/10 flex items-center justify-center p-3">
+                          <p
+                            className="potential-payout"
+                            style={{
+                              fontFamily: "var(--font-lilita-one)",
+                              textShadow: "0px 1px 0px #000000",
+                            }}
+                          >
+                            {bet.limboMultiplier
+                              ? `${(bet.limboMultiplier / 100).toFixed(2)}x`
+                              : bet.targetMultiplier
+                              ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
+                              : "—"}
+                          </p>
+                        </div>
 
-                  {/* Payout */}
-                  <div className="w-[94px] bg-white flex items-center justify-center p-[12px]">
-                    <p
-                      className="text-[16px] text-black text-center leading-[0.9]"
-                      style={{ fontFamily: "var(--font-lilita-one)" }}
-                    >
-                      {bet.payout ? formatUSD(bet.payout) : "$0.00"}
-                    </p>
+                        {/* Verify */}
+                        <div className="w-20 bg-white flex items-center justify-center p-3">
+                          <button
+                            onClick={() => handleVerify(bet.id)}
+                            className="text-blue-600 hover:text-blue-800 text-sm underline cursor-pointer"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            <Image
+                              src="/redirect.svg"
+                              alt="Verify"
+                              width={16}
+                              height={16}
+                            />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Bet Amount */}
+                        <div className="flex-1 bg-white border-r border-black/10 flex items-center justify-center p-3">
+                          <p
+                            className="text-base text-black text-center leading-tight"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            {formatUSD(bet.wager)}
+                          </p>
+                        </div>
+
+                        {/* Multiplier */}
+                        <div className="flex-1 bg-white border-r border-black/10 flex items-center justify-center p-3">
+                          <p
+                            className="potential-payout"
+                            style={{
+                              fontFamily: "var(--font-lilita-one)",
+                              textShadow: "0px 1px 0px #000000",
+                            }}
+                          >
+                            {bet.limboMultiplier
+                              ? `${(bet.limboMultiplier / 100).toFixed(2)}x`
+                              : bet.targetMultiplier
+                              ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
+                              : "—"}
+                          </p>
+                        </div>
+
+                        {/* Payout */}
+                        <div className="flex-1 bg-white border-r border-black/10 flex items-center justify-center p-3">
+                          <p
+                            className="text-base text-black text-center leading-tight"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            {bet.payout ? formatUSD(bet.payout) : "$0.00"}
+                          </p>
+                        </div>
+
+                        {/* Verify */}
+                        <div className="w-20 bg-white flex items-center justify-center p-3">
+                          <button
+                            onClick={() => handleVerify(bet.id)}
+                            className="text-blue-600 hover:text-blue-800 text-sm underline cursor-pointer"
+                            style={{ fontFamily: "var(--font-lilita-one)" }}
+                          >
+                            <Image
+                              src="/redirect.svg"
+                              alt="Verify"
+                              width={16}
+                              height={16}
+                            />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

@@ -42,7 +42,9 @@ export function ActivityDrawer({
   userAddress,
   userId,
 }: ActivityDrawerProps) {
-  const [activeTab, setActiveTab] = useState<"my-bets" | "all-bets">("my-bets");
+  const [activeTab, setActiveTab] = useState<"my-bets" | "all-bets">(
+    userAddress ? "my-bets" : "all-bets"
+  );
 
   // Fetch my bets (user's bets only)
   const {
@@ -154,10 +156,6 @@ export function ActivityDrawer({
     );
   };
 
-  if (!userAddress) {
-    return null;
-  }
-
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose} variant="bottom">
       <div className="h-[90vh]  shadow-xl flex flex-col rounded-t-[12px]">
@@ -175,30 +173,32 @@ export function ActivityDrawer({
         <div className="flex-1 flex flex-col border-2 border-black rounded-[12px] mx-2 mb-2 overflow-hidden bg-white">
           {/* Tabs Header */}
           <div className="bg-[#2574ff] border-b border-black flex">
-            <button
-              onClick={() => setActiveTab("my-bets")}
-              className={`flex-1 h-[50px] flex items-center justify-center border-r border-black transition-colors ${
-                activeTab === "my-bets" ? "border-b-[3px] border-b-black" : ""
-              }`}
-            >
-              <p
-                className={`text-[16px] uppercase leading-normal ${
-                  activeTab === "my-bets" ? "text-white" : "text-white"
+            {userAddress && (
+              <button
+                onClick={() => setActiveTab("my-bets")}
+                className={`flex-1 h-[50px] flex items-center justify-center border-r border-black transition-colors ${
+                  activeTab === "my-bets" ? "border-b-[3px] border-b-black" : ""
                 }`}
-                style={{
-                  fontFamily: "var(--font-lilita-one)",
-                  textShadow:
-                    activeTab === "my-bets" ? "0px 1.6px 0px #000000" : "none",
-                }}
               >
-                My Bets
-              </p>
-            </button>
+                <p
+                  className={`text-[16px] uppercase leading-normal ${
+                    activeTab === "my-bets" ? "text-white" : "text-white"
+                  }`}
+                  style={{
+                    fontFamily: "var(--font-lilita-one)",
+                    textShadow:
+                      activeTab === "my-bets" ? "0px 1.6px 0px #000000" : "none",
+                  }}
+                >
+                  My Bets
+                </p>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab("all-bets")}
               className={`flex-1 h-[50px] flex items-center justify-center transition-colors ${
                 activeTab === "all-bets" ? "border-b-[3px] border-b-black" : ""
-              }`}
+              } ${!userAddress ? "border-r-0" : ""}`}
             >
               <p
                 className={`text-[16px] leading-[0.9] text-center ${

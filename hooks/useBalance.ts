@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
 import { useEffect } from "react";
-import { getAuthHeaders } from "./useSimpleSiwe";
-import { useAccount } from "wagmi";
 
 interface BalanceData {
   balance: string; // in wei (blockchain balance)
@@ -19,29 +17,29 @@ interface BalanceData {
 
 /**
  * Hook to fetch and monitor server wallet balance
- * Fetches directly from blockchain via API
+ * Fetches directly from blockchain via API using wallet address
  * Only refetches on manual trigger or window focus
  * Supports optimistic updates for instant UI feedback
- * Requires session authentication
  */
-export function useBalance(userId: string | null, isAuthenticated: boolean) {
-  const { address: connectedAddress } = useAccount();
+export function useBalance(walletAddress: string | null) {
   const { optimisticBalanceUsd, setOptimisticBalance } = useGameStore();
 
-  const queryEnabled = !!userId && isAuthenticated;
+  const queryEnabled = !!walletAddress;
 
   const { data, isLoading, error, refetch, isRefetching } =
     useQuery<BalanceData>({
-      queryKey: ["balance", userId, isAuthenticated],
+      queryKey: ["balance", walletAddress],
       queryFn: async () => {
-        if (!userId) {
-          throw new Error("User ID is required");
+        if (!walletAddress) {
+          throw new Error("Wallet address is required");
         }
 
-        const response = await fetch("/api/wallet/balance", {
-          credentials: 'include', // Required for cookies in cross-origin contexts
-          headers: getAuthHeaders(connectedAddress || undefined),
-        });
+        const response = await fetch(
+          `/api/wallet/balance?address=${walletAddress}`,
+          {
+            credentials: "include",
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();

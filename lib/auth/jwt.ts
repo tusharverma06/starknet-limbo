@@ -10,7 +10,6 @@ const secret = new TextEncoder().encode(JWT_SECRET);
 
 export interface JWTPayload {
   userId: string; // User.id (cuid)
-  fid: string; // Farcaster ID
   address: string; // User's wallet address
   custodialWallet: string; // Server custodial wallet address
   iat?: number;

@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { ModalWrapper } from "./ModalWrapper";
-import sdk from "@farcaster/miniapp-sdk";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface ActivityDrawerProps {
   isOpen: boolean;
@@ -42,11 +42,13 @@ export function ActivityDrawer({
   userAddress,
   userId,
 }: ActivityDrawerProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"my-bets" | "all-bets">(
-    userAddress ? "my-bets" : "all-bets"
+    userAddress ? "my-bets" : "all-bets",
   );
 
   // Fetch my bets (user's bets only)
+  // Note: userAddress contains the custodial wallet address (used for bets)
   const {
     data: myBetsData,
     isLoading: isLoadingMyBets,
@@ -59,7 +61,7 @@ export function ActivityDrawer({
       }
 
       const response = await fetch(
-        `/api/wallet/bet-history?playerId=${userAddress}&limit=50`
+        `/api/wallet/bet-history?playerId=${userAddress}&limit=50`,
       );
 
       if (!response.ok) {
@@ -130,7 +132,7 @@ export function ActivityDrawer({
   // Helper function to format wallet address
   const formatWalletAddress = (playerId: string) => {
     // Format wallet address: A7...7tT74
-    return `${playerId.slice(0, 2)}...${playerId.slice(-5)}`;
+    return `${playerId.slice(0, 4)}...${playerId.slice(-5)}`;
   };
 
   // Helper function to calculate PNL
@@ -150,10 +152,8 @@ export function ActivityDrawer({
   };
 
   // Helper function to handle verify redirect
-  const handleVerify = async (betId: string) => {
-    await sdk.actions.openUrl(
-      `${process.env.NEXT_PUBLIC_APP_URL}/verify?betId=${betId}`
-    );
+  const handleVerify = (betId: string) => {
+    router.push(`/verify?betId=${betId}`);
   };
 
   return (
@@ -187,7 +187,9 @@ export function ActivityDrawer({
                   style={{
                     fontFamily: "var(--font-lilita-one)",
                     textShadow:
-                      activeTab === "my-bets" ? "0px 1.6px 0px #000000" : "none",
+                      activeTab === "my-bets"
+                        ? "0px 1.6px 0px #000000"
+                        : "none",
                   }}
                 >
                   My Bets
@@ -367,20 +369,7 @@ export function ActivityDrawer({
                     {activeTab === "all-bets" ? (
                       <>
                         {/* Player (PFP + Name) */}
-                        <div className="flex-1 bg-white border-r border-black/10 flex items-center gap-2 p-3">
-                          {bet.playerPfp ? (
-                            <img
-                              src={bet.playerPfp}
-                              alt={bet.playerName || "Player"}
-                              className="w-6 h-6 rounded-full"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-xs text-gray-500">
-                                {bet.playerName?.[0]?.toUpperCase() || "?"}
-                              </span>
-                            </div>
-                          )}
+                        <div className="flex-1 bg-white border-r border-black/10 flex justify-center items-center gap-2 p-3">
                           <p
                             className="text-base text-black leading-tight truncate"
                             style={{ fontFamily: "var(--font-lilita-one)" }}
@@ -412,8 +401,8 @@ export function ActivityDrawer({
                             {bet.limboMultiplier
                               ? `${(bet.limboMultiplier / 100).toFixed(2)}x`
                               : bet.targetMultiplier
-                              ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
-                              : "—"}
+                                ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
+                                : "—"}
                           </p>
                         </div>
 
@@ -457,8 +446,8 @@ export function ActivityDrawer({
                             {bet.limboMultiplier
                               ? `${(bet.limboMultiplier / 100).toFixed(2)}x`
                               : bet.targetMultiplier
-                              ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
-                              : "—"}
+                                ? `${(bet.targetMultiplier / 100).toFixed(2)}x`
+                                : "—"}
                           </p>
                         </div>
 

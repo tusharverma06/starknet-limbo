@@ -4,129 +4,92 @@ import { prisma } from "@/lib/db/prisma";
 export interface AuthenticatedRequest {
   user: {
     id: string;
-    fid: string;
-    username: string;
     address: string;
-    custodialWallet: string;
-    siweExpiresAt: Date | null;
+    custodialWalletId: string;
   };
+  body?: Record<string, unknown>; // Parsed body if it was read during auth
 }
 
 /**
- * Require session authentication for API routes
- * Validates session cookie and returns authenticated user data
+ * Simple wallet-based authentication
+ * Expects wallet address in request
+ * Used for custodial wallet operations
  */
 export async function requireAuth(
   req: NextRequest
 ): Promise<{ data: AuthenticatedRequest } | { error: NextResponse }> {
-  // Get session ID from cookie
-  const sessionId = req.cookies.get("session_id")?.value;
+  try {
+    // Get wallet address from query params or request body
+    const url = new URL(req.url);
+    let address = url.searchParams.get("address") || url.searchParams.get("wallet_address");
+    let parsedBody: Record<string, unknown> | undefined = undefined;
 
-  if (!sessionId) {
-    return {
-      error: NextResponse.json(
-        {
-          error: "Authentication required. Please sign in.",
-          code: "NO_SESSION",
-          showToast: true
-        },
-        { status: 401 }
-      ),
-    };
-  }
-
-  // Verify session exists in database and hasn't expired
-  const session = await prisma.session.findUnique({
-    where: { id: sessionId },
-    include: {
-      user: {
-        select: {
-          id: true,
-          farcaster_id: true,
-          farcaster_username: true,
-          wallet_address: true,
-          server_wallet_address: true,
-          siweExpiresAt: true,
-          siweSignature: true,
-        }
+    // If not in query params, check request body for POST requests
+    if (!address && req.method === "POST") {
+      try {
+        parsedBody = await req.json() as Record<string, unknown>;
+        address = (parsedBody.address as string) || (parsedBody.wallet_address as string);
+      } catch {
+        // If body parsing fails, continue without it
       }
-    },
-  });
+    }
 
-  if (!session) {
-    return {
-      error: NextResponse.json(
-        {
-          error: "Invalid session. Please sign in again.",
-          code: "INVALID_SESSION",
-          showToast: true
-        },
-        { status: 401 }
-      ),
-    };
-  }
+    if (!address) {
+      return {
+        error: NextResponse.json(
+          {
+            error: "Wallet address required",
+            code: "NO_ADDRESS",
+          },
+          { status: 400 }
+        ),
+      };
+    }
 
-  // Check if session has expired
-  if (session.expiresAt < new Date()) {
-    // Delete expired session
-    await prisma.session.delete({ where: { id: sessionId } });
+    // Normalize address
+    const normalizedAddress = address.toLowerCase();
 
-    return {
-      error: NextResponse.json(
-        {
-          error: "Session expired. Please sign in again.",
-          code: "SESSION_EXPIRED",
-          showToast: true
-        },
-        { status: 401 }
-      ),
-    };
-  }
-
-  const user = session.user;
-
-  // Check if SIWE signature still exists
-  if (!user.siweSignature || !user.siweExpiresAt) {
-    return {
-      error: NextResponse.json(
-        {
-          error: "Authorization expired. Please sign in again.",
-          code: "SIWE_EXPIRED",
-          showToast: true
-        },
-        { status: 401 }
-      ),
-    };
-  }
-
-  // Check if SIWE hasn't expired
-  const now = new Date();
-  if (now > new Date(user.siweExpiresAt)) {
-    return {
-      error: NextResponse.json(
-        {
-          error: "Your session has expired. Please sign in again.",
-          code: "SIWE_EXPIRED",
-          showToast: true
-        },
-        { status: 401 }
-      ),
-    };
-  }
-
-  console.log("✅ User authenticated:", user.id);
-
-  // Return authenticated user data
-  return {
-    data: {
-      user: {
-        id: user.id,
-        fid: user.farcaster_id,
-        username: user.farcaster_username,
-        address: user.wallet_address || "",
-        custodialWallet: user.server_wallet_address || "",
-        siweExpiresAt: user.siweExpiresAt,
+    // Get user by wallet address
+    const user = await prisma.user.findUnique({
+      where: { wallet_address: normalizedAddress },
+      include: {
+        custodialWallet: true,
       },
-    },
-  };
+    });
+
+    if (!user) {
+      return {
+        error: NextResponse.json(
+          {
+            error: "User not found. Please connect your wallet first.",
+            code: "USER_NOT_FOUND",
+          },
+          { status: 404 }
+        ),
+      };
+    }
+
+    // Return authenticated user data (include parsed body if we read it)
+    return {
+      data: {
+        user: {
+          id: user.id,
+          address: user.wallet_address,
+          custodialWalletId: user.custodial_wallet_id,
+        },
+        body: parsedBody,
+      },
+    };
+  } catch (error) {
+    console.error("❌ Authentication error:", error);
+    return {
+      error: NextResponse.json(
+        {
+          error: "Authentication failed",
+          code: "AUTH_FAILED",
+        },
+        { status: 500 }
+      ),
+    };
+  }
 }

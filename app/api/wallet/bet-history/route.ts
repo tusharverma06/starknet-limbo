@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
  * GET /api/wallet/bet-history
@@ -8,20 +7,14 @@ import { requireAuth } from "@/lib/auth/requireAuth";
  */
 export async function GET(req: NextRequest) {
   try {
-    // Verify authentication
-    const authResult = await requireAuth(req);
-    if ("error" in authResult) {
-      return authResult.error;
-    }
-
-    const { user } = authResult.data;
     const { searchParams } = new URL(req.url);
+    const playerId = searchParams.get("playerId");
     const limit = parseInt(searchParams.get("limit") || "50");
 
-    // Get bets for authenticated user only
-    const where = {
-      userId: user.id,
-    }
+    // Build where clause
+    const where: { playerId?: string } = playerId
+      ? { playerId: playerId.toLowerCase() }
+      : {};
 
     // Fetch bets
     const bets = await prisma.bet.findMany({
@@ -31,8 +24,7 @@ export async function GET(req: NextRequest) {
       include: {
         user: {
           select: {
-            farcaster_username: true,
-            farcaster_pfp: true,
+            wallet_address: true,
           },
         },
       },
@@ -42,12 +34,13 @@ export async function GET(req: NextRequest) {
     const formattedBets = bets.map((bet) => ({
       id: bet.id,
       playerId: bet.playerId,
-      playerName: bet.user.farcaster_username,
-      playerPfp: bet.user.farcaster_pfp,
+      playerName: null, // TODO: Add player name from user profile
+      playerPfp: null, // TODO: Add player profile picture from user profile
+      playerAddress: bet.user.wallet_address,
       wager: bet.wagerUsd || "0", // Use USD amount instead of wei
-      targetMultiplier: bet.targetMultiplier,
-      limboMultiplier: bet.limboMultiplier,
-      outcome: bet.outcome,
+      targetMultiplier: bet.targetMultiplier ? parseInt(bet.targetMultiplier) : 0,
+      limboMultiplier: bet.limboMultiplier ? parseInt(bet.limboMultiplier) : null,
+      outcome: bet.outcome as "win" | "loss" | null,
       payout: bet.payoutUsd || "0", // Use USD amount instead of wei
       status: bet.status,
       txHash: bet.txHash,

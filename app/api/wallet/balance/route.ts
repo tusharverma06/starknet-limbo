@@ -1,34 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { JsonRpcProvider, formatEther } from "ethers";
-import { walletDb } from "@/lib/db/wallets";
 import { getUsdValueFromEth } from "@/lib/utils/price";
-import { requireAuth } from "@/lib/auth/requireAuth";
+import { prisma } from "@/lib/db/prisma";
 
 /**
  * GET /api/wallet/balance
- * Get the current balance of authenticated user's wallet
- * Requires JWT authentication (verified by middleware)
+ * Get the current balance of the custodial wallet
+ * Fetches directly from blockchain (no locked balance tracking)
  */
 export async function GET(req: NextRequest) {
   try {
-    // Require JWT authentication
-    const authResult = await requireAuth(req);
-    if ("error" in authResult) {
-      return authResult.error;
+    const { searchParams } = new URL(req.url);
+    const address = searchParams.get("address");
+
+    if (!address) {
+      return NextResponse.json(
+        { error: "address is required" },
+        { status: 400 },
+      );
     }
 
-    const { user } = authResult.data;
+    // Find user by external wallet address
+    const user = await prisma.user.findUnique({
+      where: { wallet_address: address.toLowerCase() },
+      include: {
+        custodialWallet: true,
+      },
+    });
 
-    console.log(
-      "✅ JWT authentication valid, fetching balance for user:",
-      user.id
-    );
-
-    const wallet = await walletDb.getWallet(user.id);
-
-    if (!wallet) {
-      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
+    if (!user || !user.custodialWallet) {
+      return NextResponse.json(
+        { error: "User or custodial wallet not found" },
+        { status: 404 }
+      );
     }
+
+    const custodialAddress = user.custodialWallet.address;
 
     // Get balance from blockchain
     const rpcUrl =
@@ -39,51 +46,37 @@ export async function GET(req: NextRequest) {
       console.error("No valid RPC URL configured");
       return NextResponse.json(
         { error: "RPC URL not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const provider = new JsonRpcProvider(rpcUrl);
-    const blockchainBalance = await provider.getBalance(wallet.address);
+    const blockchainBalance = await provider.getBalance(custodialAddress);
 
-    // Get locked balance from DB (funds committed to pending bets)
-    const lockedBalance = BigInt(wallet.lockedBalance || "0");
-
-    // Available balance = blockchain balance - locked balance
-    const availableBalance = blockchainBalance - lockedBalance;
-
-    // DON'T cache blockchain balance - always fetch fresh from chain
-    // Only use DB for locked balance tracking
-
-    // Convert to USD
-    const blockchainEth = parseFloat(formatEther(blockchainBalance));
-    const availableEth = parseFloat(formatEther(availableBalance));
-    const lockedEth = parseFloat(formatEther(lockedBalance));
-
-    const blockchainUsd = await getUsdValueFromEth(blockchainEth);
-    const availableUsd = await getUsdValueFromEth(availableEth);
-    const lockedUsd = await getUsdValueFromEth(lockedEth);
+    // Convert to ETH and USD
+    const balanceInEth = parseFloat(formatEther(blockchainBalance));
+    const balanceInUsd = await getUsdValueFromEth(balanceInEth);
 
     return NextResponse.json({
-      address: wallet.address,
-      // Blockchain balance (total on-chain)
+      address: custodialAddress,
+      // Blockchain balance (total available)
       balance: blockchainBalance.toString(),
-      balanceInEth: blockchainEth,
-      balanceInUsd: blockchainUsd,
-      // Available balance (what user can bet with)
-      availableBalance: availableBalance.toString(),
-      availableBalanceInEth: availableEth,
-      availableBalanceInUsd: availableUsd,
-      // Locked balance (committed to pending bets)
-      lockedBalance: lockedBalance.toString(),
-      lockedBalanceInEth: lockedEth,
-      lockedBalanceInUsd: lockedUsd,
+      balanceInEth,
+      balanceInUsd,
+      // Available balance = total balance (no locked balance tracking)
+      availableBalance: blockchainBalance.toString(),
+      availableBalanceInEth: balanceInEth,
+      availableBalanceInUsd: balanceInUsd,
+      // Legacy fields (set to 0 for backward compatibility)
+      lockedBalance: "0",
+      lockedBalanceInEth: 0,
+      lockedBalanceInUsd: 0,
     });
   } catch (error) {
     console.error("Get balance error:", error);
     return NextResponse.json(
       { error: "Failed to get balance" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

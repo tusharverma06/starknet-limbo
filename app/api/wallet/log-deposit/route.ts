@@ -16,8 +16,10 @@ export async function POST(req: NextRequest) {
       return authResult.error;
     }
 
-    const { user } = authResult.data;
-    const body = await req.json();
+    const { user, body: parsedBody } = authResult.data;
+
+    // Use body from auth if available, otherwise parse it
+    const body = parsedBody || await req.json();
     const { txHash, amount } = body;
 
     // Validate inputs
@@ -32,7 +34,7 @@ export async function POST(req: NextRequest) {
     const existingTx = await prisma.walletTransaction.findFirst({
       where: {
         txHash,
-        userId: user.id,
+        custodialWalletId: user.custodialWalletId,
       },
     });
 
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Log the deposit transaction
     await prisma.walletTransaction.create({
       data: {
-        userId: user.id,
+        custodialWalletId: user.custodialWalletId,
         txHash,
         txType: "deposit",
         amount: amountInWei,

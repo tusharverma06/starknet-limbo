@@ -9,43 +9,39 @@ import { TransactionsSheet } from "@/components/ui/TransactionsSheet";
 import { useServerWallet } from "@/hooks/useServerWallet";
 import { useBalance } from "@/hooks/useBalance";
 import { useGameState } from "@/hooks/useGameState";
-import { useFarcaster } from "@/hooks/useFarcaster";
-import { useSimpleSiwe } from "@/hooks/useSimpleSiwe";
+import { useSession } from "@/hooks/useSession";
+import { useAccount } from "wagmi";
+import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { Loader2 } from "lucide-react";
-import { MIN_BET_USD, MAX_BET_USD } from "@/lib/constants";
+import { MIN_BET_USD, MAX_BET_USD, MAX_MULTIPLIER } from "@/lib/constants";
 import Image from "next/image";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount, useConnect } from "wagmi";
 import { cn } from "@/lib/utils/cn";
 import { useRive } from "@rive-app/react-canvas";
 
 // Removed unused BetResultDisplay interface - results handled inline
 
 export function MiniappGameBoard() {
-  const { user } = useFarcaster();
-  const userId = user?.fid?.toString() || null;
+  const { address, isConnected } = useAccount();
+  const userId = address || null; // Keep userId for backward compatibility
 
-  // Simple SIWE authentication with cookie-based sessions
-  const {
-    isAuthenticated,
-    custodialWallet,
-    isLoading: isAuthLoading,
-    isSigning,
-    signIn,
-    signOut,
-  } = useSimpleSiwe();
+  // Wallet authentication - links external wallet to custodial wallet
+  const { custodialWallet, isLinking, hasCompletedSiwe, linkWalletToSession } =
+    useSession();
+  console.log(custodialWallet);
 
   // Use balance hook - shows available balance (total - locked)
-  // This is what user can actually bet with
+  // This is what user can actually bet with (fetches custodial wallet balance by external wallet address)
+  // Only fetch balance after SIWE is complete (wallet has been created)
   const {
     availableBalanceInEth: balanceEth,
     availableBalanceInUsd: balanceUsd,
     lockedBalanceInUsd,
     isLoading: isBalanceLoading,
     refetch: refetchBalance,
-  } = useBalance(userId, isAuthenticated);
+  } = useBalance(hasCompletedSiwe && address ? address : null);
 
-  // Keep useServerWallet for wallet operations (placeBet, withdraw)
+  // Custodial wallet operations
+  // Only initialize after SIWE is complete
   const {
     wallet,
     placeBet: placeBetWithServerWallet,
@@ -53,17 +49,13 @@ export function MiniappGameBoard() {
     isInitialLoading,
     isWithdrawing,
     isPlacingBet: isPlacingBetViaWallet,
-  } = useServerWallet(userId, isAuthenticated);
+  } = useServerWallet(hasCompletedSiwe && address ? address : null);
+
+  console.log(wallet);
 
   const handleRefreshBalance = async () => {
     await refetchBalance();
   };
-
-  // Wagmi account for checking external wallet connection
-  const {
-    address: externalWalletAddress,
-    isConnected: isExternalWalletConnected,
-  } = useAccount();
 
   // Removed legacy on-chain bet polling/watching - now using instant off-chain results
 
@@ -82,17 +74,16 @@ export function MiniappGameBoard() {
   const [amountError, setAmountError] = useState("");
   const [multiplierError, setMultiplierError] = useState("");
   const [multiplierInput, setMultiplierInput] = useState(
-    targetMultiplier.toFixed(2)
+    targetMultiplier.toFixed(2),
   );
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [showTransactionsSheet, setShowTransactionsSheet] = useState(false);
   const [potentialPayoutUsd, setPotentialPayoutUsd] = useState<number | null>(
-    null
+    null,
   );
   const [showWalletDropdown, setShowWalletDropdown] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
   const [currentAnimation, setCurrentAnimation] = useState<
     "idle" | "win" | "lose"
   >("idle");
@@ -103,8 +94,7 @@ export function MiniappGameBoard() {
     isWin: boolean;
   } | null>(null);
   const [animationKey, setAnimationKey] = useState(0);
-  const { connect, connectors } = useConnect();
-
+  const { openConnectModal } = useConnectModal();
   // Rive animations with autoplay enabled
   const { RiveComponent: RiveIdle } = useRive({
     src: "/limbov2.riv",
@@ -126,6 +116,8 @@ export function MiniappGameBoard() {
 
   // Ref for wallet dropdown to handle click outside
   const walletDropdownRef = useRef<HTMLDivElement>(null);
+  // Ref for hidden button to simulate user interaction for autoplay
+  const hiddenButtonRef = useRef<HTMLButtonElement>(null);
 
   // Audio refs for win and lose sounds and background music
   const winAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -151,7 +143,7 @@ export function MiniappGameBoard() {
     if (bgMusicRef.current) {
       bgMusicRef.current.preload = "auto";
       bgMusicRef.current.loop = true;
-      bgMusicRef.current.volume = 0.3;
+      bgMusicRef.current.volume = 0.1;
     }
 
     // Cleanup on unmount
@@ -171,15 +163,52 @@ export function MiniappGameBoard() {
     };
   }, []);
 
+  // Function to ensure background music is playing at correct volume
+  const ensureBackgroundMusicPlaying = () => {
+    if (bgMusicRef.current && bgMusicStarted) {
+      bgMusicRef.current.volume = 0.1; // Always maintain 0.1 volume
+      if (bgMusicRef.current.paused) {
+        bgMusicRef.current.play().catch((error) => {
+          console.log("Failed to resume background music:", error);
+        });
+      }
+    }
+  };
+
   // Function to start background music (needs user interaction)
   const startBackgroundMusic = () => {
     if (bgMusicRef.current && !bgMusicStarted) {
+      bgMusicRef.current.volume = 0.1; // Ensure volume is always 0.1
       bgMusicRef.current.play().catch((error) => {
         console.log("Failed to start background music:", error);
       });
       setBgMusicStarted(true);
     }
   };
+
+  // Auto-start background music by simulating user interaction
+  useEffect(() => {
+    // Simulate click on hidden button to trigger user interaction
+    const timer = setTimeout(() => {
+      if (hiddenButtonRef.current) {
+        hiddenButtonRef.current.click();
+      }
+    }, 100); // Small delay to ensure DOM is ready
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Periodic check to ensure background music is always playing (except during bet sounds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Only resume if we're in idle state (not playing win/lose sounds)
+      if (currentAnimation === "idle") {
+        ensureBackgroundMusicPlaying();
+      }
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [currentAnimation, bgMusicStarted]);
 
   // Play audio when animation changes and handle background music
   useEffect(() => {
@@ -197,11 +226,7 @@ export function MiniappGameBoard() {
 
       // Resume background music when win audio ends
       const handleWinEnded = () => {
-        if (bgMusicRef.current && bgMusicStarted) {
-          bgMusicRef.current.play().catch((error) => {
-            console.log("Failed to resume background music:", error);
-          });
-        }
+        ensureBackgroundMusicPlaying();
       };
       winAudioRef.current.addEventListener("ended", handleWinEnded);
 
@@ -222,11 +247,7 @@ export function MiniappGameBoard() {
 
       // Resume background music when lose audio ends
       const handleLoseEnded = () => {
-        if (bgMusicRef.current && bgMusicStarted) {
-          bgMusicRef.current.play().catch((error) => {
-            console.log("Failed to resume background music:", error);
-          });
-        }
+        ensureBackgroundMusicPlaying();
       };
       loseAudioRef.current.addEventListener("ended", handleLoseEnded);
 
@@ -235,11 +256,7 @@ export function MiniappGameBoard() {
       };
     } else if (currentAnimation === "idle") {
       // Ensure background music is playing when returning to idle
-      if (bgMusicRef.current && bgMusicStarted && bgMusicRef.current.paused) {
-        bgMusicRef.current.play().catch((error) => {
-          console.log("Failed to resume background music on idle:", error);
-        });
-      }
+      ensureBackgroundMusicPlaying();
     }
   }, [currentAnimation, animationKey, bgMusicStarted]);
 
@@ -316,11 +333,15 @@ export function MiniappGameBoard() {
   };
 
   const handlePrimaryAction = async () => {
-    // Start background music on any interaction
-    startBackgroundMusic();
+    if (!isConnected) {
+      // User should connect via RainbowKit button
+      openConnectModal?.();
+      return;
+    }
 
-    if (!isAuthenticated) {
-      signIn();
+    // If connected but hasn't signed SIWE, trigger sign-in
+    if (isConnected && !hasCompletedSiwe) {
+      await linkWalletToSession();
       return;
     }
 
@@ -331,10 +352,21 @@ export function MiniappGameBoard() {
 
     // Parse bet amount
     const betAmountNum = parseFloat(betAmount || "0");
+    const multiplierNum = parseFloat(multiplierInput || "0");
 
     // If balance is less than $0.10, open funding modal
     if (balanceUsd < 0.1) {
       setShowFundingModal(true);
+      return;
+    }
+
+    // Check if bet exceeds maximum
+    if (betAmountNum > MAX_BET_USD) {
+      return;
+    }
+
+    // Check if multiplier exceeds maximum
+    if (multiplierNum > MAX_MULTIPLIER) {
       return;
     }
 
@@ -363,9 +395,9 @@ export function MiniappGameBoard() {
       return;
     }
 
-    // Safety check: Ensure SIWE authentication is valid
-    if (!isAuthenticated) {
-      setBetError("Please sign in with your wallet to place bets");
+    // Safety check: Ensure wallet is connected
+    if (!isConnected) {
+      setBetError("Please connect your wallet to place bets");
       return;
     }
 
@@ -378,9 +410,11 @@ export function MiniappGameBoard() {
     if (
       isNaN(multiplierValue) ||
       multiplierValue < 1.01 ||
-      multiplierValue > 1000
+      multiplierValue > MAX_MULTIPLIER
     ) {
-      setMultiplierError("Multiplier must be between 1.01 and 1000");
+      setMultiplierError(
+        `Multiplier must be between 1.01 and ${MAX_MULTIPLIER}`,
+      );
       return;
     }
 
@@ -439,7 +473,7 @@ export function MiniappGameBoard() {
       }
     } catch (error) {
       setBetError(
-        error instanceof Error ? error.message : "Failed to place bet"
+        error instanceof Error ? error.message : "Failed to place bet",
       );
       setIsPlacingBet(false);
     }
@@ -457,31 +491,6 @@ export function MiniappGameBoard() {
       return result;
     } catch (error) {
       throw error;
-    }
-  };
-
-  const handleSignIn = async () => {
-    if (!userId) {
-      return;
-    }
-
-    try {
-      // Check if external wallet is connected
-      if (!isExternalWalletConnected || !externalWalletAddress) {
-        // RainbowKit ConnectButton will handle opening the modal
-        return;
-      }
-
-      // Sign SIWE message to authorize custodial wallet (creates session cookie)
-      const success = await signIn();
-
-      if (success) {
-        setBetError(null); // Clear any previous errors
-      } else {
-        setBetError("Sign-in failed. Please try again.");
-      }
-    } catch (error) {
-      setBetError(error instanceof Error ? error.message : "Sign-in failed");
     }
   };
 
@@ -542,78 +551,41 @@ export function MiniappGameBoard() {
           {/* Right side buttons */}
           <div className="flex items-center gap-2">
             {/* Sign In / Wallet Button */}
-            {isAuthLoading ? (
-              // Show loading state while checking authentication
-              <button
-                disabled
-                className="border-2 border-white rounded-lg px-4 py-1 h-8 animate-pulse cursor-wait"
-              >
-                <span
-                  className="text-base text-white leading-[0.9]"
-                  style={{ fontFamily: "var(--font-lilita-one)" }}
-                >
-                  Loading...
-                </span>
-              </button>
-            ) : !isAuthenticated || isSigningOut ? (
+            {!isConnected ? (
               <ConnectButton.Custom>
-                {({
-                  account,
-                  chain,
-                  openChainModal,
-                  authenticationStatus,
-                  mounted,
-                }) => {
-                  const ready = mounted && authenticationStatus !== "loading";
-                  const connected =
-                    ready &&
-                    account &&
-                    chain &&
-                    (!authenticationStatus ||
-                      authenticationStatus === "authenticated");
-
-                  return (
-                    <button
-                      onClick={() => {
-                        if (isSigningOut) return;
-                        if (
-                          !connected ||
-                          !externalWalletAddress ||
-                          !isExternalWalletConnected
-                        ) {
-                          connect({ connector: connectors[0] });
-                        } else if (chain.unsupported) {
-                          openChainModal();
-                        } else {
-                          // Trigger SIWE sign in
-                          handleSignIn();
-                        }
-                      }}
-                      disabled={isSigningOut}
-                      className={`border-2 border-white rounded-lg px-4 py-1 h-8 hover:bg-white/10 transition-colors ${
-                        isSigningOut ? "animate-pulse cursor-not-allowed" : ""
-                      }`}
+                {({ openConnectModal }) => (
+                  <button
+                    onClick={openConnectModal}
+                    className="border-2 border-white rounded-lg px-4 py-1 h-8 hover:bg-white/10 transition-colors"
+                  >
+                    <span
+                      className="text-base text-white leading-[0.9]"
+                      style={{ fontFamily: "var(--font-lilita-one)" }}
                     >
-                      <span
-                        className="text-base text-white leading-[0.9]"
-                        style={{ fontFamily: "var(--font-lilita-one)" }}
-                      >
-                        {isSigningOut
-                          ? "Signing Out..."
-                          : !connected ||
-                            !externalWalletAddress ||
-                            !isExternalWalletConnected
-                          ? "Connect Wallet"
-                          : chain.unsupported
-                          ? "Wrong Network"
-                          : isSigning
-                          ? "Signing..."
-                          : "Sign In"}
-                      </span>
-                    </button>
-                  );
-                }}
+                      Connect Wallet
+                    </span>
+                  </button>
+                )}
               </ConnectButton.Custom>
+            ) : isConnected && !hasCompletedSiwe ? (
+              <button
+                onClick={async () => {
+                  if (isConnected && !hasCompletedSiwe) {
+                    await linkWalletToSession();
+                    return;
+                  }
+                }}
+                className="border-2 border-white rounded-lg text-base text-white leading-[0.9] px-4 py-1 h-8 hover:bg-white/10 transition-colors"
+              >
+                {isLinking ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Signing In...
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
+              </button>
             ) : (
               <div className="relative" ref={walletDropdownRef}>
                 <button
@@ -621,7 +593,7 @@ export function MiniappGameBoard() {
                   className={cn(
                     `border-2 border-white rounded-lg px-[10px] py-[10px] h-[38px] flex items-center gap-[4px] hover:bg-white/10 transition-colors`,
                     showWalletDropdown &&
-                      "bg-white hover:bg-white text-[#2574ff]!"
+                      "bg-white hover:bg-white text-[#2574ff]!",
                   )}
                 >
                   <Image
@@ -634,7 +606,7 @@ export function MiniappGameBoard() {
                     className={cn(
                       "text-base leading-[0.9] text-white",
                       showWalletDropdown &&
-                        "text-[#2574ff]! hover:text-[#2574ff]!"
+                        "text-[#2574ff]! hover:text-[#2574ff]!",
                     )}
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
@@ -680,53 +652,52 @@ export function MiniappGameBoard() {
                             className="text-[16px] text-black leading-[0.9]"
                             style={{ fontFamily: "var(--font-lilita-one)" }}
                           >
-                            {custodialWallet
-                              ? `${custodialWallet.slice(
+                            {wallet?.address
+                              ? `${wallet.address.slice(
                                   0,
-                                  2
-                                )}...${custodialWallet.slice(-6)}`
+                                  2,
+                                )}...${wallet.address.slice(-6)}`
                               : "Loading..."}
                           </p>
-                          <button
-                            onClick={async () => {
-                              setIsSigningOut(true);
-                              await signOut();
-                              setShowWalletDropdown(false);
-                              setIsSigningOut(false);
-                            }}
-                            disabled={isSigningOut}
-                            className="flex items-center justify-center disabled:opacity-50"
-                          >
-                            <svg
-                              width="14"
-                              height="14"
-                              viewBox="0 0 14 14"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M5.25 12.25H3.5C3.23478 12.25 2.98043 12.1446 2.79289 11.9571C2.60536 11.7696 2.5 11.5152 2.5 11.25V2.75C2.5 2.48478 2.60536 2.23043 2.79289 2.04289C2.98043 1.85536 3.23478 1.75 3.5 1.75H5.25M9.625 9.625L12.25 7L9.625 4.375M12.25 7H5.25"
-                                stroke="#E9452D"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </button>
+                          <ConnectButton.Custom>
+                            {({ openAccountModal }) => (
+                              <button
+                                onClick={() => {
+                                  setShowWalletDropdown(false);
+                                  openAccountModal();
+                                }}
+                                className="flex items-center justify-center"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 14 14"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M5.25 12.25H3.5C3.23478 12.25 2.98043 12.1446 2.79289 11.9571C2.60536 11.7696 2.5 11.5152 2.5 11.25V2.75C2.5 2.48478 2.60536 2.23043 2.79289 2.04289C2.98043 1.85536 3.23478 1.75 3.5 1.75H5.25M9.625 9.625L12.25 7L9.625 4.375M12.25 7H5.25"
+                                    stroke="#E9452D"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </ConnectButton.Custom>
                         </div>
 
                         {/* Add Funds */}
                         <button
                           onClick={() => {
-                            if (!wallet || !isAuthenticated) {
+                            if (!wallet || !isConnected) {
                               return;
                             }
                             setShowFundingModal(true);
                             setShowWalletDropdown(false);
                           }}
-                          disabled={
-                            !wallet || !isAuthenticated || isInitialLoading
-                          }
+                          disabled={!wallet || !isConnected || isInitialLoading}
                           className="flex items-center gap-[8px] w-full disabled:opacity-50"
                         >
                           <svg
@@ -755,7 +726,7 @@ export function MiniappGameBoard() {
                         {/* Withdraw Funds */}
                         <button
                           onClick={() => {
-                            if (!wallet || !isAuthenticated) {
+                            if (!wallet || !isConnected) {
                               return;
                             }
                             setShowWithdrawModal(true);
@@ -763,7 +734,7 @@ export function MiniappGameBoard() {
                           }}
                           disabled={
                             !wallet ||
-                            !isAuthenticated ||
+                            !isConnected ||
                             isInitialLoading ||
                             isWithdrawing
                           }
@@ -962,7 +933,8 @@ export function MiniappGameBoard() {
               </p>
               <div
                 className={`border-2 ${
-                  parseFloat(betAmount || "0") > balanceUsd && balanceUsd >= 0.1
+                  (parseFloat(betAmount || "0") > balanceUsd && balanceUsd >= 0.1) ||
+                  parseFloat(betAmount || "0") > MAX_BET_USD
                     ? "border-[#e9452d]"
                     : "border-black"
                 } rounded-xl h-[44px] flex items-center justify-between px-3 py-2`}
@@ -970,8 +942,9 @@ export function MiniappGameBoard() {
                 <div className="flex items-center gap-0">
                   <span
                     className={`text-base leading-[0.9] font-bold ${
-                      parseFloat(betAmount || "0") > balanceUsd &&
-                      balanceUsd >= 0.1
+                      (parseFloat(betAmount || "0") > balanceUsd &&
+                        balanceUsd >= 0.1) ||
+                      parseFloat(betAmount || "0") > MAX_BET_USD
                         ? "text-[#e9452d]"
                         : "text-black"
                     }`}
@@ -981,8 +954,9 @@ export function MiniappGameBoard() {
                   <input
                     type="text"
                     className={`text-base leading-[0.9] bg-transparent focus:outline-none focus:ring-0 ${
-                      parseFloat(betAmount || "0") > balanceUsd &&
-                      balanceUsd >= 0.1
+                      (parseFloat(betAmount || "0") > balanceUsd &&
+                        balanceUsd >= 0.1) ||
+                      parseFloat(betAmount || "0") > MAX_BET_USD
                         ? "text-[#e9452d]"
                         : "text-black"
                     }`}
@@ -1003,16 +977,18 @@ export function MiniappGameBoard() {
                       onClick={() => handleQuickAmount(item.multiplier)}
                       disabled={isDisabled}
                       className={`border-2 ${
-                        parseFloat(betAmount || "0") > balanceUsd &&
-                        balanceUsd >= 0.1
+                        (parseFloat(betAmount || "0") > balanceUsd &&
+                          balanceUsd >= 0.1) ||
+                        parseFloat(betAmount || "0") > MAX_BET_USD
                           ? "border-[#e9452d]"
                           : "border-black"
                       } rounded-lg h-[24px] px-[6px] py-[8px] flex items-center justify-center disabled:opacity-50`}
                     >
                       <p
                         className={`text-[12px] tracking-[-1px] leading-[0.9] ${
-                          parseFloat(betAmount || "0") > balanceUsd &&
-                          balanceUsd >= 0.1
+                          (parseFloat(betAmount || "0") > balanceUsd &&
+                            balanceUsd >= 0.1) ||
+                          parseFloat(betAmount || "0") > MAX_BET_USD
                             ? "text-[#e9452d]"
                             : "text-black"
                         }`}
@@ -1024,8 +1000,42 @@ export function MiniappGameBoard() {
                   ))}
                 </div>
               </div>
+              {/* Max bet exceeded error message */}
+              {parseFloat(betAmount || "0") > MAX_BET_USD && (
+                <div className="flex items-center gap-[6px]">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="8"
+                      cy="8"
+                      r="6"
+                      stroke="#e9452d"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <path
+                      d="M8 5V9M8 11V11.5"
+                      stroke="#e9452d"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <p
+                    className="text-[#e9452d] text-[16px] leading-[0.9]"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Maximum bet is ${MAX_BET_USD}
+                  </p>
+                </div>
+              )}
               {/* Insufficient balance error message */}
-              {parseFloat(betAmount || "0") > balanceUsd &&
+              {parseFloat(betAmount || "0") <= MAX_BET_USD &&
+                parseFloat(betAmount || "0") > balanceUsd &&
                 balanceUsd >= 0.1 && (
                   <div className="flex items-center gap-[6px]">
                     <svg
@@ -1068,12 +1078,22 @@ export function MiniappGameBoard() {
               >
                 Multiplier
               </p>
-              <div className="border-2 border-black rounded-xl h-[44px] flex items-center justify-between px-3 py-2">
+              <div
+                className={`border-2 ${
+                  parseFloat(multiplierInput || "0") > MAX_MULTIPLIER
+                    ? "border-[#e9452d]"
+                    : "border-black"
+                } rounded-xl h-[44px] flex items-center justify-between px-3 py-2`}
+              >
                 <input
                   type="text"
                   inputMode="decimal"
-                  placeholder="1.01 - 1000"
-                  className="text-base text-black leading-[0.9] bg-transparent focus:outline-none focus:ring-0 flex-1"
+                  placeholder={`1.01 - ${MAX_MULTIPLIER}`}
+                  className={`text-base leading-[0.9] bg-transparent focus:outline-none focus:ring-0 flex-1 ${
+                    parseFloat(multiplierInput || "0") > MAX_MULTIPLIER
+                      ? "text-[#e9452d]"
+                      : "text-black"
+                  }`}
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                   value={multiplierInput}
                   onChange={(e) => {
@@ -1088,7 +1108,7 @@ export function MiniappGameBoard() {
                     // On blur, validate and format the input
                     const val = parseFloat(multiplierInput);
                     if (!isNaN(val)) {
-                      const clamped = Math.max(1.01, Math.min(1000, val));
+                      const clamped = Math.max(1.01, Math.min(MAX_MULTIPLIER, val));
                       setTargetMultiplier(clamped);
                       setMultiplierInput(clamped.toFixed(2));
                       setMultiplierError("");
@@ -1098,12 +1118,80 @@ export function MiniappGameBoard() {
                   }}
                   disabled={isDisabled}
                 />
-                <span className="text-base text-black leading-[0.9] font-bold ml-1">
+                <span
+                  className={`text-base leading-[0.9] font-bold ml-1 ${
+                    parseFloat(multiplierInput || "0") > MAX_MULTIPLIER
+                      ? "text-[#e9452d]"
+                      : "text-black"
+                  }`}
+                >
                   x
                 </span>
               </div>
-              {multiplierError && (
-                <p className="text-xs text-red-600 mt-1">{multiplierError}</p>
+              {/* Max multiplier exceeded error message */}
+              {parseFloat(multiplierInput || "0") > MAX_MULTIPLIER && (
+                <div className="flex items-center gap-[6px]">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="8"
+                      cy="8"
+                      r="6"
+                      stroke="#e9452d"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <path
+                      d="M8 5V9M8 11V11.5"
+                      stroke="#e9452d"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <p
+                    className="text-[#e9452d] text-[16px] leading-[0.9]"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    Maximum multiplier is {MAX_MULTIPLIER}x
+                  </p>
+                </div>
+              )}
+              {multiplierError && !parseFloat(multiplierInput || "0") && (
+                <div className="flex items-center gap-[6px]">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="8"
+                      cy="8"
+                      r="6"
+                      stroke="#e9452d"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <path
+                      d="M8 5V9M8 11V11.5"
+                      stroke="#e9452d"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <p
+                    className="text-[#e9452d] text-[16px] leading-[0.9]"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    {multiplierError}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -1193,14 +1281,12 @@ export function MiniappGameBoard() {
             <button
               onClick={handlePrimaryAction}
               disabled={
-                isAuthLoading ||
                 isPlacingBet ||
                 isPlacingBetViaWallet ||
                 isBalanceLoading ||
-                isSigning ||
-                isSigningOut ||
                 isInitialLoading ||
-                (!wallet && isAuthenticated)
+                isLinking ||
+                (isConnected && hasCompletedSiwe && !wallet)
               }
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
             >
@@ -1211,10 +1297,17 @@ export function MiniappGameBoard() {
                   fontFamily: "var(--font-lilita-one)",
                 }}
               >
-                {!isAuthenticated ? (
-                  "Sign In to Play"
-                ) : isAuthLoading ? (
-                  "Signing..."
+                {!isConnected ? (
+                  "Connect Wallet"
+                ) : isConnected && !hasCompletedSiwe ? (
+                  isLinking ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Signing In...
+                    </span>
+                  ) : (
+                    "Sign In"
+                  )
                 ) : isPlacingBet ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -1222,6 +1315,10 @@ export function MiniappGameBoard() {
                   </span>
                 ) : balanceUsd < 0.1 ? (
                   "Fund Wallet to Play"
+                ) : parseFloat(betAmount || "0") > MAX_BET_USD ? (
+                  "Bet Exceeds Maximum"
+                ) : parseFloat(multiplierInput || "0") > MAX_MULTIPLIER ? (
+                  "Multiplier Too High"
                 ) : parseFloat(betAmount || "0") > balanceUsd ? (
                   "Add More Funds"
                 ) : amountError ? (
@@ -1336,6 +1433,15 @@ export function MiniappGameBoard() {
         isOpen={showTransactionsSheet}
         onClose={() => setShowTransactionsSheet(false)}
         userId={userId}
+      />
+
+      {/* Hidden button to simulate user interaction for autoplay */}
+      <button
+        ref={hiddenButtonRef}
+        onClick={startBackgroundMusic}
+        className="hidden"
+        aria-hidden="true"
+        tabIndex={-1}
       />
     </div>
   );

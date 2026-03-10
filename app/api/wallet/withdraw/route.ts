@@ -21,16 +21,17 @@ export async function POST(req: NextRequest) {
       return authResult.error;
     }
 
-    const { user } = authResult.data;
+    const { user, body: parsedBody } = authResult.data;
 
-    const body = await req.json();
+    // Use body from auth if available, otherwise parse it
+    const body = parsedBody || (await req.json());
     const { toAddress, usdAmount } = body;
 
     // Validate inputs
     if (!toAddress || !usdAmount) {
       return NextResponse.json(
         { error: "toAddress and usdAmount are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,18 +43,21 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Invalid Ethereum address format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log("✅ JWT authentication valid, processing withdrawal for user:", user.id);
+    console.log(
+      "✅ JWT authentication valid, processing withdrawal for user:",
+      user.id,
+    );
 
     // Validate amount
     const usdAmountNum = parseFloat(usdAmount);
     if (isNaN(usdAmountNum) || usdAmountNum <= 0) {
       return NextResponse.json(
         { error: "Invalid USD amount" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (usdAmountNum < 0.01) {
       return NextResponse.json(
         { error: "Minimum withdrawal amount is $0.01" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,20 +74,39 @@ export async function POST(req: NextRequest) {
     if (ethAmount <= 0) {
       return NextResponse.json(
         { error: "Failed to convert USD to ETH" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log(`💸 Processing withdrawal: $${usdAmountNum} (~${ethAmount} ETH) to ${toAddress}`);
+    console.log(
+      `💸 Processing withdrawal: $${usdAmountNum} (~${ethAmount} ETH) to ${toAddress}`,
+    );
 
-    // Get wallet from database
-    const walletData = await walletDb.getWallet(user.id);
-    if (!walletData) {
+    // Get user with custodial wallet
+    const userWithWallet = await prisma.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      select: {
+        custodial_wallet_id: true,
+        custodialWallet: {
+          select: {
+            id: true,
+            address: true,
+            wallet: true,
+          },
+        },
+      },
+    });
+
+    if (!userWithWallet?.custodialWallet?.wallet) {
       return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }
 
     // Decrypt private key
-    const privateKey = decryptPrivateKey(walletData.encryptedPrivateKey);
+    const privateKey = decryptPrivateKey(
+      userWithWallet.custodialWallet.wallet.encryptedPrivateKey,
+    );
 
     // Create provider and wallet using Alchemy RPC
     const rpcUrl =
@@ -108,7 +131,7 @@ export async function POST(req: NextRequest) {
           error: "Insufficient balance",
           message: "Your wallet balance is 0. Please fund your wallet first.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -119,12 +142,12 @@ export async function POST(req: NextRequest) {
         {
           error: "Insufficient balance",
           message: `Withdrawal amount ($${usdAmountNum.toFixed(
-            2
+            2,
           )}) exceeds your balance (~${balanceInEth} ETH). Please reduce the amount.`,
           available: balance.toString(),
           requested: withdrawAmount.toString(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -137,7 +160,7 @@ export async function POST(req: NextRequest) {
         provider,
         wallet.address,
         toAddress,
-        ethAmountRounded.toString()
+        ethAmountRounded.toString(),
       );
 
       console.log("⛽ Gas estimate:", gasEstimation.gasLimit);
@@ -157,7 +180,7 @@ export async function POST(req: NextRequest) {
         console.log(
           "⛽ Using fallback gas estimate:",
           gasCost.toString(),
-          "wei"
+          "wei",
         );
       } catch (fallbackError) {
         console.error("Fallback gas estimation failed:", fallbackError);
@@ -167,7 +190,7 @@ export async function POST(req: NextRequest) {
             message:
               "Could not estimate transaction cost. The network may be experiencing issues. Please try again later.",
           },
-          { status: 500 }
+          { status: 500 },
         );
       }
     }
@@ -188,7 +211,7 @@ export async function POST(req: NextRequest) {
           gasCost: gasCost.toString(),
           totalRequired: totalRequired.toString(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -203,7 +226,7 @@ export async function POST(req: NextRequest) {
     // Record pending transaction
     await prisma.walletTransaction.create({
       data: {
-        userId: user.id,
+        custodialWalletId: userWithWallet.custodialWallet.id,
         txHash: tx.hash,
         txType: "withdraw",
         amount: withdrawAmount.toString(),
@@ -212,27 +235,38 @@ export async function POST(req: NextRequest) {
     });
     console.log("📝 Withdrawal transaction recorded");
 
-    // Wait for confirmation
-    const receipt = await tx.wait();
+    // Wait for confirmation with timeout
+    let receipt;
+    try {
+      receipt = await tx.wait();
 
-    // Update transaction status
-    await prisma.walletTransaction.updateMany({
-      where: { txHash: tx.hash },
-      data: {
-        status: "confirmed",
-        blockNumber: BigInt(receipt?.blockNumber || 0),
-        gasUsed: receipt?.gasUsed?.toString() || "0",
-        confirmedAt: new Date(),
-      },
-    });
-    console.log("✅ Withdrawal confirmed in database");
+      // Update transaction status to confirmed
+      await prisma.walletTransaction.updateMany({
+        where: { txHash: tx.hash },
+        data: {
+          status: "confirmed",
+          blockNumber: BigInt(receipt?.blockNumber || 0),
+          gasUsed: receipt?.gasUsed?.toString() || "0",
+          confirmedAt: new Date(),
+        },
+      });
+      console.log("✅ Withdrawal confirmed in database");
+    } catch (confirmError) {
+      console.error("❌ Withdrawal confirmation failed:", confirmError);
 
-    // Update last used timestamp
-    await walletDb.updateLastUsed(user.id);
+      // Mark transaction as failed
+      await prisma.walletTransaction.updateMany({
+        where: { txHash: tx.hash },
+        data: {
+          status: "failed",
+        },
+      });
+
+      throw new Error("Transaction failed to confirm on blockchain");
+    }
 
     // Update balance
     const newBalance = await provider.getBalance(wallet.address);
-    await walletDb.updateBalance(user.id, newBalance.toString());
 
     console.log("✅ Withdrawal confirmed:", receipt?.hash);
 
@@ -252,7 +286,7 @@ export async function POST(req: NextRequest) {
         error: "Withdrawal failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

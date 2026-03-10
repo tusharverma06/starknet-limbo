@@ -4,24 +4,24 @@ import { useEffect, useRef } from "react";
  * Hook to automatically process referral codes from URL
  */
 export function useReferralProcessor(
-  userFid: string | null,
+  address: string | null,
   processReferral: (params: {
-    fid: string;
-    referrerFid: string;
+    address: string;
+    referrerAddress: string;
   }) => Promise<void>
 ) {
   const processedRef = useRef(false);
 
   useEffect(() => {
-    if (!userFid || processedRef.current) return;
+    if (!address || processedRef.current) return;
 
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get("ref");
 
-    if (refCode && refCode !== userFid) {
+    if (refCode && refCode.toLowerCase() !== address.toLowerCase()) {
       processedRef.current = true;
 
-      processReferral({ fid: userFid, referrerFid: refCode })
+      processReferral({ address, referrerAddress: refCode })
         .then(() => {
           // Clear ref param from URL
           window.history.replaceState({}, "", window.location.pathname);
@@ -31,5 +31,5 @@ export function useReferralProcessor(
           processedRef.current = false;
         });
     }
-  }, [userFid, processReferral]);
+  }, [address, processReferral]);
 }

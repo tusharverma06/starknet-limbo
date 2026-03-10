@@ -1,3 +1,5 @@
+"use client";
+
 import { PonderProvider } from "@ponder/react";
 import { client } from "@/lib/client";
 import { ReactNode } from "react";

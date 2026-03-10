@@ -5,26 +5,26 @@ import { TASKS } from "@/lib/utils/tasks";
 /**
  * POST /api/tasks/complete
  *
- * Simple task completion based on FID.
+ * Simple task completion based on wallet address.
  * User clicks task → button appears → clicks complete → status updated.
  *
- * Request: { fid: "123", taskId: "follow" }
+ * Request: { address: "0x...", taskId: "twitter_follow" }
  * Response: { success: true, points: 100, totalPoints: 250 }
  */
 export async function POST(req: NextRequest) {
   try {
-    const { fid, taskId } = await req.json();
+    const { address, taskId } = await req.json();
 
-    if (!fid || !taskId) {
+    if (!address || !taskId) {
       return NextResponse.json(
-        { error: "fid and taskId are required" },
+        { error: "address and taskId are required" },
         { status: 400 }
       );
     }
 
-    // Find user by FID
+    // Find user by wallet address
     const user = await prisma.user.findUnique({
-      where: { farcaster_id: fid },
+      where: { wallet_address: address.toLowerCase() },
     });
 
     if (!user) {

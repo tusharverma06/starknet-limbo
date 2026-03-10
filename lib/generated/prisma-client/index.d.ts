@@ -14,15 +14,15 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
 
 
 /**
+ * Model CustodialWallet
+ * 
+ */
+export type CustodialWallet = $Result.DefaultSelection<Prisma.$CustodialWalletPayload>
+/**
  * Model User
  * 
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
-/**
- * Model Session
- * 
- */
-export type Session = $Result.DefaultSelection<Prisma.$SessionPayload>
 /**
  * Model Wallet
  * 
@@ -38,6 +38,16 @@ export type WalletTransaction = $Result.DefaultSelection<Prisma.$WalletTransacti
  * 
  */
 export type Bet = $Result.DefaultSelection<Prisma.$BetPayload>
+/**
+ * Model UserTask
+ * 
+ */
+export type UserTask = $Result.DefaultSelection<Prisma.$UserTaskPayload>
+/**
+ * Model Referral
+ * 
+ */
+export type Referral = $Result.DefaultSelection<Prisma.$ReferralPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -46,8 +56,8 @@ export type Bet = $Result.DefaultSelection<Prisma.$BetPayload>
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more CustodialWallets
+ * const custodialWallets = await prisma.custodialWallet.findMany()
  * ```
  *
  *
@@ -67,8 +77,8 @@ export class PrismaClient<
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Users
-   * const users = await prisma.user.findMany()
+   * // Fetch zero or more CustodialWallets
+   * const custodialWallets = await prisma.custodialWallet.findMany()
    * ```
    *
    *
@@ -158,6 +168,16 @@ export class PrismaClient<
   }>>
 
       /**
+   * `prisma.custodialWallet`: Exposes CRUD operations for the **CustodialWallet** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CustodialWallets
+    * const custodialWallets = await prisma.custodialWallet.findMany()
+    * ```
+    */
+  get custodialWallet(): Prisma.CustodialWalletDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
@@ -166,16 +186,6 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.session`: Exposes CRUD operations for the **Session** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Sessions
-    * const sessions = await prisma.session.findMany()
-    * ```
-    */
-  get session(): Prisma.SessionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.wallet`: Exposes CRUD operations for the **Wallet** model.
@@ -206,6 +216,26 @@ export class PrismaClient<
     * ```
     */
   get bet(): Prisma.BetDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userTask`: Exposes CRUD operations for the **UserTask** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserTasks
+    * const userTasks = await prisma.userTask.findMany()
+    * ```
+    */
+  get userTask(): Prisma.UserTaskDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.referral`: Exposes CRUD operations for the **Referral** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Referrals
+    * const referrals = await prisma.referral.findMany()
+    * ```
+    */
+  get referral(): Prisma.ReferralDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -647,11 +677,13 @@ export namespace Prisma {
 
 
   export const ModelName: {
+    CustodialWallet: 'CustodialWallet',
     User: 'User',
-    Session: 'Session',
     Wallet: 'Wallet',
     WalletTransaction: 'WalletTransaction',
-    Bet: 'Bet'
+    Bet: 'Bet',
+    UserTask: 'UserTask',
+    Referral: 'Referral'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -670,10 +702,84 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "session" | "wallet" | "walletTransaction" | "bet"
+      modelProps: "custodialWallet" | "user" | "wallet" | "walletTransaction" | "bet" | "userTask" | "referral"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
+      CustodialWallet: {
+        payload: Prisma.$CustodialWalletPayload<ExtArgs>
+        fields: Prisma.CustodialWalletFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CustodialWalletFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CustodialWalletFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>
+          }
+          findFirst: {
+            args: Prisma.CustodialWalletFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CustodialWalletFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>
+          }
+          findMany: {
+            args: Prisma.CustodialWalletFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>[]
+          }
+          create: {
+            args: Prisma.CustodialWalletCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>
+          }
+          createMany: {
+            args: Prisma.CustodialWalletCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CustodialWalletCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>[]
+          }
+          delete: {
+            args: Prisma.CustodialWalletDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>
+          }
+          update: {
+            args: Prisma.CustodialWalletUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>
+          }
+          deleteMany: {
+            args: Prisma.CustodialWalletDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CustodialWalletUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CustodialWalletUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>[]
+          }
+          upsert: {
+            args: Prisma.CustodialWalletUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CustodialWalletPayload>
+          }
+          aggregate: {
+            args: Prisma.CustodialWalletAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCustodialWallet>
+          }
+          groupBy: {
+            args: Prisma.CustodialWalletGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CustodialWalletGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CustodialWalletCountArgs<ExtArgs>
+            result: $Utils.Optional<CustodialWalletCountAggregateOutputType> | number
+          }
+        }
+      }
       User: {
         payload: Prisma.$UserPayload<ExtArgs>
         fields: Prisma.UserFieldRefs
@@ -745,80 +851,6 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
-          }
-        }
-      }
-      Session: {
-        payload: Prisma.$SessionPayload<ExtArgs>
-        fields: Prisma.SessionFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.SessionFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.SessionFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>
-          }
-          findFirst: {
-            args: Prisma.SessionFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.SessionFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>
-          }
-          findMany: {
-            args: Prisma.SessionFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>[]
-          }
-          create: {
-            args: Prisma.SessionCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>
-          }
-          createMany: {
-            args: Prisma.SessionCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.SessionCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>[]
-          }
-          delete: {
-            args: Prisma.SessionDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>
-          }
-          update: {
-            args: Prisma.SessionUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>
-          }
-          deleteMany: {
-            args: Prisma.SessionDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.SessionUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.SessionUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>[]
-          }
-          upsert: {
-            args: Prisma.SessionUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$SessionPayload>
-          }
-          aggregate: {
-            args: Prisma.SessionAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateSession>
-          }
-          groupBy: {
-            args: Prisma.SessionGroupByArgs<ExtArgs>
-            result: $Utils.Optional<SessionGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.SessionCountArgs<ExtArgs>
-            result: $Utils.Optional<SessionCountAggregateOutputType> | number
           }
         }
       }
@@ -1044,6 +1076,154 @@ export namespace Prisma {
           }
         }
       }
+      UserTask: {
+        payload: Prisma.$UserTaskPayload<ExtArgs>
+        fields: Prisma.UserTaskFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserTaskFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserTaskFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>
+          }
+          findFirst: {
+            args: Prisma.UserTaskFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserTaskFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>
+          }
+          findMany: {
+            args: Prisma.UserTaskFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>[]
+          }
+          create: {
+            args: Prisma.UserTaskCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>
+          }
+          createMany: {
+            args: Prisma.UserTaskCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserTaskCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>[]
+          }
+          delete: {
+            args: Prisma.UserTaskDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>
+          }
+          update: {
+            args: Prisma.UserTaskUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserTaskDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserTaskUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserTaskUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserTaskUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserTaskPayload>
+          }
+          aggregate: {
+            args: Prisma.UserTaskAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserTask>
+          }
+          groupBy: {
+            args: Prisma.UserTaskGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserTaskGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserTaskCountArgs<ExtArgs>
+            result: $Utils.Optional<UserTaskCountAggregateOutputType> | number
+          }
+        }
+      }
+      Referral: {
+        payload: Prisma.$ReferralPayload<ExtArgs>
+        fields: Prisma.ReferralFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ReferralFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ReferralFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>
+          }
+          findFirst: {
+            args: Prisma.ReferralFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ReferralFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>
+          }
+          findMany: {
+            args: Prisma.ReferralFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>[]
+          }
+          create: {
+            args: Prisma.ReferralCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>
+          }
+          createMany: {
+            args: Prisma.ReferralCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ReferralCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>[]
+          }
+          delete: {
+            args: Prisma.ReferralDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>
+          }
+          update: {
+            args: Prisma.ReferralUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>
+          }
+          deleteMany: {
+            args: Prisma.ReferralDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ReferralUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ReferralUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>[]
+          }
+          upsert: {
+            args: Prisma.ReferralUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReferralPayload>
+          }
+          aggregate: {
+            args: Prisma.ReferralAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReferral>
+          }
+          groupBy: {
+            args: Prisma.ReferralGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ReferralGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ReferralCountArgs<ExtArgs>
+            result: $Utils.Optional<ReferralCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1140,11 +1320,13 @@ export namespace Prisma {
     omit?: Prisma.GlobalOmitConfig
   }
   export type GlobalOmitConfig = {
+    custodialWallet?: CustodialWalletOmit
     user?: UserOmit
-    session?: SessionOmit
     wallet?: WalletOmit
     walletTransaction?: WalletTransactionOmit
     bet?: BetOmit
+    userTask?: UserTaskOmit
+    referral?: ReferralOmit
   }
 
   /* Types for Logging */
@@ -1221,17 +1403,52 @@ export namespace Prisma {
 
 
   /**
+   * Count Type CustodialWalletCountOutputType
+   */
+
+  export type CustodialWalletCountOutputType = {
+    users: number
+  }
+
+  export type CustodialWalletCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    users?: boolean | CustodialWalletCountOutputTypeCountUsersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CustodialWalletCountOutputType without action
+   */
+  export type CustodialWalletCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWalletCountOutputType
+     */
+    select?: CustodialWalletCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CustodialWalletCountOutputType without action
+   */
+  export type CustodialWalletCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
+  }
+
+
+  /**
    * Count Type UserCountOutputType
    */
 
   export type UserCountOutputType = {
     bets: number
-    sessions: number
+    userTasks: number
+    referralsGiven: number
+    referralsReceived: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bets?: boolean | UserCountOutputTypeCountBetsArgs
-    sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+    userTasks?: boolean | UserCountOutputTypeCountUserTasksArgs
+    referralsGiven?: boolean | UserCountOutputTypeCountReferralsGivenArgs
+    referralsReceived?: boolean | UserCountOutputTypeCountReferralsReceivedArgs
   }
 
   // Custom InputTypes
@@ -1255,8 +1472,22 @@ export namespace Prisma {
   /**
    * UserCountOutputType without action
    */
-  export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: SessionWhereInput
+  export type UserCountOutputTypeCountUserTasksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserTaskWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountReferralsGivenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReferralWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountReferralsReceivedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReferralWhereInput
   }
 
 
@@ -1296,97 +1527,1189 @@ export namespace Prisma {
    */
 
   /**
-   * Model User
+   * Model CustodialWallet
    */
 
-  export type AggregateUser = {
-    _count: UserCountAggregateOutputType | null
-    _min: UserMinAggregateOutputType | null
-    _max: UserMaxAggregateOutputType | null
+  export type AggregateCustodialWallet = {
+    _count: CustodialWalletCountAggregateOutputType | null
+    _min: CustodialWalletMinAggregateOutputType | null
+    _max: CustodialWalletMaxAggregateOutputType | null
   }
 
-  export type UserMinAggregateOutputType = {
+  export type CustodialWalletMinAggregateOutputType = {
     id: string | null
-    farcaster_id: string | null
-    farcaster_username: string | null
-    farcaster_pfp: string | null
-    wallet_address: string | null
-    server_wallet_address: string | null
-    siweSignature: string | null
-    siweMessage: string | null
-    siweExpiresAt: Date | null
+    address: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
-  export type UserMaxAggregateOutputType = {
+  export type CustodialWalletMaxAggregateOutputType = {
     id: string | null
-    farcaster_id: string | null
-    farcaster_username: string | null
-    farcaster_pfp: string | null
-    wallet_address: string | null
-    server_wallet_address: string | null
-    siweSignature: string | null
-    siweMessage: string | null
-    siweExpiresAt: Date | null
+    address: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
 
-  export type UserCountAggregateOutputType = {
+  export type CustodialWalletCountAggregateOutputType = {
     id: number
-    farcaster_id: number
-    farcaster_username: number
-    farcaster_pfp: number
-    wallet_address: number
-    server_wallet_address: number
-    siweSignature: number
-    siweMessage: number
-    siweExpiresAt: number
+    address: number
     createdAt: number
     updatedAt: number
     _all: number
   }
 
 
+  export type CustodialWalletMinAggregateInputType = {
+    id?: true
+    address?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CustodialWalletMaxAggregateInputType = {
+    id?: true
+    address?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CustodialWalletCountAggregateInputType = {
+    id?: true
+    address?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CustodialWalletAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CustodialWallet to aggregate.
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustodialWallets to fetch.
+     */
+    orderBy?: CustodialWalletOrderByWithRelationInput | CustodialWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CustodialWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustodialWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustodialWallets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CustodialWallets
+    **/
+    _count?: true | CustodialWalletCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CustodialWalletMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CustodialWalletMaxAggregateInputType
+  }
+
+  export type GetCustodialWalletAggregateType<T extends CustodialWalletAggregateArgs> = {
+        [P in keyof T & keyof AggregateCustodialWallet]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCustodialWallet[P]>
+      : GetScalarType<T[P], AggregateCustodialWallet[P]>
+  }
+
+
+
+
+  export type CustodialWalletGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CustodialWalletWhereInput
+    orderBy?: CustodialWalletOrderByWithAggregationInput | CustodialWalletOrderByWithAggregationInput[]
+    by: CustodialWalletScalarFieldEnum[] | CustodialWalletScalarFieldEnum
+    having?: CustodialWalletScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CustodialWalletCountAggregateInputType | true
+    _min?: CustodialWalletMinAggregateInputType
+    _max?: CustodialWalletMaxAggregateInputType
+  }
+
+  export type CustodialWalletGroupByOutputType = {
+    id: string
+    address: string
+    createdAt: Date
+    updatedAt: Date
+    _count: CustodialWalletCountAggregateOutputType | null
+    _min: CustodialWalletMinAggregateOutputType | null
+    _max: CustodialWalletMaxAggregateOutputType | null
+  }
+
+  type GetCustodialWalletGroupByPayload<T extends CustodialWalletGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CustodialWalletGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CustodialWalletGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CustodialWalletGroupByOutputType[P]>
+            : GetScalarType<T[P], CustodialWalletGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CustodialWalletSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    address?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    wallet?: boolean | CustodialWallet$walletArgs<ExtArgs>
+    users?: boolean | CustodialWallet$usersArgs<ExtArgs>
+    _count?: boolean | CustodialWalletCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["custodialWallet"]>
+
+  export type CustodialWalletSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    address?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["custodialWallet"]>
+
+  export type CustodialWalletSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    address?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["custodialWallet"]>
+
+  export type CustodialWalletSelectScalar = {
+    id?: boolean
+    address?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CustodialWalletOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "address" | "createdAt" | "updatedAt", ExtArgs["result"]["custodialWallet"]>
+  export type CustodialWalletInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    wallet?: boolean | CustodialWallet$walletArgs<ExtArgs>
+    users?: boolean | CustodialWallet$usersArgs<ExtArgs>
+    _count?: boolean | CustodialWalletCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CustodialWalletIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type CustodialWalletIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $CustodialWalletPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CustodialWallet"
+    objects: {
+      wallet: Prisma.$WalletPayload<ExtArgs> | null
+      users: Prisma.$UserPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      address: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["custodialWallet"]>
+    composites: {}
+  }
+
+  type CustodialWalletGetPayload<S extends boolean | null | undefined | CustodialWalletDefaultArgs> = $Result.GetResult<Prisma.$CustodialWalletPayload, S>
+
+  type CustodialWalletCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CustodialWalletFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CustodialWalletCountAggregateInputType | true
+    }
+
+  export interface CustodialWalletDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CustodialWallet'], meta: { name: 'CustodialWallet' } }
+    /**
+     * Find zero or one CustodialWallet that matches the filter.
+     * @param {CustodialWalletFindUniqueArgs} args - Arguments to find a CustodialWallet
+     * @example
+     * // Get one CustodialWallet
+     * const custodialWallet = await prisma.custodialWallet.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CustodialWalletFindUniqueArgs>(args: SelectSubset<T, CustodialWalletFindUniqueArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CustodialWallet that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CustodialWalletFindUniqueOrThrowArgs} args - Arguments to find a CustodialWallet
+     * @example
+     * // Get one CustodialWallet
+     * const custodialWallet = await prisma.custodialWallet.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CustodialWalletFindUniqueOrThrowArgs>(args: SelectSubset<T, CustodialWalletFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CustodialWallet that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletFindFirstArgs} args - Arguments to find a CustodialWallet
+     * @example
+     * // Get one CustodialWallet
+     * const custodialWallet = await prisma.custodialWallet.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CustodialWalletFindFirstArgs>(args?: SelectSubset<T, CustodialWalletFindFirstArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CustodialWallet that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletFindFirstOrThrowArgs} args - Arguments to find a CustodialWallet
+     * @example
+     * // Get one CustodialWallet
+     * const custodialWallet = await prisma.custodialWallet.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CustodialWalletFindFirstOrThrowArgs>(args?: SelectSubset<T, CustodialWalletFindFirstOrThrowArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CustodialWallets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CustodialWallets
+     * const custodialWallets = await prisma.custodialWallet.findMany()
+     * 
+     * // Get first 10 CustodialWallets
+     * const custodialWallets = await prisma.custodialWallet.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const custodialWalletWithIdOnly = await prisma.custodialWallet.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CustodialWalletFindManyArgs>(args?: SelectSubset<T, CustodialWalletFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CustodialWallet.
+     * @param {CustodialWalletCreateArgs} args - Arguments to create a CustodialWallet.
+     * @example
+     * // Create one CustodialWallet
+     * const CustodialWallet = await prisma.custodialWallet.create({
+     *   data: {
+     *     // ... data to create a CustodialWallet
+     *   }
+     * })
+     * 
+     */
+    create<T extends CustodialWalletCreateArgs>(args: SelectSubset<T, CustodialWalletCreateArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CustodialWallets.
+     * @param {CustodialWalletCreateManyArgs} args - Arguments to create many CustodialWallets.
+     * @example
+     * // Create many CustodialWallets
+     * const custodialWallet = await prisma.custodialWallet.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CustodialWalletCreateManyArgs>(args?: SelectSubset<T, CustodialWalletCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CustodialWallets and returns the data saved in the database.
+     * @param {CustodialWalletCreateManyAndReturnArgs} args - Arguments to create many CustodialWallets.
+     * @example
+     * // Create many CustodialWallets
+     * const custodialWallet = await prisma.custodialWallet.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CustodialWallets and only return the `id`
+     * const custodialWalletWithIdOnly = await prisma.custodialWallet.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CustodialWalletCreateManyAndReturnArgs>(args?: SelectSubset<T, CustodialWalletCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CustodialWallet.
+     * @param {CustodialWalletDeleteArgs} args - Arguments to delete one CustodialWallet.
+     * @example
+     * // Delete one CustodialWallet
+     * const CustodialWallet = await prisma.custodialWallet.delete({
+     *   where: {
+     *     // ... filter to delete one CustodialWallet
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CustodialWalletDeleteArgs>(args: SelectSubset<T, CustodialWalletDeleteArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CustodialWallet.
+     * @param {CustodialWalletUpdateArgs} args - Arguments to update one CustodialWallet.
+     * @example
+     * // Update one CustodialWallet
+     * const custodialWallet = await prisma.custodialWallet.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CustodialWalletUpdateArgs>(args: SelectSubset<T, CustodialWalletUpdateArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CustodialWallets.
+     * @param {CustodialWalletDeleteManyArgs} args - Arguments to filter CustodialWallets to delete.
+     * @example
+     * // Delete a few CustodialWallets
+     * const { count } = await prisma.custodialWallet.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CustodialWalletDeleteManyArgs>(args?: SelectSubset<T, CustodialWalletDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CustodialWallets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CustodialWallets
+     * const custodialWallet = await prisma.custodialWallet.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CustodialWalletUpdateManyArgs>(args: SelectSubset<T, CustodialWalletUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CustodialWallets and returns the data updated in the database.
+     * @param {CustodialWalletUpdateManyAndReturnArgs} args - Arguments to update many CustodialWallets.
+     * @example
+     * // Update many CustodialWallets
+     * const custodialWallet = await prisma.custodialWallet.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CustodialWallets and only return the `id`
+     * const custodialWalletWithIdOnly = await prisma.custodialWallet.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CustodialWalletUpdateManyAndReturnArgs>(args: SelectSubset<T, CustodialWalletUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CustodialWallet.
+     * @param {CustodialWalletUpsertArgs} args - Arguments to update or create a CustodialWallet.
+     * @example
+     * // Update or create a CustodialWallet
+     * const custodialWallet = await prisma.custodialWallet.upsert({
+     *   create: {
+     *     // ... data to create a CustodialWallet
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CustodialWallet we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CustodialWalletUpsertArgs>(args: SelectSubset<T, CustodialWalletUpsertArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CustodialWallets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletCountArgs} args - Arguments to filter CustodialWallets to count.
+     * @example
+     * // Count the number of CustodialWallets
+     * const count = await prisma.custodialWallet.count({
+     *   where: {
+     *     // ... the filter for the CustodialWallets we want to count
+     *   }
+     * })
+    **/
+    count<T extends CustodialWalletCountArgs>(
+      args?: Subset<T, CustodialWalletCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CustodialWalletCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CustodialWallet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CustodialWalletAggregateArgs>(args: Subset<T, CustodialWalletAggregateArgs>): Prisma.PrismaPromise<GetCustodialWalletAggregateType<T>>
+
+    /**
+     * Group by CustodialWallet.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CustodialWalletGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CustodialWalletGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CustodialWalletGroupByArgs['orderBy'] }
+        : { orderBy?: CustodialWalletGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CustodialWalletGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCustodialWalletGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CustodialWallet model
+   */
+  readonly fields: CustodialWalletFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CustodialWallet.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CustodialWalletClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    wallet<T extends CustodialWallet$walletArgs<ExtArgs> = {}>(args?: Subset<T, CustodialWallet$walletArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    users<T extends CustodialWallet$usersArgs<ExtArgs> = {}>(args?: Subset<T, CustodialWallet$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CustodialWallet model
+   */
+  interface CustodialWalletFieldRefs {
+    readonly id: FieldRef<"CustodialWallet", 'String'>
+    readonly address: FieldRef<"CustodialWallet", 'String'>
+    readonly createdAt: FieldRef<"CustodialWallet", 'DateTime'>
+    readonly updatedAt: FieldRef<"CustodialWallet", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CustodialWallet findUnique
+   */
+  export type CustodialWalletFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which CustodialWallet to fetch.
+     */
+    where: CustodialWalletWhereUniqueInput
+  }
+
+  /**
+   * CustodialWallet findUniqueOrThrow
+   */
+  export type CustodialWalletFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which CustodialWallet to fetch.
+     */
+    where: CustodialWalletWhereUniqueInput
+  }
+
+  /**
+   * CustodialWallet findFirst
+   */
+  export type CustodialWalletFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which CustodialWallet to fetch.
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustodialWallets to fetch.
+     */
+    orderBy?: CustodialWalletOrderByWithRelationInput | CustodialWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CustodialWallets.
+     */
+    cursor?: CustodialWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustodialWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustodialWallets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CustodialWallets.
+     */
+    distinct?: CustodialWalletScalarFieldEnum | CustodialWalletScalarFieldEnum[]
+  }
+
+  /**
+   * CustodialWallet findFirstOrThrow
+   */
+  export type CustodialWalletFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which CustodialWallet to fetch.
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustodialWallets to fetch.
+     */
+    orderBy?: CustodialWalletOrderByWithRelationInput | CustodialWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CustodialWallets.
+     */
+    cursor?: CustodialWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustodialWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustodialWallets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CustodialWallets.
+     */
+    distinct?: CustodialWalletScalarFieldEnum | CustodialWalletScalarFieldEnum[]
+  }
+
+  /**
+   * CustodialWallet findMany
+   */
+  export type CustodialWalletFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * Filter, which CustodialWallets to fetch.
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CustodialWallets to fetch.
+     */
+    orderBy?: CustodialWalletOrderByWithRelationInput | CustodialWalletOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CustodialWallets.
+     */
+    cursor?: CustodialWalletWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CustodialWallets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CustodialWallets.
+     */
+    skip?: number
+    distinct?: CustodialWalletScalarFieldEnum | CustodialWalletScalarFieldEnum[]
+  }
+
+  /**
+   * CustodialWallet create
+   */
+  export type CustodialWalletCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CustodialWallet.
+     */
+    data: XOR<CustodialWalletCreateInput, CustodialWalletUncheckedCreateInput>
+  }
+
+  /**
+   * CustodialWallet createMany
+   */
+  export type CustodialWalletCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CustodialWallets.
+     */
+    data: CustodialWalletCreateManyInput | CustodialWalletCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CustodialWallet createManyAndReturn
+   */
+  export type CustodialWalletCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * The data used to create many CustodialWallets.
+     */
+    data: CustodialWalletCreateManyInput | CustodialWalletCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CustodialWallet update
+   */
+  export type CustodialWalletUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CustodialWallet.
+     */
+    data: XOR<CustodialWalletUpdateInput, CustodialWalletUncheckedUpdateInput>
+    /**
+     * Choose, which CustodialWallet to update.
+     */
+    where: CustodialWalletWhereUniqueInput
+  }
+
+  /**
+   * CustodialWallet updateMany
+   */
+  export type CustodialWalletUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CustodialWallets.
+     */
+    data: XOR<CustodialWalletUpdateManyMutationInput, CustodialWalletUncheckedUpdateManyInput>
+    /**
+     * Filter which CustodialWallets to update
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * Limit how many CustodialWallets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CustodialWallet updateManyAndReturn
+   */
+  export type CustodialWalletUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * The data used to update CustodialWallets.
+     */
+    data: XOR<CustodialWalletUpdateManyMutationInput, CustodialWalletUncheckedUpdateManyInput>
+    /**
+     * Filter which CustodialWallets to update
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * Limit how many CustodialWallets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CustodialWallet upsert
+   */
+  export type CustodialWalletUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CustodialWallet to update in case it exists.
+     */
+    where: CustodialWalletWhereUniqueInput
+    /**
+     * In case the CustodialWallet found by the `where` argument doesn't exist, create a new CustodialWallet with this data.
+     */
+    create: XOR<CustodialWalletCreateInput, CustodialWalletUncheckedCreateInput>
+    /**
+     * In case the CustodialWallet was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CustodialWalletUpdateInput, CustodialWalletUncheckedUpdateInput>
+  }
+
+  /**
+   * CustodialWallet delete
+   */
+  export type CustodialWalletDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+    /**
+     * Filter which CustodialWallet to delete.
+     */
+    where: CustodialWalletWhereUniqueInput
+  }
+
+  /**
+   * CustodialWallet deleteMany
+   */
+  export type CustodialWalletDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CustodialWallets to delete
+     */
+    where?: CustodialWalletWhereInput
+    /**
+     * Limit how many CustodialWallets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CustodialWallet.wallet
+   */
+  export type CustodialWallet$walletArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Wallet
+     */
+    select?: WalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Wallet
+     */
+    omit?: WalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WalletInclude<ExtArgs> | null
+    where?: WalletWhereInput
+  }
+
+  /**
+   * CustodialWallet.users
+   */
+  export type CustodialWallet$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    cursor?: UserWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * CustodialWallet without action
+   */
+  export type CustodialWalletDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CustodialWallet
+     */
+    select?: CustodialWalletSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CustodialWallet
+     */
+    omit?: CustodialWalletOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CustodialWalletInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model User
+   */
+
+  export type AggregateUser = {
+    _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  export type UserAvgAggregateOutputType = {
+    totalPoints: number | null
+  }
+
+  export type UserSumAggregateOutputType = {
+    totalPoints: number | null
+  }
+
+  export type UserMinAggregateOutputType = {
+    id: string | null
+    wallet_address: string | null
+    custodial_wallet_id: string | null
+    sessionId: string | null
+    siwe_message: string | null
+    siwe_signature: string | null
+    siwe_expires_at: Date | null
+    totalPoints: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserMaxAggregateOutputType = {
+    id: string | null
+    wallet_address: string | null
+    custodial_wallet_id: string | null
+    sessionId: string | null
+    siwe_message: string | null
+    siwe_signature: string | null
+    siwe_expires_at: Date | null
+    totalPoints: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserCountAggregateOutputType = {
+    id: number
+    wallet_address: number
+    custodial_wallet_id: number
+    sessionId: number
+    siwe_message: number
+    siwe_signature: number
+    siwe_expires_at: number
+    totalPoints: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserAvgAggregateInputType = {
+    totalPoints?: true
+  }
+
+  export type UserSumAggregateInputType = {
+    totalPoints?: true
+  }
+
   export type UserMinAggregateInputType = {
     id?: true
-    farcaster_id?: true
-    farcaster_username?: true
-    farcaster_pfp?: true
     wallet_address?: true
-    server_wallet_address?: true
-    siweSignature?: true
-    siweMessage?: true
-    siweExpiresAt?: true
+    custodial_wallet_id?: true
+    sessionId?: true
+    siwe_message?: true
+    siwe_signature?: true
+    siwe_expires_at?: true
+    totalPoints?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type UserMaxAggregateInputType = {
     id?: true
-    farcaster_id?: true
-    farcaster_username?: true
-    farcaster_pfp?: true
     wallet_address?: true
-    server_wallet_address?: true
-    siweSignature?: true
-    siweMessage?: true
-    siweExpiresAt?: true
+    custodial_wallet_id?: true
+    sessionId?: true
+    siwe_message?: true
+    siwe_signature?: true
+    siwe_expires_at?: true
+    totalPoints?: true
     createdAt?: true
     updatedAt?: true
   }
 
   export type UserCountAggregateInputType = {
     id?: true
-    farcaster_id?: true
-    farcaster_username?: true
-    farcaster_pfp?: true
     wallet_address?: true
-    server_wallet_address?: true
-    siweSignature?: true
-    siweMessage?: true
-    siweExpiresAt?: true
+    custodial_wallet_id?: true
+    sessionId?: true
+    siwe_message?: true
+    siwe_signature?: true
+    siwe_expires_at?: true
+    totalPoints?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1430,6 +2753,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: UserAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: UserMinAggregateInputType
@@ -1460,23 +2795,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: UserCountAggregateInputType | true
+    _avg?: UserAvgAggregateInputType
+    _sum?: UserSumAggregateInputType
     _min?: UserMinAggregateInputType
     _max?: UserMaxAggregateInputType
   }
 
   export type UserGroupByOutputType = {
     id: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp: string | null
-    wallet_address: string | null
-    server_wallet_address: string | null
-    siweSignature: string | null
-    siweMessage: string | null
-    siweExpiresAt: Date | null
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId: string | null
+    siwe_message: string | null
+    siwe_signature: string | null
+    siwe_expires_at: Date | null
+    totalPoints: number
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
+    _avg: UserAvgAggregateOutputType | null
+    _sum: UserSumAggregateOutputType | null
     _min: UserMinAggregateOutputType | null
     _max: UserMaxAggregateOutputType | null
   }
@@ -1497,91 +2835,98 @@ export namespace Prisma {
 
   export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    farcaster_id?: boolean
-    farcaster_username?: boolean
-    farcaster_pfp?: boolean
     wallet_address?: boolean
-    server_wallet_address?: boolean
-    siweSignature?: boolean
-    siweMessage?: boolean
-    siweExpiresAt?: boolean
+    custodial_wallet_id?: boolean
+    sessionId?: boolean
+    siwe_message?: boolean
+    siwe_signature?: boolean
+    siwe_expires_at?: boolean
+    totalPoints?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    wallet?: boolean | User$walletArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
     bets?: boolean | User$betsArgs<ExtArgs>
-    sessions?: boolean | User$sessionsArgs<ExtArgs>
+    userTasks?: boolean | User$userTasksArgs<ExtArgs>
+    referralsGiven?: boolean | User$referralsGivenArgs<ExtArgs>
+    referralsReceived?: boolean | User$referralsReceivedArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    farcaster_id?: boolean
-    farcaster_username?: boolean
-    farcaster_pfp?: boolean
     wallet_address?: boolean
-    server_wallet_address?: boolean
-    siweSignature?: boolean
-    siweMessage?: boolean
-    siweExpiresAt?: boolean
+    custodial_wallet_id?: boolean
+    sessionId?: boolean
+    siwe_message?: boolean
+    siwe_signature?: boolean
+    siwe_expires_at?: boolean
+    totalPoints?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    farcaster_id?: boolean
-    farcaster_username?: boolean
-    farcaster_pfp?: boolean
     wallet_address?: boolean
-    server_wallet_address?: boolean
-    siweSignature?: boolean
-    siweMessage?: boolean
-    siweExpiresAt?: boolean
+    custodial_wallet_id?: boolean
+    sessionId?: boolean
+    siwe_message?: boolean
+    siwe_signature?: boolean
+    siwe_expires_at?: boolean
+    totalPoints?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
     id?: boolean
-    farcaster_id?: boolean
-    farcaster_username?: boolean
-    farcaster_pfp?: boolean
     wallet_address?: boolean
-    server_wallet_address?: boolean
-    siweSignature?: boolean
-    siweMessage?: boolean
-    siweExpiresAt?: boolean
+    custodial_wallet_id?: boolean
+    sessionId?: boolean
+    siwe_message?: boolean
+    siwe_signature?: boolean
+    siwe_expires_at?: boolean
+    totalPoints?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "farcaster_id" | "farcaster_username" | "farcaster_pfp" | "wallet_address" | "server_wallet_address" | "siweSignature" | "siweMessage" | "siweExpiresAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "wallet_address" | "custodial_wallet_id" | "sessionId" | "siwe_message" | "siwe_signature" | "siwe_expires_at" | "totalPoints" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    wallet?: boolean | User$walletArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
     bets?: boolean | User$betsArgs<ExtArgs>
-    sessions?: boolean | User$sessionsArgs<ExtArgs>
+    userTasks?: boolean | User$userTasksArgs<ExtArgs>
+    referralsGiven?: boolean | User$referralsGivenArgs<ExtArgs>
+    referralsReceived?: boolean | User$referralsReceivedArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
+  }
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
+  }
 
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
     objects: {
-      wallet: Prisma.$WalletPayload<ExtArgs> | null
+      custodialWallet: Prisma.$CustodialWalletPayload<ExtArgs>
       bets: Prisma.$BetPayload<ExtArgs>[]
-      sessions: Prisma.$SessionPayload<ExtArgs>[]
+      userTasks: Prisma.$UserTaskPayload<ExtArgs>[]
+      referralsGiven: Prisma.$ReferralPayload<ExtArgs>[]
+      referralsReceived: Prisma.$ReferralPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
-      farcaster_id: string
-      farcaster_username: string
-      farcaster_pfp: string | null
-      wallet_address: string | null
-      server_wallet_address: string | null
-      siweSignature: string | null
-      siweMessage: string | null
-      siweExpiresAt: Date | null
+      wallet_address: string
+      custodial_wallet_id: string
+      sessionId: string | null
+      siwe_message: string | null
+      siwe_signature: string | null
+      siwe_expires_at: Date | null
+      totalPoints: number
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -1978,9 +3323,11 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    wallet<T extends User$walletArgs<ExtArgs> = {}>(args?: Subset<T, User$walletArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    custodialWallet<T extends CustodialWalletDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CustodialWalletDefaultArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     bets<T extends User$betsArgs<ExtArgs> = {}>(args?: Subset<T, User$betsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    userTasks<T extends User$userTasksArgs<ExtArgs> = {}>(args?: Subset<T, User$userTasksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    referralsGiven<T extends User$referralsGivenArgs<ExtArgs> = {}>(args?: Subset<T, User$referralsGivenArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    referralsReceived<T extends User$referralsReceivedArgs<ExtArgs> = {}>(args?: Subset<T, User$referralsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2011,14 +3358,13 @@ export namespace Prisma {
    */
   interface UserFieldRefs {
     readonly id: FieldRef<"User", 'String'>
-    readonly farcaster_id: FieldRef<"User", 'String'>
-    readonly farcaster_username: FieldRef<"User", 'String'>
-    readonly farcaster_pfp: FieldRef<"User", 'String'>
     readonly wallet_address: FieldRef<"User", 'String'>
-    readonly server_wallet_address: FieldRef<"User", 'String'>
-    readonly siweSignature: FieldRef<"User", 'String'>
-    readonly siweMessage: FieldRef<"User", 'String'>
-    readonly siweExpiresAt: FieldRef<"User", 'DateTime'>
+    readonly custodial_wallet_id: FieldRef<"User", 'String'>
+    readonly sessionId: FieldRef<"User", 'String'>
+    readonly siwe_message: FieldRef<"User", 'String'>
+    readonly siwe_signature: FieldRef<"User", 'String'>
+    readonly siwe_expires_at: FieldRef<"User", 'DateTime'>
+    readonly totalPoints: FieldRef<"User", 'Int'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -2270,6 +3616,10 @@ export namespace Prisma {
      */
     data: UserCreateManyInput | UserCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2340,6 +3690,10 @@ export namespace Prisma {
      * Limit how many Users to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2409,25 +3763,6 @@ export namespace Prisma {
   }
 
   /**
-   * User.wallet
-   */
-  export type User$walletArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Wallet
-     */
-    select?: WalletSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Wallet
-     */
-    omit?: WalletOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: WalletInclude<ExtArgs> | null
-    where?: WalletWhereInput
-  }
-
-  /**
    * User.bets
    */
   export type User$betsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2452,27 +3787,75 @@ export namespace Prisma {
   }
 
   /**
-   * User.sessions
+   * User.userTasks
    */
-  export type User$sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+  export type User$userTasksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     /**
-     * Select specific fields to fetch from the Session
+     * Select specific fields to fetch from the UserTask
      */
-    select?: SessionSelect<ExtArgs> | null
+    select?: UserTaskSelect<ExtArgs> | null
     /**
-     * Omit specific fields from the Session
+     * Omit specific fields from the UserTask
      */
-    omit?: SessionOmit<ExtArgs> | null
+    omit?: UserTaskOmit<ExtArgs> | null
     /**
      * Choose, which related nodes to fetch as well
      */
-    include?: SessionInclude<ExtArgs> | null
-    where?: SessionWhereInput
-    orderBy?: SessionOrderByWithRelationInput | SessionOrderByWithRelationInput[]
-    cursor?: SessionWhereUniqueInput
+    include?: UserTaskInclude<ExtArgs> | null
+    where?: UserTaskWhereInput
+    orderBy?: UserTaskOrderByWithRelationInput | UserTaskOrderByWithRelationInput[]
+    cursor?: UserTaskWhereUniqueInput
     take?: number
     skip?: number
-    distinct?: SessionScalarFieldEnum | SessionScalarFieldEnum[]
+    distinct?: UserTaskScalarFieldEnum | UserTaskScalarFieldEnum[]
+  }
+
+  /**
+   * User.referralsGiven
+   */
+  export type User$referralsGivenArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    where?: ReferralWhereInput
+    orderBy?: ReferralOrderByWithRelationInput | ReferralOrderByWithRelationInput[]
+    cursor?: ReferralWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReferralScalarFieldEnum | ReferralScalarFieldEnum[]
+  }
+
+  /**
+   * User.referralsReceived
+   */
+  export type User$referralsReceivedArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    where?: ReferralWhereInput
+    orderBy?: ReferralOrderByWithRelationInput | ReferralOrderByWithRelationInput[]
+    cursor?: ReferralWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReferralScalarFieldEnum | ReferralScalarFieldEnum[]
   }
 
   /**
@@ -2491,1051 +3874,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model Session
-   */
-
-  export type AggregateSession = {
-    _count: SessionCountAggregateOutputType | null
-    _min: SessionMinAggregateOutputType | null
-    _max: SessionMaxAggregateOutputType | null
-  }
-
-  export type SessionMinAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    expiresAt: Date | null
-    createdAt: Date | null
-  }
-
-  export type SessionMaxAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    expiresAt: Date | null
-    createdAt: Date | null
-  }
-
-  export type SessionCountAggregateOutputType = {
-    id: number
-    userId: number
-    expiresAt: number
-    createdAt: number
-    _all: number
-  }
-
-
-  export type SessionMinAggregateInputType = {
-    id?: true
-    userId?: true
-    expiresAt?: true
-    createdAt?: true
-  }
-
-  export type SessionMaxAggregateInputType = {
-    id?: true
-    userId?: true
-    expiresAt?: true
-    createdAt?: true
-  }
-
-  export type SessionCountAggregateInputType = {
-    id?: true
-    userId?: true
-    expiresAt?: true
-    createdAt?: true
-    _all?: true
-  }
-
-  export type SessionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Session to aggregate.
-     */
-    where?: SessionWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Sessions to fetch.
-     */
-    orderBy?: SessionOrderByWithRelationInput | SessionOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: SessionWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Sessions from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Sessions.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned Sessions
-    **/
-    _count?: true | SessionCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: SessionMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: SessionMaxAggregateInputType
-  }
-
-  export type GetSessionAggregateType<T extends SessionAggregateArgs> = {
-        [P in keyof T & keyof AggregateSession]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateSession[P]>
-      : GetScalarType<T[P], AggregateSession[P]>
-  }
-
-
-
-
-  export type SessionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: SessionWhereInput
-    orderBy?: SessionOrderByWithAggregationInput | SessionOrderByWithAggregationInput[]
-    by: SessionScalarFieldEnum[] | SessionScalarFieldEnum
-    having?: SessionScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: SessionCountAggregateInputType | true
-    _min?: SessionMinAggregateInputType
-    _max?: SessionMaxAggregateInputType
-  }
-
-  export type SessionGroupByOutputType = {
-    id: string
-    userId: string
-    expiresAt: Date
-    createdAt: Date
-    _count: SessionCountAggregateOutputType | null
-    _min: SessionMinAggregateOutputType | null
-    _max: SessionMaxAggregateOutputType | null
-  }
-
-  type GetSessionGroupByPayload<T extends SessionGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<SessionGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof SessionGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], SessionGroupByOutputType[P]>
-            : GetScalarType<T[P], SessionGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type SessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    expiresAt?: boolean
-    createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["session"]>
-
-  export type SessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    expiresAt?: boolean
-    createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["session"]>
-
-  export type SessionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    expiresAt?: boolean
-    createdAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["session"]>
-
-  export type SessionSelectScalar = {
-    id?: boolean
-    userId?: boolean
-    expiresAt?: boolean
-    createdAt?: boolean
-  }
-
-  export type SessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "expiresAt" | "createdAt", ExtArgs["result"]["session"]>
-  export type SessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type SessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type SessionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $SessionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Session"
-    objects: {
-      user: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      userId: string
-      expiresAt: Date
-      createdAt: Date
-    }, ExtArgs["result"]["session"]>
-    composites: {}
-  }
-
-  type SessionGetPayload<S extends boolean | null | undefined | SessionDefaultArgs> = $Result.GetResult<Prisma.$SessionPayload, S>
-
-  type SessionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<SessionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: SessionCountAggregateInputType | true
-    }
-
-  export interface SessionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Session'], meta: { name: 'Session' } }
-    /**
-     * Find zero or one Session that matches the filter.
-     * @param {SessionFindUniqueArgs} args - Arguments to find a Session
-     * @example
-     * // Get one Session
-     * const session = await prisma.session.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends SessionFindUniqueArgs>(args: SelectSubset<T, SessionFindUniqueArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one Session that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {SessionFindUniqueOrThrowArgs} args - Arguments to find a Session
-     * @example
-     * // Get one Session
-     * const session = await prisma.session.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends SessionFindUniqueOrThrowArgs>(args: SelectSubset<T, SessionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first Session that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionFindFirstArgs} args - Arguments to find a Session
-     * @example
-     * // Get one Session
-     * const session = await prisma.session.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends SessionFindFirstArgs>(args?: SelectSubset<T, SessionFindFirstArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first Session that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionFindFirstOrThrowArgs} args - Arguments to find a Session
-     * @example
-     * // Get one Session
-     * const session = await prisma.session.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends SessionFindFirstOrThrowArgs>(args?: SelectSubset<T, SessionFindFirstOrThrowArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more Sessions that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all Sessions
-     * const sessions = await prisma.session.findMany()
-     * 
-     * // Get first 10 Sessions
-     * const sessions = await prisma.session.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const sessionWithIdOnly = await prisma.session.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends SessionFindManyArgs>(args?: SelectSubset<T, SessionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a Session.
-     * @param {SessionCreateArgs} args - Arguments to create a Session.
-     * @example
-     * // Create one Session
-     * const Session = await prisma.session.create({
-     *   data: {
-     *     // ... data to create a Session
-     *   }
-     * })
-     * 
-     */
-    create<T extends SessionCreateArgs>(args: SelectSubset<T, SessionCreateArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many Sessions.
-     * @param {SessionCreateManyArgs} args - Arguments to create many Sessions.
-     * @example
-     * // Create many Sessions
-     * const session = await prisma.session.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends SessionCreateManyArgs>(args?: SelectSubset<T, SessionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Sessions and returns the data saved in the database.
-     * @param {SessionCreateManyAndReturnArgs} args - Arguments to create many Sessions.
-     * @example
-     * // Create many Sessions
-     * const session = await prisma.session.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Sessions and only return the `id`
-     * const sessionWithIdOnly = await prisma.session.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends SessionCreateManyAndReturnArgs>(args?: SelectSubset<T, SessionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a Session.
-     * @param {SessionDeleteArgs} args - Arguments to delete one Session.
-     * @example
-     * // Delete one Session
-     * const Session = await prisma.session.delete({
-     *   where: {
-     *     // ... filter to delete one Session
-     *   }
-     * })
-     * 
-     */
-    delete<T extends SessionDeleteArgs>(args: SelectSubset<T, SessionDeleteArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one Session.
-     * @param {SessionUpdateArgs} args - Arguments to update one Session.
-     * @example
-     * // Update one Session
-     * const session = await prisma.session.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends SessionUpdateArgs>(args: SelectSubset<T, SessionUpdateArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more Sessions.
-     * @param {SessionDeleteManyArgs} args - Arguments to filter Sessions to delete.
-     * @example
-     * // Delete a few Sessions
-     * const { count } = await prisma.session.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends SessionDeleteManyArgs>(args?: SelectSubset<T, SessionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Sessions.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many Sessions
-     * const session = await prisma.session.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends SessionUpdateManyArgs>(args: SelectSubset<T, SessionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Sessions and returns the data updated in the database.
-     * @param {SessionUpdateManyAndReturnArgs} args - Arguments to update many Sessions.
-     * @example
-     * // Update many Sessions
-     * const session = await prisma.session.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Sessions and only return the `id`
-     * const sessionWithIdOnly = await prisma.session.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends SessionUpdateManyAndReturnArgs>(args: SelectSubset<T, SessionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one Session.
-     * @param {SessionUpsertArgs} args - Arguments to update or create a Session.
-     * @example
-     * // Update or create a Session
-     * const session = await prisma.session.upsert({
-     *   create: {
-     *     // ... data to create a Session
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the Session we want to update
-     *   }
-     * })
-     */
-    upsert<T extends SessionUpsertArgs>(args: SelectSubset<T, SessionUpsertArgs<ExtArgs>>): Prisma__SessionClient<$Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of Sessions.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionCountArgs} args - Arguments to filter Sessions to count.
-     * @example
-     * // Count the number of Sessions
-     * const count = await prisma.session.count({
-     *   where: {
-     *     // ... the filter for the Sessions we want to count
-     *   }
-     * })
-    **/
-    count<T extends SessionCountArgs>(
-      args?: Subset<T, SessionCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], SessionCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a Session.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends SessionAggregateArgs>(args: Subset<T, SessionAggregateArgs>): Prisma.PrismaPromise<GetSessionAggregateType<T>>
-
-    /**
-     * Group by Session.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {SessionGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends SessionGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: SessionGroupByArgs['orderBy'] }
-        : { orderBy?: SessionGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, SessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the Session model
-   */
-  readonly fields: SessionFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for Session.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__SessionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the Session model
-   */
-  interface SessionFieldRefs {
-    readonly id: FieldRef<"Session", 'String'>
-    readonly userId: FieldRef<"Session", 'String'>
-    readonly expiresAt: FieldRef<"Session", 'DateTime'>
-    readonly createdAt: FieldRef<"Session", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * Session findUnique
-   */
-  export type SessionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * Filter, which Session to fetch.
-     */
-    where: SessionWhereUniqueInput
-  }
-
-  /**
-   * Session findUniqueOrThrow
-   */
-  export type SessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * Filter, which Session to fetch.
-     */
-    where: SessionWhereUniqueInput
-  }
-
-  /**
-   * Session findFirst
-   */
-  export type SessionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * Filter, which Session to fetch.
-     */
-    where?: SessionWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Sessions to fetch.
-     */
-    orderBy?: SessionOrderByWithRelationInput | SessionOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Sessions.
-     */
-    cursor?: SessionWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Sessions from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Sessions.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Sessions.
-     */
-    distinct?: SessionScalarFieldEnum | SessionScalarFieldEnum[]
-  }
-
-  /**
-   * Session findFirstOrThrow
-   */
-  export type SessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * Filter, which Session to fetch.
-     */
-    where?: SessionWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Sessions to fetch.
-     */
-    orderBy?: SessionOrderByWithRelationInput | SessionOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Sessions.
-     */
-    cursor?: SessionWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Sessions from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Sessions.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Sessions.
-     */
-    distinct?: SessionScalarFieldEnum | SessionScalarFieldEnum[]
-  }
-
-  /**
-   * Session findMany
-   */
-  export type SessionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * Filter, which Sessions to fetch.
-     */
-    where?: SessionWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Sessions to fetch.
-     */
-    orderBy?: SessionOrderByWithRelationInput | SessionOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing Sessions.
-     */
-    cursor?: SessionWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Sessions from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Sessions.
-     */
-    skip?: number
-    distinct?: SessionScalarFieldEnum | SessionScalarFieldEnum[]
-  }
-
-  /**
-   * Session create
-   */
-  export type SessionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * The data needed to create a Session.
-     */
-    data: XOR<SessionCreateInput, SessionUncheckedCreateInput>
-  }
-
-  /**
-   * Session createMany
-   */
-  export type SessionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many Sessions.
-     */
-    data: SessionCreateManyInput | SessionCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * Session createManyAndReturn
-   */
-  export type SessionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * The data used to create many Sessions.
-     */
-    data: SessionCreateManyInput | SessionCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * Session update
-   */
-  export type SessionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * The data needed to update a Session.
-     */
-    data: XOR<SessionUpdateInput, SessionUncheckedUpdateInput>
-    /**
-     * Choose, which Session to update.
-     */
-    where: SessionWhereUniqueInput
-  }
-
-  /**
-   * Session updateMany
-   */
-  export type SessionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update Sessions.
-     */
-    data: XOR<SessionUpdateManyMutationInput, SessionUncheckedUpdateManyInput>
-    /**
-     * Filter which Sessions to update
-     */
-    where?: SessionWhereInput
-    /**
-     * Limit how many Sessions to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * Session updateManyAndReturn
-   */
-  export type SessionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * The data used to update Sessions.
-     */
-    data: XOR<SessionUpdateManyMutationInput, SessionUncheckedUpdateManyInput>
-    /**
-     * Filter which Sessions to update
-     */
-    where?: SessionWhereInput
-    /**
-     * Limit how many Sessions to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * Session upsert
-   */
-  export type SessionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * The filter to search for the Session to update in case it exists.
-     */
-    where: SessionWhereUniqueInput
-    /**
-     * In case the Session found by the `where` argument doesn't exist, create a new Session with this data.
-     */
-    create: XOR<SessionCreateInput, SessionUncheckedCreateInput>
-    /**
-     * In case the Session was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<SessionUpdateInput, SessionUncheckedUpdateInput>
-  }
-
-  /**
-   * Session delete
-   */
-  export type SessionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
-    /**
-     * Filter which Session to delete.
-     */
-    where: SessionWhereUniqueInput
-  }
-
-  /**
-   * Session deleteMany
-   */
-  export type SessionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Sessions to delete
-     */
-    where?: SessionWhereInput
-    /**
-     * Limit how many Sessions to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * Session without action
-   */
-  export type SessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Session
-     */
-    select?: SessionSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Session
-     */
-    omit?: SessionOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: SessionInclude<ExtArgs> | null
   }
 
 
@@ -3562,7 +3900,7 @@ export namespace Prisma {
   }
 
   export type WalletMinAggregateOutputType = {
-    userId: string | null
+    custodialWalletId: string | null
     address: string | null
     encryptedPrivateKey: string | null
     createdAt: bigint | null
@@ -3574,7 +3912,7 @@ export namespace Prisma {
   }
 
   export type WalletMaxAggregateOutputType = {
-    userId: string | null
+    custodialWalletId: string | null
     address: string | null
     encryptedPrivateKey: string | null
     createdAt: bigint | null
@@ -3586,7 +3924,7 @@ export namespace Prisma {
   }
 
   export type WalletCountAggregateOutputType = {
-    userId: number
+    custodialWalletId: number
     address: number
     encryptedPrivateKey: number
     createdAt: number
@@ -3610,7 +3948,7 @@ export namespace Prisma {
   }
 
   export type WalletMinAggregateInputType = {
-    userId?: true
+    custodialWalletId?: true
     address?: true
     encryptedPrivateKey?: true
     createdAt?: true
@@ -3622,7 +3960,7 @@ export namespace Prisma {
   }
 
   export type WalletMaxAggregateInputType = {
-    userId?: true
+    custodialWalletId?: true
     address?: true
     encryptedPrivateKey?: true
     createdAt?: true
@@ -3634,7 +3972,7 @@ export namespace Prisma {
   }
 
   export type WalletCountAggregateInputType = {
-    userId?: true
+    custodialWalletId?: true
     address?: true
     encryptedPrivateKey?: true
     createdAt?: true
@@ -3733,7 +4071,7 @@ export namespace Prisma {
   }
 
   export type WalletGroupByOutputType = {
-    userId: string
+    custodialWalletId: string
     address: string
     encryptedPrivateKey: string
     createdAt: bigint
@@ -3764,7 +4102,7 @@ export namespace Prisma {
 
 
   export type WalletSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    userId?: boolean
+    custodialWalletId?: boolean
     address?: boolean
     encryptedPrivateKey?: boolean
     createdAt?: boolean
@@ -3773,13 +4111,13 @@ export namespace Prisma {
     lastUsed?: boolean
     createdAtTimestamp?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
     transactions?: boolean | Wallet$transactionsArgs<ExtArgs>
     _count?: boolean | WalletCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["wallet"]>
 
   export type WalletSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    userId?: boolean
+    custodialWalletId?: boolean
     address?: boolean
     encryptedPrivateKey?: boolean
     createdAt?: boolean
@@ -3788,11 +4126,11 @@ export namespace Prisma {
     lastUsed?: boolean
     createdAtTimestamp?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["wallet"]>
 
   export type WalletSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    userId?: boolean
+    custodialWalletId?: boolean
     address?: boolean
     encryptedPrivateKey?: boolean
     createdAt?: boolean
@@ -3801,11 +4139,11 @@ export namespace Prisma {
     lastUsed?: boolean
     createdAtTimestamp?: boolean
     updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["wallet"]>
 
   export type WalletSelectScalar = {
-    userId?: boolean
+    custodialWalletId?: boolean
     address?: boolean
     encryptedPrivateKey?: boolean
     createdAt?: boolean
@@ -3816,27 +4154,27 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type WalletOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "address" | "encryptedPrivateKey" | "createdAt" | "balance" | "lockedBalance" | "lastUsed" | "createdAtTimestamp" | "updatedAt", ExtArgs["result"]["wallet"]>
+  export type WalletOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"custodialWalletId" | "address" | "encryptedPrivateKey" | "createdAt" | "balance" | "lockedBalance" | "lastUsed" | "createdAtTimestamp" | "updatedAt", ExtArgs["result"]["wallet"]>
   export type WalletInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
     transactions?: boolean | Wallet$transactionsArgs<ExtArgs>
     _count?: boolean | WalletCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WalletIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
   }
   export type WalletIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
+    custodialWallet?: boolean | CustodialWalletDefaultArgs<ExtArgs>
   }
 
   export type $WalletPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Wallet"
     objects: {
-      user: Prisma.$UserPayload<ExtArgs>
+      custodialWallet: Prisma.$CustodialWalletPayload<ExtArgs>
       transactions: Prisma.$WalletTransactionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
-      userId: string
+      custodialWalletId: string
       address: string
       encryptedPrivateKey: string
       createdAt: bigint
@@ -3928,8 +4266,8 @@ export namespace Prisma {
      * // Get first 10 Wallets
      * const wallets = await prisma.wallet.findMany({ take: 10 })
      * 
-     * // Only select the `userId`
-     * const walletWithUserIdOnly = await prisma.wallet.findMany({ select: { userId: true } })
+     * // Only select the `custodialWalletId`
+     * const walletWithCustodialWalletIdOnly = await prisma.wallet.findMany({ select: { custodialWalletId: true } })
      * 
      */
     findMany<T extends WalletFindManyArgs>(args?: SelectSubset<T, WalletFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -3973,9 +4311,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Create many Wallets and only return the `userId`
-     * const walletWithUserIdOnly = await prisma.wallet.createManyAndReturn({
-     *   select: { userId: true },
+     * // Create many Wallets and only return the `custodialWalletId`
+     * const walletWithCustodialWalletIdOnly = await prisma.wallet.createManyAndReturn({
+     *   select: { custodialWalletId: true },
      *   data: [
      *     // ... provide data here
      *   ]
@@ -4064,9 +4402,9 @@ export namespace Prisma {
      *   ]
      * })
      * 
-     * // Update zero or more Wallets and only return the `userId`
-     * const walletWithUserIdOnly = await prisma.wallet.updateManyAndReturn({
-     *   select: { userId: true },
+     * // Update zero or more Wallets and only return the `custodialWalletId`
+     * const walletWithCustodialWalletIdOnly = await prisma.wallet.updateManyAndReturn({
+     *   select: { custodialWalletId: true },
      *   where: {
      *     // ... provide filter here
      *   },
@@ -4239,7 +4577,7 @@ export namespace Prisma {
    */
   export interface Prisma__WalletClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    custodialWallet<T extends CustodialWalletDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CustodialWalletDefaultArgs<ExtArgs>>): Prisma__CustodialWalletClient<$Result.GetResult<Prisma.$CustodialWalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     transactions<T extends Wallet$transactionsArgs<ExtArgs> = {}>(args?: Subset<T, Wallet$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WalletTransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4270,7 +4608,7 @@ export namespace Prisma {
    * Fields of the Wallet model
    */
   interface WalletFieldRefs {
-    readonly userId: FieldRef<"Wallet", 'String'>
+    readonly custodialWalletId: FieldRef<"Wallet", 'String'>
     readonly address: FieldRef<"Wallet", 'String'>
     readonly encryptedPrivateKey: FieldRef<"Wallet", 'String'>
     readonly createdAt: FieldRef<"Wallet", 'BigInt'>
@@ -4741,7 +5079,7 @@ export namespace Prisma {
 
   export type WalletTransactionMinAggregateOutputType = {
     id: number | null
-    userId: string | null
+    custodialWalletId: string | null
     txHash: string | null
     txType: string | null
     amount: string | null
@@ -4754,7 +5092,7 @@ export namespace Prisma {
 
   export type WalletTransactionMaxAggregateOutputType = {
     id: number | null
-    userId: string | null
+    custodialWalletId: string | null
     txHash: string | null
     txType: string | null
     amount: string | null
@@ -4767,7 +5105,7 @@ export namespace Prisma {
 
   export type WalletTransactionCountAggregateOutputType = {
     id: number
-    userId: number
+    custodialWalletId: number
     txHash: number
     txType: number
     amount: number
@@ -4792,7 +5130,7 @@ export namespace Prisma {
 
   export type WalletTransactionMinAggregateInputType = {
     id?: true
-    userId?: true
+    custodialWalletId?: true
     txHash?: true
     txType?: true
     amount?: true
@@ -4805,7 +5143,7 @@ export namespace Prisma {
 
   export type WalletTransactionMaxAggregateInputType = {
     id?: true
-    userId?: true
+    custodialWalletId?: true
     txHash?: true
     txType?: true
     amount?: true
@@ -4818,7 +5156,7 @@ export namespace Prisma {
 
   export type WalletTransactionCountAggregateInputType = {
     id?: true
-    userId?: true
+    custodialWalletId?: true
     txHash?: true
     txType?: true
     amount?: true
@@ -4918,7 +5256,7 @@ export namespace Prisma {
 
   export type WalletTransactionGroupByOutputType = {
     id: number
-    userId: string
+    custodialWalletId: string
     txHash: string | null
     txType: string
     amount: string
@@ -4950,7 +5288,7 @@ export namespace Prisma {
 
   export type WalletTransactionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    userId?: boolean
+    custodialWalletId?: boolean
     txHash?: boolean
     txType?: boolean
     amount?: boolean
@@ -4964,7 +5302,7 @@ export namespace Prisma {
 
   export type WalletTransactionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    userId?: boolean
+    custodialWalletId?: boolean
     txHash?: boolean
     txType?: boolean
     amount?: boolean
@@ -4978,7 +5316,7 @@ export namespace Prisma {
 
   export type WalletTransactionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    userId?: boolean
+    custodialWalletId?: boolean
     txHash?: boolean
     txType?: boolean
     amount?: boolean
@@ -4992,7 +5330,7 @@ export namespace Prisma {
 
   export type WalletTransactionSelectScalar = {
     id?: boolean
-    userId?: boolean
+    custodialWalletId?: boolean
     txHash?: boolean
     txType?: boolean
     amount?: boolean
@@ -5003,7 +5341,7 @@ export namespace Prisma {
     confirmedAt?: boolean
   }
 
-  export type WalletTransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "txHash" | "txType" | "amount" | "status" | "blockNumber" | "gasUsed" | "createdAt" | "confirmedAt", ExtArgs["result"]["walletTransaction"]>
+  export type WalletTransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "custodialWalletId" | "txHash" | "txType" | "amount" | "status" | "blockNumber" | "gasUsed" | "createdAt" | "confirmedAt", ExtArgs["result"]["walletTransaction"]>
   export type WalletTransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
   }
@@ -5021,7 +5359,7 @@ export namespace Prisma {
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
-      userId: string
+      custodialWalletId: string
       txHash: string | null
       txType: string
       amount: string
@@ -5455,7 +5793,7 @@ export namespace Prisma {
    */
   interface WalletTransactionFieldRefs {
     readonly id: FieldRef<"WalletTransaction", 'Int'>
-    readonly userId: FieldRef<"WalletTransaction", 'String'>
+    readonly custodialWalletId: FieldRef<"WalletTransaction", 'String'>
     readonly txHash: FieldRef<"WalletTransaction", 'String'>
     readonly txType: FieldRef<"WalletTransaction", 'String'>
     readonly amount: FieldRef<"WalletTransaction", 'String'>
@@ -7171,6 +7509,2224 @@ export namespace Prisma {
 
 
   /**
+   * Model UserTask
+   */
+
+  export type AggregateUserTask = {
+    _count: UserTaskCountAggregateOutputType | null
+    _avg: UserTaskAvgAggregateOutputType | null
+    _sum: UserTaskSumAggregateOutputType | null
+    _min: UserTaskMinAggregateOutputType | null
+    _max: UserTaskMaxAggregateOutputType | null
+  }
+
+  export type UserTaskAvgAggregateOutputType = {
+    points: number | null
+  }
+
+  export type UserTaskSumAggregateOutputType = {
+    points: number | null
+  }
+
+  export type UserTaskMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    taskId: string | null
+    completed: boolean | null
+    points: number | null
+    completedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type UserTaskMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    taskId: string | null
+    completed: boolean | null
+    points: number | null
+    completedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type UserTaskCountAggregateOutputType = {
+    id: number
+    userId: number
+    taskId: number
+    completed: number
+    points: number
+    completedAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type UserTaskAvgAggregateInputType = {
+    points?: true
+  }
+
+  export type UserTaskSumAggregateInputType = {
+    points?: true
+  }
+
+  export type UserTaskMinAggregateInputType = {
+    id?: true
+    userId?: true
+    taskId?: true
+    completed?: true
+    points?: true
+    completedAt?: true
+    createdAt?: true
+  }
+
+  export type UserTaskMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    taskId?: true
+    completed?: true
+    points?: true
+    completedAt?: true
+    createdAt?: true
+  }
+
+  export type UserTaskCountAggregateInputType = {
+    id?: true
+    userId?: true
+    taskId?: true
+    completed?: true
+    points?: true
+    completedAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type UserTaskAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserTask to aggregate.
+     */
+    where?: UserTaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserTasks to fetch.
+     */
+    orderBy?: UserTaskOrderByWithRelationInput | UserTaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserTaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserTasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserTasks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserTasks
+    **/
+    _count?: true | UserTaskCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserTaskAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserTaskSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserTaskMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserTaskMaxAggregateInputType
+  }
+
+  export type GetUserTaskAggregateType<T extends UserTaskAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserTask]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserTask[P]>
+      : GetScalarType<T[P], AggregateUserTask[P]>
+  }
+
+
+
+
+  export type UserTaskGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserTaskWhereInput
+    orderBy?: UserTaskOrderByWithAggregationInput | UserTaskOrderByWithAggregationInput[]
+    by: UserTaskScalarFieldEnum[] | UserTaskScalarFieldEnum
+    having?: UserTaskScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserTaskCountAggregateInputType | true
+    _avg?: UserTaskAvgAggregateInputType
+    _sum?: UserTaskSumAggregateInputType
+    _min?: UserTaskMinAggregateInputType
+    _max?: UserTaskMaxAggregateInputType
+  }
+
+  export type UserTaskGroupByOutputType = {
+    id: string
+    userId: string
+    taskId: string
+    completed: boolean
+    points: number
+    completedAt: Date | null
+    createdAt: Date
+    _count: UserTaskCountAggregateOutputType | null
+    _avg: UserTaskAvgAggregateOutputType | null
+    _sum: UserTaskSumAggregateOutputType | null
+    _min: UserTaskMinAggregateOutputType | null
+    _max: UserTaskMaxAggregateOutputType | null
+  }
+
+  type GetUserTaskGroupByPayload<T extends UserTaskGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserTaskGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserTaskGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserTaskGroupByOutputType[P]>
+            : GetScalarType<T[P], UserTaskGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserTaskSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    taskId?: boolean
+    completed?: boolean
+    points?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userTask"]>
+
+  export type UserTaskSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    taskId?: boolean
+    completed?: boolean
+    points?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userTask"]>
+
+  export type UserTaskSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    taskId?: boolean
+    completed?: boolean
+    points?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userTask"]>
+
+  export type UserTaskSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    taskId?: boolean
+    completed?: boolean
+    points?: boolean
+    completedAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type UserTaskOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "taskId" | "completed" | "points" | "completedAt" | "createdAt", ExtArgs["result"]["userTask"]>
+  export type UserTaskInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserTaskIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserTaskIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $UserTaskPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserTask"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      taskId: string
+      completed: boolean
+      points: number
+      completedAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["userTask"]>
+    composites: {}
+  }
+
+  type UserTaskGetPayload<S extends boolean | null | undefined | UserTaskDefaultArgs> = $Result.GetResult<Prisma.$UserTaskPayload, S>
+
+  type UserTaskCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserTaskFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserTaskCountAggregateInputType | true
+    }
+
+  export interface UserTaskDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserTask'], meta: { name: 'UserTask' } }
+    /**
+     * Find zero or one UserTask that matches the filter.
+     * @param {UserTaskFindUniqueArgs} args - Arguments to find a UserTask
+     * @example
+     * // Get one UserTask
+     * const userTask = await prisma.userTask.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserTaskFindUniqueArgs>(args: SelectSubset<T, UserTaskFindUniqueArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserTask that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserTaskFindUniqueOrThrowArgs} args - Arguments to find a UserTask
+     * @example
+     * // Get one UserTask
+     * const userTask = await prisma.userTask.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserTaskFindUniqueOrThrowArgs>(args: SelectSubset<T, UserTaskFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserTask that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskFindFirstArgs} args - Arguments to find a UserTask
+     * @example
+     * // Get one UserTask
+     * const userTask = await prisma.userTask.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserTaskFindFirstArgs>(args?: SelectSubset<T, UserTaskFindFirstArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserTask that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskFindFirstOrThrowArgs} args - Arguments to find a UserTask
+     * @example
+     * // Get one UserTask
+     * const userTask = await prisma.userTask.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserTaskFindFirstOrThrowArgs>(args?: SelectSubset<T, UserTaskFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserTasks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserTasks
+     * const userTasks = await prisma.userTask.findMany()
+     * 
+     * // Get first 10 UserTasks
+     * const userTasks = await prisma.userTask.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userTaskWithIdOnly = await prisma.userTask.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserTaskFindManyArgs>(args?: SelectSubset<T, UserTaskFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserTask.
+     * @param {UserTaskCreateArgs} args - Arguments to create a UserTask.
+     * @example
+     * // Create one UserTask
+     * const UserTask = await prisma.userTask.create({
+     *   data: {
+     *     // ... data to create a UserTask
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserTaskCreateArgs>(args: SelectSubset<T, UserTaskCreateArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserTasks.
+     * @param {UserTaskCreateManyArgs} args - Arguments to create many UserTasks.
+     * @example
+     * // Create many UserTasks
+     * const userTask = await prisma.userTask.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserTaskCreateManyArgs>(args?: SelectSubset<T, UserTaskCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserTasks and returns the data saved in the database.
+     * @param {UserTaskCreateManyAndReturnArgs} args - Arguments to create many UserTasks.
+     * @example
+     * // Create many UserTasks
+     * const userTask = await prisma.userTask.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserTasks and only return the `id`
+     * const userTaskWithIdOnly = await prisma.userTask.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserTaskCreateManyAndReturnArgs>(args?: SelectSubset<T, UserTaskCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserTask.
+     * @param {UserTaskDeleteArgs} args - Arguments to delete one UserTask.
+     * @example
+     * // Delete one UserTask
+     * const UserTask = await prisma.userTask.delete({
+     *   where: {
+     *     // ... filter to delete one UserTask
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserTaskDeleteArgs>(args: SelectSubset<T, UserTaskDeleteArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserTask.
+     * @param {UserTaskUpdateArgs} args - Arguments to update one UserTask.
+     * @example
+     * // Update one UserTask
+     * const userTask = await prisma.userTask.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserTaskUpdateArgs>(args: SelectSubset<T, UserTaskUpdateArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserTasks.
+     * @param {UserTaskDeleteManyArgs} args - Arguments to filter UserTasks to delete.
+     * @example
+     * // Delete a few UserTasks
+     * const { count } = await prisma.userTask.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserTaskDeleteManyArgs>(args?: SelectSubset<T, UserTaskDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserTasks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserTasks
+     * const userTask = await prisma.userTask.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserTaskUpdateManyArgs>(args: SelectSubset<T, UserTaskUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserTasks and returns the data updated in the database.
+     * @param {UserTaskUpdateManyAndReturnArgs} args - Arguments to update many UserTasks.
+     * @example
+     * // Update many UserTasks
+     * const userTask = await prisma.userTask.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserTasks and only return the `id`
+     * const userTaskWithIdOnly = await prisma.userTask.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserTaskUpdateManyAndReturnArgs>(args: SelectSubset<T, UserTaskUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserTask.
+     * @param {UserTaskUpsertArgs} args - Arguments to update or create a UserTask.
+     * @example
+     * // Update or create a UserTask
+     * const userTask = await prisma.userTask.upsert({
+     *   create: {
+     *     // ... data to create a UserTask
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserTask we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserTaskUpsertArgs>(args: SelectSubset<T, UserTaskUpsertArgs<ExtArgs>>): Prisma__UserTaskClient<$Result.GetResult<Prisma.$UserTaskPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserTasks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskCountArgs} args - Arguments to filter UserTasks to count.
+     * @example
+     * // Count the number of UserTasks
+     * const count = await prisma.userTask.count({
+     *   where: {
+     *     // ... the filter for the UserTasks we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserTaskCountArgs>(
+      args?: Subset<T, UserTaskCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserTaskCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserTask.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserTaskAggregateArgs>(args: Subset<T, UserTaskAggregateArgs>): Prisma.PrismaPromise<GetUserTaskAggregateType<T>>
+
+    /**
+     * Group by UserTask.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserTaskGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserTaskGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserTaskGroupByArgs['orderBy'] }
+        : { orderBy?: UserTaskGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserTaskGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserTaskGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserTask model
+   */
+  readonly fields: UserTaskFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserTask.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserTaskClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserTask model
+   */
+  interface UserTaskFieldRefs {
+    readonly id: FieldRef<"UserTask", 'String'>
+    readonly userId: FieldRef<"UserTask", 'String'>
+    readonly taskId: FieldRef<"UserTask", 'String'>
+    readonly completed: FieldRef<"UserTask", 'Boolean'>
+    readonly points: FieldRef<"UserTask", 'Int'>
+    readonly completedAt: FieldRef<"UserTask", 'DateTime'>
+    readonly createdAt: FieldRef<"UserTask", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserTask findUnique
+   */
+  export type UserTaskFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * Filter, which UserTask to fetch.
+     */
+    where: UserTaskWhereUniqueInput
+  }
+
+  /**
+   * UserTask findUniqueOrThrow
+   */
+  export type UserTaskFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * Filter, which UserTask to fetch.
+     */
+    where: UserTaskWhereUniqueInput
+  }
+
+  /**
+   * UserTask findFirst
+   */
+  export type UserTaskFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * Filter, which UserTask to fetch.
+     */
+    where?: UserTaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserTasks to fetch.
+     */
+    orderBy?: UserTaskOrderByWithRelationInput | UserTaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserTasks.
+     */
+    cursor?: UserTaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserTasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserTasks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserTasks.
+     */
+    distinct?: UserTaskScalarFieldEnum | UserTaskScalarFieldEnum[]
+  }
+
+  /**
+   * UserTask findFirstOrThrow
+   */
+  export type UserTaskFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * Filter, which UserTask to fetch.
+     */
+    where?: UserTaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserTasks to fetch.
+     */
+    orderBy?: UserTaskOrderByWithRelationInput | UserTaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserTasks.
+     */
+    cursor?: UserTaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserTasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserTasks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserTasks.
+     */
+    distinct?: UserTaskScalarFieldEnum | UserTaskScalarFieldEnum[]
+  }
+
+  /**
+   * UserTask findMany
+   */
+  export type UserTaskFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * Filter, which UserTasks to fetch.
+     */
+    where?: UserTaskWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserTasks to fetch.
+     */
+    orderBy?: UserTaskOrderByWithRelationInput | UserTaskOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserTasks.
+     */
+    cursor?: UserTaskWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserTasks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserTasks.
+     */
+    skip?: number
+    distinct?: UserTaskScalarFieldEnum | UserTaskScalarFieldEnum[]
+  }
+
+  /**
+   * UserTask create
+   */
+  export type UserTaskCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserTask.
+     */
+    data: XOR<UserTaskCreateInput, UserTaskUncheckedCreateInput>
+  }
+
+  /**
+   * UserTask createMany
+   */
+  export type UserTaskCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserTasks.
+     */
+    data: UserTaskCreateManyInput | UserTaskCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserTask createManyAndReturn
+   */
+  export type UserTaskCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserTasks.
+     */
+    data: UserTaskCreateManyInput | UserTaskCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserTask update
+   */
+  export type UserTaskUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserTask.
+     */
+    data: XOR<UserTaskUpdateInput, UserTaskUncheckedUpdateInput>
+    /**
+     * Choose, which UserTask to update.
+     */
+    where: UserTaskWhereUniqueInput
+  }
+
+  /**
+   * UserTask updateMany
+   */
+  export type UserTaskUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserTasks.
+     */
+    data: XOR<UserTaskUpdateManyMutationInput, UserTaskUncheckedUpdateManyInput>
+    /**
+     * Filter which UserTasks to update
+     */
+    where?: UserTaskWhereInput
+    /**
+     * Limit how many UserTasks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserTask updateManyAndReturn
+   */
+  export type UserTaskUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * The data used to update UserTasks.
+     */
+    data: XOR<UserTaskUpdateManyMutationInput, UserTaskUncheckedUpdateManyInput>
+    /**
+     * Filter which UserTasks to update
+     */
+    where?: UserTaskWhereInput
+    /**
+     * Limit how many UserTasks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserTask upsert
+   */
+  export type UserTaskUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserTask to update in case it exists.
+     */
+    where: UserTaskWhereUniqueInput
+    /**
+     * In case the UserTask found by the `where` argument doesn't exist, create a new UserTask with this data.
+     */
+    create: XOR<UserTaskCreateInput, UserTaskUncheckedCreateInput>
+    /**
+     * In case the UserTask was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserTaskUpdateInput, UserTaskUncheckedUpdateInput>
+  }
+
+  /**
+   * UserTask delete
+   */
+  export type UserTaskDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+    /**
+     * Filter which UserTask to delete.
+     */
+    where: UserTaskWhereUniqueInput
+  }
+
+  /**
+   * UserTask deleteMany
+   */
+  export type UserTaskDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserTasks to delete
+     */
+    where?: UserTaskWhereInput
+    /**
+     * Limit how many UserTasks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserTask without action
+   */
+  export type UserTaskDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserTask
+     */
+    select?: UserTaskSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserTask
+     */
+    omit?: UserTaskOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserTaskInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Referral
+   */
+
+  export type AggregateReferral = {
+    _count: ReferralCountAggregateOutputType | null
+    _avg: ReferralAvgAggregateOutputType | null
+    _sum: ReferralSumAggregateOutputType | null
+    _min: ReferralMinAggregateOutputType | null
+    _max: ReferralMaxAggregateOutputType | null
+  }
+
+  export type ReferralAvgAggregateOutputType = {
+    points: number | null
+  }
+
+  export type ReferralSumAggregateOutputType = {
+    points: number | null
+  }
+
+  export type ReferralMinAggregateOutputType = {
+    id: string | null
+    referrerId: string | null
+    referredId: string | null
+    points: number | null
+    createdAt: Date | null
+  }
+
+  export type ReferralMaxAggregateOutputType = {
+    id: string | null
+    referrerId: string | null
+    referredId: string | null
+    points: number | null
+    createdAt: Date | null
+  }
+
+  export type ReferralCountAggregateOutputType = {
+    id: number
+    referrerId: number
+    referredId: number
+    points: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ReferralAvgAggregateInputType = {
+    points?: true
+  }
+
+  export type ReferralSumAggregateInputType = {
+    points?: true
+  }
+
+  export type ReferralMinAggregateInputType = {
+    id?: true
+    referrerId?: true
+    referredId?: true
+    points?: true
+    createdAt?: true
+  }
+
+  export type ReferralMaxAggregateInputType = {
+    id?: true
+    referrerId?: true
+    referredId?: true
+    points?: true
+    createdAt?: true
+  }
+
+  export type ReferralCountAggregateInputType = {
+    id?: true
+    referrerId?: true
+    referredId?: true
+    points?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ReferralAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Referral to aggregate.
+     */
+    where?: ReferralWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Referrals to fetch.
+     */
+    orderBy?: ReferralOrderByWithRelationInput | ReferralOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ReferralWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Referrals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Referrals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Referrals
+    **/
+    _count?: true | ReferralCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ReferralAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ReferralSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ReferralMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ReferralMaxAggregateInputType
+  }
+
+  export type GetReferralAggregateType<T extends ReferralAggregateArgs> = {
+        [P in keyof T & keyof AggregateReferral]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReferral[P]>
+      : GetScalarType<T[P], AggregateReferral[P]>
+  }
+
+
+
+
+  export type ReferralGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReferralWhereInput
+    orderBy?: ReferralOrderByWithAggregationInput | ReferralOrderByWithAggregationInput[]
+    by: ReferralScalarFieldEnum[] | ReferralScalarFieldEnum
+    having?: ReferralScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ReferralCountAggregateInputType | true
+    _avg?: ReferralAvgAggregateInputType
+    _sum?: ReferralSumAggregateInputType
+    _min?: ReferralMinAggregateInputType
+    _max?: ReferralMaxAggregateInputType
+  }
+
+  export type ReferralGroupByOutputType = {
+    id: string
+    referrerId: string
+    referredId: string
+    points: number
+    createdAt: Date
+    _count: ReferralCountAggregateOutputType | null
+    _avg: ReferralAvgAggregateOutputType | null
+    _sum: ReferralSumAggregateOutputType | null
+    _min: ReferralMinAggregateOutputType | null
+    _max: ReferralMaxAggregateOutputType | null
+  }
+
+  type GetReferralGroupByPayload<T extends ReferralGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ReferralGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ReferralGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ReferralGroupByOutputType[P]>
+            : GetScalarType<T[P], ReferralGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ReferralSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    referrerId?: boolean
+    referredId?: boolean
+    points?: boolean
+    createdAt?: boolean
+    referrer?: boolean | UserDefaultArgs<ExtArgs>
+    referred?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["referral"]>
+
+  export type ReferralSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    referrerId?: boolean
+    referredId?: boolean
+    points?: boolean
+    createdAt?: boolean
+    referrer?: boolean | UserDefaultArgs<ExtArgs>
+    referred?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["referral"]>
+
+  export type ReferralSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    referrerId?: boolean
+    referredId?: boolean
+    points?: boolean
+    createdAt?: boolean
+    referrer?: boolean | UserDefaultArgs<ExtArgs>
+    referred?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["referral"]>
+
+  export type ReferralSelectScalar = {
+    id?: boolean
+    referrerId?: boolean
+    referredId?: boolean
+    points?: boolean
+    createdAt?: boolean
+  }
+
+  export type ReferralOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "referrerId" | "referredId" | "points" | "createdAt", ExtArgs["result"]["referral"]>
+  export type ReferralInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    referrer?: boolean | UserDefaultArgs<ExtArgs>
+    referred?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type ReferralIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    referrer?: boolean | UserDefaultArgs<ExtArgs>
+    referred?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type ReferralIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    referrer?: boolean | UserDefaultArgs<ExtArgs>
+    referred?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $ReferralPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Referral"
+    objects: {
+      referrer: Prisma.$UserPayload<ExtArgs>
+      referred: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      referrerId: string
+      referredId: string
+      points: number
+      createdAt: Date
+    }, ExtArgs["result"]["referral"]>
+    composites: {}
+  }
+
+  type ReferralGetPayload<S extends boolean | null | undefined | ReferralDefaultArgs> = $Result.GetResult<Prisma.$ReferralPayload, S>
+
+  type ReferralCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ReferralFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ReferralCountAggregateInputType | true
+    }
+
+  export interface ReferralDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Referral'], meta: { name: 'Referral' } }
+    /**
+     * Find zero or one Referral that matches the filter.
+     * @param {ReferralFindUniqueArgs} args - Arguments to find a Referral
+     * @example
+     * // Get one Referral
+     * const referral = await prisma.referral.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ReferralFindUniqueArgs>(args: SelectSubset<T, ReferralFindUniqueArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Referral that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ReferralFindUniqueOrThrowArgs} args - Arguments to find a Referral
+     * @example
+     * // Get one Referral
+     * const referral = await prisma.referral.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ReferralFindUniqueOrThrowArgs>(args: SelectSubset<T, ReferralFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Referral that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralFindFirstArgs} args - Arguments to find a Referral
+     * @example
+     * // Get one Referral
+     * const referral = await prisma.referral.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ReferralFindFirstArgs>(args?: SelectSubset<T, ReferralFindFirstArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Referral that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralFindFirstOrThrowArgs} args - Arguments to find a Referral
+     * @example
+     * // Get one Referral
+     * const referral = await prisma.referral.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ReferralFindFirstOrThrowArgs>(args?: SelectSubset<T, ReferralFindFirstOrThrowArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Referrals that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Referrals
+     * const referrals = await prisma.referral.findMany()
+     * 
+     * // Get first 10 Referrals
+     * const referrals = await prisma.referral.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const referralWithIdOnly = await prisma.referral.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ReferralFindManyArgs>(args?: SelectSubset<T, ReferralFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Referral.
+     * @param {ReferralCreateArgs} args - Arguments to create a Referral.
+     * @example
+     * // Create one Referral
+     * const Referral = await prisma.referral.create({
+     *   data: {
+     *     // ... data to create a Referral
+     *   }
+     * })
+     * 
+     */
+    create<T extends ReferralCreateArgs>(args: SelectSubset<T, ReferralCreateArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Referrals.
+     * @param {ReferralCreateManyArgs} args - Arguments to create many Referrals.
+     * @example
+     * // Create many Referrals
+     * const referral = await prisma.referral.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ReferralCreateManyArgs>(args?: SelectSubset<T, ReferralCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Referrals and returns the data saved in the database.
+     * @param {ReferralCreateManyAndReturnArgs} args - Arguments to create many Referrals.
+     * @example
+     * // Create many Referrals
+     * const referral = await prisma.referral.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Referrals and only return the `id`
+     * const referralWithIdOnly = await prisma.referral.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ReferralCreateManyAndReturnArgs>(args?: SelectSubset<T, ReferralCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Referral.
+     * @param {ReferralDeleteArgs} args - Arguments to delete one Referral.
+     * @example
+     * // Delete one Referral
+     * const Referral = await prisma.referral.delete({
+     *   where: {
+     *     // ... filter to delete one Referral
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ReferralDeleteArgs>(args: SelectSubset<T, ReferralDeleteArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Referral.
+     * @param {ReferralUpdateArgs} args - Arguments to update one Referral.
+     * @example
+     * // Update one Referral
+     * const referral = await prisma.referral.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ReferralUpdateArgs>(args: SelectSubset<T, ReferralUpdateArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Referrals.
+     * @param {ReferralDeleteManyArgs} args - Arguments to filter Referrals to delete.
+     * @example
+     * // Delete a few Referrals
+     * const { count } = await prisma.referral.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ReferralDeleteManyArgs>(args?: SelectSubset<T, ReferralDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Referrals.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Referrals
+     * const referral = await prisma.referral.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ReferralUpdateManyArgs>(args: SelectSubset<T, ReferralUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Referrals and returns the data updated in the database.
+     * @param {ReferralUpdateManyAndReturnArgs} args - Arguments to update many Referrals.
+     * @example
+     * // Update many Referrals
+     * const referral = await prisma.referral.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Referrals and only return the `id`
+     * const referralWithIdOnly = await prisma.referral.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ReferralUpdateManyAndReturnArgs>(args: SelectSubset<T, ReferralUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Referral.
+     * @param {ReferralUpsertArgs} args - Arguments to update or create a Referral.
+     * @example
+     * // Update or create a Referral
+     * const referral = await prisma.referral.upsert({
+     *   create: {
+     *     // ... data to create a Referral
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Referral we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ReferralUpsertArgs>(args: SelectSubset<T, ReferralUpsertArgs<ExtArgs>>): Prisma__ReferralClient<$Result.GetResult<Prisma.$ReferralPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Referrals.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralCountArgs} args - Arguments to filter Referrals to count.
+     * @example
+     * // Count the number of Referrals
+     * const count = await prisma.referral.count({
+     *   where: {
+     *     // ... the filter for the Referrals we want to count
+     *   }
+     * })
+    **/
+    count<T extends ReferralCountArgs>(
+      args?: Subset<T, ReferralCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ReferralCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Referral.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ReferralAggregateArgs>(args: Subset<T, ReferralAggregateArgs>): Prisma.PrismaPromise<GetReferralAggregateType<T>>
+
+    /**
+     * Group by Referral.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReferralGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ReferralGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ReferralGroupByArgs['orderBy'] }
+        : { orderBy?: ReferralGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ReferralGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetReferralGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Referral model
+   */
+  readonly fields: ReferralFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Referral.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ReferralClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    referrer<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    referred<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Referral model
+   */
+  interface ReferralFieldRefs {
+    readonly id: FieldRef<"Referral", 'String'>
+    readonly referrerId: FieldRef<"Referral", 'String'>
+    readonly referredId: FieldRef<"Referral", 'String'>
+    readonly points: FieldRef<"Referral", 'Int'>
+    readonly createdAt: FieldRef<"Referral", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Referral findUnique
+   */
+  export type ReferralFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * Filter, which Referral to fetch.
+     */
+    where: ReferralWhereUniqueInput
+  }
+
+  /**
+   * Referral findUniqueOrThrow
+   */
+  export type ReferralFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * Filter, which Referral to fetch.
+     */
+    where: ReferralWhereUniqueInput
+  }
+
+  /**
+   * Referral findFirst
+   */
+  export type ReferralFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * Filter, which Referral to fetch.
+     */
+    where?: ReferralWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Referrals to fetch.
+     */
+    orderBy?: ReferralOrderByWithRelationInput | ReferralOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Referrals.
+     */
+    cursor?: ReferralWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Referrals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Referrals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Referrals.
+     */
+    distinct?: ReferralScalarFieldEnum | ReferralScalarFieldEnum[]
+  }
+
+  /**
+   * Referral findFirstOrThrow
+   */
+  export type ReferralFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * Filter, which Referral to fetch.
+     */
+    where?: ReferralWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Referrals to fetch.
+     */
+    orderBy?: ReferralOrderByWithRelationInput | ReferralOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Referrals.
+     */
+    cursor?: ReferralWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Referrals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Referrals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Referrals.
+     */
+    distinct?: ReferralScalarFieldEnum | ReferralScalarFieldEnum[]
+  }
+
+  /**
+   * Referral findMany
+   */
+  export type ReferralFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * Filter, which Referrals to fetch.
+     */
+    where?: ReferralWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Referrals to fetch.
+     */
+    orderBy?: ReferralOrderByWithRelationInput | ReferralOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Referrals.
+     */
+    cursor?: ReferralWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Referrals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Referrals.
+     */
+    skip?: number
+    distinct?: ReferralScalarFieldEnum | ReferralScalarFieldEnum[]
+  }
+
+  /**
+   * Referral create
+   */
+  export type ReferralCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Referral.
+     */
+    data: XOR<ReferralCreateInput, ReferralUncheckedCreateInput>
+  }
+
+  /**
+   * Referral createMany
+   */
+  export type ReferralCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Referrals.
+     */
+    data: ReferralCreateManyInput | ReferralCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Referral createManyAndReturn
+   */
+  export type ReferralCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * The data used to create many Referrals.
+     */
+    data: ReferralCreateManyInput | ReferralCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Referral update
+   */
+  export type ReferralUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Referral.
+     */
+    data: XOR<ReferralUpdateInput, ReferralUncheckedUpdateInput>
+    /**
+     * Choose, which Referral to update.
+     */
+    where: ReferralWhereUniqueInput
+  }
+
+  /**
+   * Referral updateMany
+   */
+  export type ReferralUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Referrals.
+     */
+    data: XOR<ReferralUpdateManyMutationInput, ReferralUncheckedUpdateManyInput>
+    /**
+     * Filter which Referrals to update
+     */
+    where?: ReferralWhereInput
+    /**
+     * Limit how many Referrals to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Referral updateManyAndReturn
+   */
+  export type ReferralUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * The data used to update Referrals.
+     */
+    data: XOR<ReferralUpdateManyMutationInput, ReferralUncheckedUpdateManyInput>
+    /**
+     * Filter which Referrals to update
+     */
+    where?: ReferralWhereInput
+    /**
+     * Limit how many Referrals to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Referral upsert
+   */
+  export type ReferralUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Referral to update in case it exists.
+     */
+    where: ReferralWhereUniqueInput
+    /**
+     * In case the Referral found by the `where` argument doesn't exist, create a new Referral with this data.
+     */
+    create: XOR<ReferralCreateInput, ReferralUncheckedCreateInput>
+    /**
+     * In case the Referral was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ReferralUpdateInput, ReferralUncheckedUpdateInput>
+  }
+
+  /**
+   * Referral delete
+   */
+  export type ReferralDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+    /**
+     * Filter which Referral to delete.
+     */
+    where: ReferralWhereUniqueInput
+  }
+
+  /**
+   * Referral deleteMany
+   */
+  export type ReferralDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Referrals to delete
+     */
+    where?: ReferralWhereInput
+    /**
+     * Limit how many Referrals to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Referral without action
+   */
+  export type ReferralDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Referral
+     */
+    select?: ReferralSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Referral
+     */
+    omit?: ReferralOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReferralInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -7184,16 +9740,25 @@ export namespace Prisma {
   export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
+  export const CustodialWalletScalarFieldEnum: {
+    id: 'id',
+    address: 'address',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CustodialWalletScalarFieldEnum = (typeof CustodialWalletScalarFieldEnum)[keyof typeof CustodialWalletScalarFieldEnum]
+
+
   export const UserScalarFieldEnum: {
     id: 'id',
-    farcaster_id: 'farcaster_id',
-    farcaster_username: 'farcaster_username',
-    farcaster_pfp: 'farcaster_pfp',
     wallet_address: 'wallet_address',
-    server_wallet_address: 'server_wallet_address',
-    siweSignature: 'siweSignature',
-    siweMessage: 'siweMessage',
-    siweExpiresAt: 'siweExpiresAt',
+    custodial_wallet_id: 'custodial_wallet_id',
+    sessionId: 'sessionId',
+    siwe_message: 'siwe_message',
+    siwe_signature: 'siwe_signature',
+    siwe_expires_at: 'siwe_expires_at',
+    totalPoints: 'totalPoints',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -7201,18 +9766,8 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-  export const SessionScalarFieldEnum: {
-    id: 'id',
-    userId: 'userId',
-    expiresAt: 'expiresAt',
-    createdAt: 'createdAt'
-  };
-
-  export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
-
-
   export const WalletScalarFieldEnum: {
-    userId: 'userId',
+    custodialWalletId: 'custodialWalletId',
     address: 'address',
     encryptedPrivateKey: 'encryptedPrivateKey',
     createdAt: 'createdAt',
@@ -7228,7 +9783,7 @@ export namespace Prisma {
 
   export const WalletTransactionScalarFieldEnum: {
     id: 'id',
-    userId: 'userId',
+    custodialWalletId: 'custodialWalletId',
     txHash: 'txHash',
     txType: 'txType',
     amount: 'amount',
@@ -7269,6 +9824,30 @@ export namespace Prisma {
   };
 
   export type BetScalarFieldEnum = (typeof BetScalarFieldEnum)[keyof typeof BetScalarFieldEnum]
+
+
+  export const UserTaskScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    taskId: 'taskId',
+    completed: 'completed',
+    points: 'points',
+    completedAt: 'completedAt',
+    createdAt: 'createdAt'
+  };
+
+  export type UserTaskScalarFieldEnum = (typeof UserTaskScalarFieldEnum)[keyof typeof UserTaskScalarFieldEnum]
+
+
+  export const ReferralScalarFieldEnum: {
+    id: 'id',
+    referrerId: 'referrerId',
+    referredId: 'referredId',
+    points: 'points',
+    createdAt: 'createdAt'
+  };
+
+  export type ReferralScalarFieldEnum = (typeof ReferralScalarFieldEnum)[keyof typeof ReferralScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -7329,6 +9908,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
    * Reference to a field of type 'BigInt'
    */
   export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
@@ -7343,16 +9936,9 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Int'
+   * Reference to a field of type 'Boolean'
    */
-  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-  /**
-   * Reference to a field of type 'Int[]'
-   */
-  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -7373,78 +9959,135 @@ export namespace Prisma {
    */
 
 
+  export type CustodialWalletWhereInput = {
+    AND?: CustodialWalletWhereInput | CustodialWalletWhereInput[]
+    OR?: CustodialWalletWhereInput[]
+    NOT?: CustodialWalletWhereInput | CustodialWalletWhereInput[]
+    id?: StringFilter<"CustodialWallet"> | string
+    address?: StringFilter<"CustodialWallet"> | string
+    createdAt?: DateTimeFilter<"CustodialWallet"> | Date | string
+    updatedAt?: DateTimeFilter<"CustodialWallet"> | Date | string
+    wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    users?: UserListRelationFilter
+  }
+
+  export type CustodialWalletOrderByWithRelationInput = {
+    id?: SortOrder
+    address?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    wallet?: WalletOrderByWithRelationInput
+    users?: UserOrderByRelationAggregateInput
+  }
+
+  export type CustodialWalletWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    address?: string
+    AND?: CustodialWalletWhereInput | CustodialWalletWhereInput[]
+    OR?: CustodialWalletWhereInput[]
+    NOT?: CustodialWalletWhereInput | CustodialWalletWhereInput[]
+    createdAt?: DateTimeFilter<"CustodialWallet"> | Date | string
+    updatedAt?: DateTimeFilter<"CustodialWallet"> | Date | string
+    wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    users?: UserListRelationFilter
+  }, "id" | "address">
+
+  export type CustodialWalletOrderByWithAggregationInput = {
+    id?: SortOrder
+    address?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CustodialWalletCountOrderByAggregateInput
+    _max?: CustodialWalletMaxOrderByAggregateInput
+    _min?: CustodialWalletMinOrderByAggregateInput
+  }
+
+  export type CustodialWalletScalarWhereWithAggregatesInput = {
+    AND?: CustodialWalletScalarWhereWithAggregatesInput | CustodialWalletScalarWhereWithAggregatesInput[]
+    OR?: CustodialWalletScalarWhereWithAggregatesInput[]
+    NOT?: CustodialWalletScalarWhereWithAggregatesInput | CustodialWalletScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CustodialWallet"> | string
+    address?: StringWithAggregatesFilter<"CustodialWallet"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"CustodialWallet"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CustodialWallet"> | Date | string
+  }
+
   export type UserWhereInput = {
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     id?: StringFilter<"User"> | string
-    farcaster_id?: StringFilter<"User"> | string
-    farcaster_username?: StringFilter<"User"> | string
-    farcaster_pfp?: StringNullableFilter<"User"> | string | null
-    wallet_address?: StringNullableFilter<"User"> | string | null
-    server_wallet_address?: StringNullableFilter<"User"> | string | null
-    siweSignature?: StringNullableFilter<"User"> | string | null
-    siweMessage?: StringNullableFilter<"User"> | string | null
-    siweExpiresAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    wallet_address?: StringFilter<"User"> | string
+    custodial_wallet_id?: StringFilter<"User"> | string
+    sessionId?: StringNullableFilter<"User"> | string | null
+    siwe_message?: StringNullableFilter<"User"> | string | null
+    siwe_signature?: StringNullableFilter<"User"> | string | null
+    siwe_expires_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    totalPoints?: IntFilter<"User"> | number
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
-    wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    custodialWallet?: XOR<CustodialWalletScalarRelationFilter, CustodialWalletWhereInput>
     bets?: BetListRelationFilter
-    sessions?: SessionListRelationFilter
+    userTasks?: UserTaskListRelationFilter
+    referralsGiven?: ReferralListRelationFilter
+    referralsReceived?: ReferralListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
     id?: SortOrder
-    farcaster_id?: SortOrder
-    farcaster_username?: SortOrder
-    farcaster_pfp?: SortOrderInput | SortOrder
-    wallet_address?: SortOrderInput | SortOrder
-    server_wallet_address?: SortOrderInput | SortOrder
-    siweSignature?: SortOrderInput | SortOrder
-    siweMessage?: SortOrderInput | SortOrder
-    siweExpiresAt?: SortOrderInput | SortOrder
+    wallet_address?: SortOrder
+    custodial_wallet_id?: SortOrder
+    sessionId?: SortOrderInput | SortOrder
+    siwe_message?: SortOrderInput | SortOrder
+    siwe_signature?: SortOrderInput | SortOrder
+    siwe_expires_at?: SortOrderInput | SortOrder
+    totalPoints?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    wallet?: WalletOrderByWithRelationInput
+    custodialWallet?: CustodialWalletOrderByWithRelationInput
     bets?: BetOrderByRelationAggregateInput
-    sessions?: SessionOrderByRelationAggregateInput
+    userTasks?: UserTaskOrderByRelationAggregateInput
+    referralsGiven?: ReferralOrderByRelationAggregateInput
+    referralsReceived?: ReferralOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    farcaster_id?: string
+    wallet_address?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
-    farcaster_username?: StringFilter<"User"> | string
-    farcaster_pfp?: StringNullableFilter<"User"> | string | null
-    wallet_address?: StringNullableFilter<"User"> | string | null
-    server_wallet_address?: StringNullableFilter<"User"> | string | null
-    siweSignature?: StringNullableFilter<"User"> | string | null
-    siweMessage?: StringNullableFilter<"User"> | string | null
-    siweExpiresAt?: DateTimeNullableFilter<"User"> | Date | string | null
+    custodial_wallet_id?: StringFilter<"User"> | string
+    sessionId?: StringNullableFilter<"User"> | string | null
+    siwe_message?: StringNullableFilter<"User"> | string | null
+    siwe_signature?: StringNullableFilter<"User"> | string | null
+    siwe_expires_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    totalPoints?: IntFilter<"User"> | number
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
-    wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    custodialWallet?: XOR<CustodialWalletScalarRelationFilter, CustodialWalletWhereInput>
     bets?: BetListRelationFilter
-    sessions?: SessionListRelationFilter
-  }, "id" | "farcaster_id">
+    userTasks?: UserTaskListRelationFilter
+    referralsGiven?: ReferralListRelationFilter
+    referralsReceived?: ReferralListRelationFilter
+  }, "id" | "wallet_address">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
-    farcaster_id?: SortOrder
-    farcaster_username?: SortOrder
-    farcaster_pfp?: SortOrderInput | SortOrder
-    wallet_address?: SortOrderInput | SortOrder
-    server_wallet_address?: SortOrderInput | SortOrder
-    siweSignature?: SortOrderInput | SortOrder
-    siweMessage?: SortOrderInput | SortOrder
-    siweExpiresAt?: SortOrderInput | SortOrder
+    wallet_address?: SortOrder
+    custodial_wallet_id?: SortOrder
+    sessionId?: SortOrderInput | SortOrder
+    siwe_message?: SortOrderInput | SortOrder
+    siwe_signature?: SortOrderInput | SortOrder
+    siwe_expires_at?: SortOrderInput | SortOrder
+    totalPoints?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
+    _avg?: UserAvgOrderByAggregateInput
     _max?: UserMaxOrderByAggregateInput
     _min?: UserMinOrderByAggregateInput
+    _sum?: UserSumOrderByAggregateInput
   }
 
   export type UserScalarWhereWithAggregatesInput = {
@@ -7452,73 +10095,22 @@ export namespace Prisma {
     OR?: UserScalarWhereWithAggregatesInput[]
     NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"User"> | string
-    farcaster_id?: StringWithAggregatesFilter<"User"> | string
-    farcaster_username?: StringWithAggregatesFilter<"User"> | string
-    farcaster_pfp?: StringNullableWithAggregatesFilter<"User"> | string | null
-    wallet_address?: StringNullableWithAggregatesFilter<"User"> | string | null
-    server_wallet_address?: StringNullableWithAggregatesFilter<"User"> | string | null
-    siweSignature?: StringNullableWithAggregatesFilter<"User"> | string | null
-    siweMessage?: StringNullableWithAggregatesFilter<"User"> | string | null
-    siweExpiresAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    wallet_address?: StringWithAggregatesFilter<"User"> | string
+    custodial_wallet_id?: StringWithAggregatesFilter<"User"> | string
+    sessionId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    siwe_message?: StringNullableWithAggregatesFilter<"User"> | string | null
+    siwe_signature?: StringNullableWithAggregatesFilter<"User"> | string | null
+    siwe_expires_at?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+    totalPoints?: IntWithAggregatesFilter<"User"> | number
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
-  }
-
-  export type SessionWhereInput = {
-    AND?: SessionWhereInput | SessionWhereInput[]
-    OR?: SessionWhereInput[]
-    NOT?: SessionWhereInput | SessionWhereInput[]
-    id?: StringFilter<"Session"> | string
-    userId?: StringFilter<"Session"> | string
-    expiresAt?: DateTimeFilter<"Session"> | Date | string
-    createdAt?: DateTimeFilter<"Session"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type SessionOrderByWithRelationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    expiresAt?: SortOrder
-    createdAt?: SortOrder
-    user?: UserOrderByWithRelationInput
-  }
-
-  export type SessionWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    AND?: SessionWhereInput | SessionWhereInput[]
-    OR?: SessionWhereInput[]
-    NOT?: SessionWhereInput | SessionWhereInput[]
-    userId?: StringFilter<"Session"> | string
-    expiresAt?: DateTimeFilter<"Session"> | Date | string
-    createdAt?: DateTimeFilter<"Session"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "id">
-
-  export type SessionOrderByWithAggregationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    expiresAt?: SortOrder
-    createdAt?: SortOrder
-    _count?: SessionCountOrderByAggregateInput
-    _max?: SessionMaxOrderByAggregateInput
-    _min?: SessionMinOrderByAggregateInput
-  }
-
-  export type SessionScalarWhereWithAggregatesInput = {
-    AND?: SessionScalarWhereWithAggregatesInput | SessionScalarWhereWithAggregatesInput[]
-    OR?: SessionScalarWhereWithAggregatesInput[]
-    NOT?: SessionScalarWhereWithAggregatesInput | SessionScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"Session"> | string
-    userId?: StringWithAggregatesFilter<"Session"> | string
-    expiresAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
-    createdAt?: DateTimeWithAggregatesFilter<"Session"> | Date | string
   }
 
   export type WalletWhereInput = {
     AND?: WalletWhereInput | WalletWhereInput[]
     OR?: WalletWhereInput[]
     NOT?: WalletWhereInput | WalletWhereInput[]
-    userId?: StringFilter<"Wallet"> | string
+    custodialWalletId?: StringFilter<"Wallet"> | string
     address?: StringFilter<"Wallet"> | string
     encryptedPrivateKey?: StringFilter<"Wallet"> | string
     createdAt?: BigIntFilter<"Wallet"> | bigint | number
@@ -7527,12 +10119,12 @@ export namespace Prisma {
     lastUsed?: BigIntNullableFilter<"Wallet"> | bigint | number | null
     createdAtTimestamp?: DateTimeFilter<"Wallet"> | Date | string
     updatedAt?: DateTimeFilter<"Wallet"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    custodialWallet?: XOR<CustodialWalletScalarRelationFilter, CustodialWalletWhereInput>
     transactions?: WalletTransactionListRelationFilter
   }
 
   export type WalletOrderByWithRelationInput = {
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     address?: SortOrder
     encryptedPrivateKey?: SortOrder
     createdAt?: SortOrder
@@ -7541,12 +10133,12 @@ export namespace Prisma {
     lastUsed?: SortOrderInput | SortOrder
     createdAtTimestamp?: SortOrder
     updatedAt?: SortOrder
-    user?: UserOrderByWithRelationInput
+    custodialWallet?: CustodialWalletOrderByWithRelationInput
     transactions?: WalletTransactionOrderByRelationAggregateInput
   }
 
   export type WalletWhereUniqueInput = Prisma.AtLeast<{
-    userId?: string
+    custodialWalletId?: string
     address?: string
     AND?: WalletWhereInput | WalletWhereInput[]
     OR?: WalletWhereInput[]
@@ -7558,12 +10150,12 @@ export namespace Prisma {
     lastUsed?: BigIntNullableFilter<"Wallet"> | bigint | number | null
     createdAtTimestamp?: DateTimeFilter<"Wallet"> | Date | string
     updatedAt?: DateTimeFilter<"Wallet"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    custodialWallet?: XOR<CustodialWalletScalarRelationFilter, CustodialWalletWhereInput>
     transactions?: WalletTransactionListRelationFilter
-  }, "userId" | "address">
+  }, "custodialWalletId" | "address">
 
   export type WalletOrderByWithAggregationInput = {
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     address?: SortOrder
     encryptedPrivateKey?: SortOrder
     createdAt?: SortOrder
@@ -7583,7 +10175,7 @@ export namespace Prisma {
     AND?: WalletScalarWhereWithAggregatesInput | WalletScalarWhereWithAggregatesInput[]
     OR?: WalletScalarWhereWithAggregatesInput[]
     NOT?: WalletScalarWhereWithAggregatesInput | WalletScalarWhereWithAggregatesInput[]
-    userId?: StringWithAggregatesFilter<"Wallet"> | string
+    custodialWalletId?: StringWithAggregatesFilter<"Wallet"> | string
     address?: StringWithAggregatesFilter<"Wallet"> | string
     encryptedPrivateKey?: StringWithAggregatesFilter<"Wallet"> | string
     createdAt?: BigIntWithAggregatesFilter<"Wallet"> | bigint | number
@@ -7599,7 +10191,7 @@ export namespace Prisma {
     OR?: WalletTransactionWhereInput[]
     NOT?: WalletTransactionWhereInput | WalletTransactionWhereInput[]
     id?: IntFilter<"WalletTransaction"> | number
-    userId?: StringFilter<"WalletTransaction"> | string
+    custodialWalletId?: StringFilter<"WalletTransaction"> | string
     txHash?: StringNullableFilter<"WalletTransaction"> | string | null
     txType?: StringFilter<"WalletTransaction"> | string
     amount?: StringFilter<"WalletTransaction"> | string
@@ -7613,7 +10205,7 @@ export namespace Prisma {
 
   export type WalletTransactionOrderByWithRelationInput = {
     id?: SortOrder
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     txHash?: SortOrderInput | SortOrder
     txType?: SortOrder
     amount?: SortOrder
@@ -7630,7 +10222,7 @@ export namespace Prisma {
     AND?: WalletTransactionWhereInput | WalletTransactionWhereInput[]
     OR?: WalletTransactionWhereInput[]
     NOT?: WalletTransactionWhereInput | WalletTransactionWhereInput[]
-    userId?: StringFilter<"WalletTransaction"> | string
+    custodialWalletId?: StringFilter<"WalletTransaction"> | string
     txHash?: StringNullableFilter<"WalletTransaction"> | string | null
     txType?: StringFilter<"WalletTransaction"> | string
     amount?: StringFilter<"WalletTransaction"> | string
@@ -7644,7 +10236,7 @@ export namespace Prisma {
 
   export type WalletTransactionOrderByWithAggregationInput = {
     id?: SortOrder
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     txHash?: SortOrderInput | SortOrder
     txType?: SortOrder
     amount?: SortOrder
@@ -7665,7 +10257,7 @@ export namespace Prisma {
     OR?: WalletTransactionScalarWhereWithAggregatesInput[]
     NOT?: WalletTransactionScalarWhereWithAggregatesInput | WalletTransactionScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"WalletTransaction"> | number
-    userId?: StringWithAggregatesFilter<"WalletTransaction"> | string
+    custodialWalletId?: StringWithAggregatesFilter<"WalletTransaction"> | string
     txHash?: StringNullableWithAggregatesFilter<"WalletTransaction"> | string | null
     txType?: StringWithAggregatesFilter<"WalletTransaction"> | string
     amount?: StringWithAggregatesFilter<"WalletTransaction"> | string
@@ -7821,162 +10413,296 @@ export namespace Prisma {
     resolvedAt?: DateTimeNullableWithAggregatesFilter<"Bet"> | Date | string | null
   }
 
-  export type UserCreateInput = {
+  export type UserTaskWhereInput = {
+    AND?: UserTaskWhereInput | UserTaskWhereInput[]
+    OR?: UserTaskWhereInput[]
+    NOT?: UserTaskWhereInput | UserTaskWhereInput[]
+    id?: StringFilter<"UserTask"> | string
+    userId?: StringFilter<"UserTask"> | string
+    taskId?: StringFilter<"UserTask"> | string
+    completed?: BoolFilter<"UserTask"> | boolean
+    points?: IntFilter<"UserTask"> | number
+    completedAt?: DateTimeNullableFilter<"UserTask"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserTask"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type UserTaskOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    taskId?: SortOrder
+    completed?: SortOrder
+    points?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type UserTaskWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    userId_taskId?: UserTaskUserIdTaskIdCompoundUniqueInput
+    AND?: UserTaskWhereInput | UserTaskWhereInput[]
+    OR?: UserTaskWhereInput[]
+    NOT?: UserTaskWhereInput | UserTaskWhereInput[]
+    userId?: StringFilter<"UserTask"> | string
+    taskId?: StringFilter<"UserTask"> | string
+    completed?: BoolFilter<"UserTask"> | boolean
+    points?: IntFilter<"UserTask"> | number
+    completedAt?: DateTimeNullableFilter<"UserTask"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserTask"> | Date | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId_taskId">
+
+  export type UserTaskOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    taskId?: SortOrder
+    completed?: SortOrder
+    points?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: UserTaskCountOrderByAggregateInput
+    _avg?: UserTaskAvgOrderByAggregateInput
+    _max?: UserTaskMaxOrderByAggregateInput
+    _min?: UserTaskMinOrderByAggregateInput
+    _sum?: UserTaskSumOrderByAggregateInput
+  }
+
+  export type UserTaskScalarWhereWithAggregatesInput = {
+    AND?: UserTaskScalarWhereWithAggregatesInput | UserTaskScalarWhereWithAggregatesInput[]
+    OR?: UserTaskScalarWhereWithAggregatesInput[]
+    NOT?: UserTaskScalarWhereWithAggregatesInput | UserTaskScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserTask"> | string
+    userId?: StringWithAggregatesFilter<"UserTask"> | string
+    taskId?: StringWithAggregatesFilter<"UserTask"> | string
+    completed?: BoolWithAggregatesFilter<"UserTask"> | boolean
+    points?: IntWithAggregatesFilter<"UserTask"> | number
+    completedAt?: DateTimeNullableWithAggregatesFilter<"UserTask"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"UserTask"> | Date | string
+  }
+
+  export type ReferralWhereInput = {
+    AND?: ReferralWhereInput | ReferralWhereInput[]
+    OR?: ReferralWhereInput[]
+    NOT?: ReferralWhereInput | ReferralWhereInput[]
+    id?: StringFilter<"Referral"> | string
+    referrerId?: StringFilter<"Referral"> | string
+    referredId?: StringFilter<"Referral"> | string
+    points?: IntFilter<"Referral"> | number
+    createdAt?: DateTimeFilter<"Referral"> | Date | string
+    referrer?: XOR<UserScalarRelationFilter, UserWhereInput>
+    referred?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type ReferralOrderByWithRelationInput = {
+    id?: SortOrder
+    referrerId?: SortOrder
+    referredId?: SortOrder
+    points?: SortOrder
+    createdAt?: SortOrder
+    referrer?: UserOrderByWithRelationInput
+    referred?: UserOrderByWithRelationInput
+  }
+
+  export type ReferralWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    referrerId_referredId?: ReferralReferrerIdReferredIdCompoundUniqueInput
+    AND?: ReferralWhereInput | ReferralWhereInput[]
+    OR?: ReferralWhereInput[]
+    NOT?: ReferralWhereInput | ReferralWhereInput[]
+    referrerId?: StringFilter<"Referral"> | string
+    referredId?: StringFilter<"Referral"> | string
+    points?: IntFilter<"Referral"> | number
+    createdAt?: DateTimeFilter<"Referral"> | Date | string
+    referrer?: XOR<UserScalarRelationFilter, UserWhereInput>
+    referred?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "referrerId_referredId">
+
+  export type ReferralOrderByWithAggregationInput = {
+    id?: SortOrder
+    referrerId?: SortOrder
+    referredId?: SortOrder
+    points?: SortOrder
+    createdAt?: SortOrder
+    _count?: ReferralCountOrderByAggregateInput
+    _avg?: ReferralAvgOrderByAggregateInput
+    _max?: ReferralMaxOrderByAggregateInput
+    _min?: ReferralMinOrderByAggregateInput
+    _sum?: ReferralSumOrderByAggregateInput
+  }
+
+  export type ReferralScalarWhereWithAggregatesInput = {
+    AND?: ReferralScalarWhereWithAggregatesInput | ReferralScalarWhereWithAggregatesInput[]
+    OR?: ReferralScalarWhereWithAggregatesInput[]
+    NOT?: ReferralScalarWhereWithAggregatesInput | ReferralScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Referral"> | string
+    referrerId?: StringWithAggregatesFilter<"Referral"> | string
+    referredId?: StringWithAggregatesFilter<"Referral"> | string
+    points?: IntWithAggregatesFilter<"Referral"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"Referral"> | Date | string
+  }
+
+  export type CustodialWalletCreateInput = {
+    id?: string
+    address: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    wallet?: WalletCreateNestedOneWithoutUserInput
+    wallet?: WalletCreateNestedOneWithoutCustodialWalletInput
+    users?: UserCreateNestedManyWithoutCustodialWalletInput
+  }
+
+  export type CustodialWalletUncheckedCreateInput = {
+    id?: string
+    address: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wallet?: WalletUncheckedCreateNestedOneWithoutCustodialWalletInput
+    users?: UserUncheckedCreateNestedManyWithoutCustodialWalletInput
+  }
+
+  export type CustodialWalletUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wallet?: WalletUpdateOneWithoutCustodialWalletNestedInput
+    users?: UserUpdateManyWithoutCustodialWalletNestedInput
+  }
+
+  export type CustodialWalletUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    wallet?: WalletUncheckedUpdateOneWithoutCustodialWalletNestedInput
+    users?: UserUncheckedUpdateManyWithoutCustodialWalletNestedInput
+  }
+
+  export type CustodialWalletCreateManyInput = {
+    id?: string
+    address: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CustodialWalletUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CustodialWalletUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    address?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    custodialWallet: CustodialWalletCreateNestedOneWithoutUsersInput
     bets?: BetCreateNestedManyWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralCreateNestedManyWithoutReferredInput
   }
 
   export type UserUncheckedCreateInput = {
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
     bets?: BetUncheckedCreateNestedManyWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskUncheckedCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralUncheckedCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralUncheckedCreateNestedManyWithoutReferredInput
   }
 
   export type UserUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    wallet?: WalletUpdateOneWithoutUserNestedInput
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutUsersNestedInput
     bets?: BetUpdateManyWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUpdateManyWithoutReferredNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    custodial_wallet_id?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
     bets?: BetUncheckedUpdateManyWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUncheckedUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUncheckedUpdateManyWithoutReferredNestedInput
   }
 
   export type UserCreateManyInput = {
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
 
   export type UserUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    custodial_wallet_id?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type SessionCreateInput = {
-    id?: string
-    expiresAt: Date | string
-    createdAt?: Date | string
-    user: UserCreateNestedOneWithoutSessionsInput
-  }
-
-  export type SessionUncheckedCreateInput = {
-    id?: string
-    userId: string
-    expiresAt: Date | string
-    createdAt?: Date | string
-  }
-
-  export type SessionUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutSessionsNestedInput
-  }
-
-  export type SessionUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type SessionCreateManyInput = {
-    id?: string
-    userId: string
-    expiresAt: Date | string
-    createdAt?: Date | string
-  }
-
-  export type SessionUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type SessionUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WalletCreateInput = {
@@ -7988,12 +10714,12 @@ export namespace Prisma {
     lastUsed?: bigint | number | null
     createdAtTimestamp?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutWalletInput
+    custodialWallet: CustodialWalletCreateNestedOneWithoutWalletInput
     transactions?: WalletTransactionCreateNestedManyWithoutWalletInput
   }
 
   export type WalletUncheckedCreateInput = {
-    userId: string
+    custodialWalletId: string
     address: string
     encryptedPrivateKey: string
     createdAt: bigint | number
@@ -8014,12 +10740,12 @@ export namespace Prisma {
     lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutWalletNestedInput
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutWalletNestedInput
     transactions?: WalletTransactionUpdateManyWithoutWalletNestedInput
   }
 
   export type WalletUncheckedUpdateInput = {
-    userId?: StringFieldUpdateOperationsInput | string
+    custodialWalletId?: StringFieldUpdateOperationsInput | string
     address?: StringFieldUpdateOperationsInput | string
     encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
     createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -8032,7 +10758,7 @@ export namespace Prisma {
   }
 
   export type WalletCreateManyInput = {
-    userId: string
+    custodialWalletId: string
     address: string
     encryptedPrivateKey: string
     createdAt: bigint | number
@@ -8055,7 +10781,7 @@ export namespace Prisma {
   }
 
   export type WalletUncheckedUpdateManyInput = {
-    userId?: StringFieldUpdateOperationsInput | string
+    custodialWalletId?: StringFieldUpdateOperationsInput | string
     address?: StringFieldUpdateOperationsInput | string
     encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
     createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -8080,7 +10806,7 @@ export namespace Prisma {
 
   export type WalletTransactionUncheckedCreateInput = {
     id?: number
-    userId: string
+    custodialWalletId: string
     txHash?: string | null
     txType: string
     amount: string
@@ -8105,7 +10831,7 @@ export namespace Prisma {
 
   export type WalletTransactionUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
-    userId?: StringFieldUpdateOperationsInput | string
+    custodialWalletId?: StringFieldUpdateOperationsInput | string
     txHash?: NullableStringFieldUpdateOperationsInput | string | null
     txType?: StringFieldUpdateOperationsInput | string
     amount?: StringFieldUpdateOperationsInput | string
@@ -8118,7 +10844,7 @@ export namespace Prisma {
 
   export type WalletTransactionCreateManyInput = {
     id?: number
-    userId: string
+    custodialWalletId: string
     txHash?: string | null
     txType: string
     amount: string
@@ -8142,7 +10868,7 @@ export namespace Prisma {
 
   export type WalletTransactionUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
-    userId?: StringFieldUpdateOperationsInput | string
+    custodialWalletId?: StringFieldUpdateOperationsInput | string
     txHash?: NullableStringFieldUpdateOperationsInput | string | null
     txType?: StringFieldUpdateOperationsInput | string
     amount?: StringFieldUpdateOperationsInput | string
@@ -8334,6 +11060,129 @@ export namespace Prisma {
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type UserTaskCreateInput = {
+    id?: string
+    taskId: string
+    completed?: boolean
+    points?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutUserTasksInput
+  }
+
+  export type UserTaskUncheckedCreateInput = {
+    id?: string
+    userId: string
+    taskId: string
+    completed?: boolean
+    points?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type UserTaskUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutUserTasksNestedInput
+  }
+
+  export type UserTaskUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserTaskCreateManyInput = {
+    id?: string
+    userId: string
+    taskId: string
+    completed?: boolean
+    points?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type UserTaskUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserTaskUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralCreateInput = {
+    id?: string
+    points?: number
+    createdAt?: Date | string
+    referrer: UserCreateNestedOneWithoutReferralsGivenInput
+    referred: UserCreateNestedOneWithoutReferralsReceivedInput
+  }
+
+  export type ReferralUncheckedCreateInput = {
+    id?: string
+    referrerId: string
+    referredId: string
+    points?: number
+    createdAt?: Date | string
+  }
+
+  export type ReferralUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referrer?: UserUpdateOneRequiredWithoutReferralsGivenNestedInput
+    referred?: UserUpdateOneRequiredWithoutReferralsReceivedNestedInput
+  }
+
+  export type ReferralUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    referrerId?: StringFieldUpdateOperationsInput | string
+    referredId?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralCreateManyInput = {
+    id?: string
+    referrerId: string
+    referredId: string
+    points?: number
+    createdAt?: Date | string
+  }
+
+  export type ReferralUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    referrerId?: StringFieldUpdateOperationsInput | string
+    referredId?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -8347,6 +11196,85 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type DateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type WalletNullableScalarRelationFilter = {
+    is?: WalletWhereInput | null
+    isNot?: WalletWhereInput | null
+  }
+
+  export type UserListRelationFilter = {
+    every?: UserWhereInput
+    some?: UserWhereInput
+    none?: UserWhereInput
+  }
+
+  export type UserOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CustodialWalletCountOrderByAggregateInput = {
+    id?: SortOrder
+    address?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustodialWalletMaxOrderByAggregateInput = {
+    id?: SortOrder
+    address?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CustodialWalletMinOrderByAggregateInput = {
+    id?: SortOrder
+    address?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type StringNullableFilter<$PrismaModel = never> = {
@@ -8375,20 +11303,20 @@ export namespace Prisma {
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
-  export type DateTimeFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
   }
 
-  export type WalletNullableScalarRelationFilter = {
-    is?: WalletWhereInput | null
-    isNot?: WalletWhereInput | null
+  export type CustodialWalletScalarRelationFilter = {
+    is?: CustodialWalletWhereInput
+    isNot?: CustodialWalletWhereInput
   }
 
   export type BetListRelationFilter = {
@@ -8397,10 +11325,16 @@ export namespace Prisma {
     none?: BetWhereInput
   }
 
-  export type SessionListRelationFilter = {
-    every?: SessionWhereInput
-    some?: SessionWhereInput
-    none?: SessionWhereInput
+  export type UserTaskListRelationFilter = {
+    every?: UserTaskWhereInput
+    some?: UserTaskWhereInput
+    none?: UserTaskWhereInput
+  }
+
+  export type ReferralListRelationFilter = {
+    every?: ReferralWhereInput
+    some?: ReferralWhereInput
+    none?: ReferralWhereInput
   }
 
   export type SortOrderInput = {
@@ -8412,68 +11346,59 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
-  export type SessionOrderByRelationAggregateInput = {
+  export type UserTaskOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ReferralOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
-    farcaster_id?: SortOrder
-    farcaster_username?: SortOrder
-    farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
-    server_wallet_address?: SortOrder
-    siweSignature?: SortOrder
-    siweMessage?: SortOrder
-    siweExpiresAt?: SortOrder
+    custodial_wallet_id?: SortOrder
+    sessionId?: SortOrder
+    siwe_message?: SortOrder
+    siwe_signature?: SortOrder
+    siwe_expires_at?: SortOrder
+    totalPoints?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
+  export type UserAvgOrderByAggregateInput = {
+    totalPoints?: SortOrder
+  }
+
   export type UserMaxOrderByAggregateInput = {
     id?: SortOrder
-    farcaster_id?: SortOrder
-    farcaster_username?: SortOrder
-    farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
-    server_wallet_address?: SortOrder
-    siweSignature?: SortOrder
-    siweMessage?: SortOrder
-    siweExpiresAt?: SortOrder
+    custodial_wallet_id?: SortOrder
+    sessionId?: SortOrder
+    siwe_message?: SortOrder
+    siwe_signature?: SortOrder
+    siwe_expires_at?: SortOrder
+    totalPoints?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type UserMinOrderByAggregateInput = {
     id?: SortOrder
-    farcaster_id?: SortOrder
-    farcaster_username?: SortOrder
-    farcaster_pfp?: SortOrder
     wallet_address?: SortOrder
-    server_wallet_address?: SortOrder
-    siweSignature?: SortOrder
-    siweMessage?: SortOrder
-    siweExpiresAt?: SortOrder
+    custodial_wallet_id?: SortOrder
+    sessionId?: SortOrder
+    siwe_message?: SortOrder
+    siwe_signature?: SortOrder
+    siwe_expires_at?: SortOrder
+    totalPoints?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
-  export type StringWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
+  export type UserSumOrderByAggregateInput = {
+    totalPoints?: SortOrder
   }
 
   export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -8508,44 +11433,20 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
-  }
-
-  export type UserScalarRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
-  }
-
-  export type SessionCountOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    expiresAt?: SortOrder
-    createdAt?: SortOrder
-  }
-
-  export type SessionMaxOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    expiresAt?: SortOrder
-    createdAt?: SortOrder
-  }
-
-  export type SessionMinOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    expiresAt?: SortOrder
-    createdAt?: SortOrder
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type BigIntFilter<$PrismaModel = never> = {
@@ -8581,7 +11482,7 @@ export namespace Prisma {
   }
 
   export type WalletCountOrderByAggregateInput = {
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     address?: SortOrder
     encryptedPrivateKey?: SortOrder
     createdAt?: SortOrder
@@ -8598,7 +11499,7 @@ export namespace Prisma {
   }
 
   export type WalletMaxOrderByAggregateInput = {
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     address?: SortOrder
     encryptedPrivateKey?: SortOrder
     createdAt?: SortOrder
@@ -8610,7 +11511,7 @@ export namespace Prisma {
   }
 
   export type WalletMinOrderByAggregateInput = {
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     address?: SortOrder
     encryptedPrivateKey?: SortOrder
     createdAt?: SortOrder
@@ -8658,17 +11559,6 @@ export namespace Prisma {
     _max?: NestedBigIntNullableFilter<$PrismaModel>
   }
 
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
-  }
-
   export type WalletScalarRelationFilter = {
     is?: WalletWhereInput
     isNot?: WalletWhereInput
@@ -8676,7 +11566,7 @@ export namespace Prisma {
 
   export type WalletTransactionCountOrderByAggregateInput = {
     id?: SortOrder
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     txHash?: SortOrder
     txType?: SortOrder
     amount?: SortOrder
@@ -8694,7 +11584,7 @@ export namespace Prisma {
 
   export type WalletTransactionMaxOrderByAggregateInput = {
     id?: SortOrder
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     txHash?: SortOrder
     txType?: SortOrder
     amount?: SortOrder
@@ -8707,7 +11597,7 @@ export namespace Prisma {
 
   export type WalletTransactionMinOrderByAggregateInput = {
     id?: SortOrder
-    userId?: SortOrder
+    custodialWalletId?: SortOrder
     txHash?: SortOrder
     txType?: SortOrder
     amount?: SortOrder
@@ -8723,20 +11613,9 @@ export namespace Prisma {
     blockNumber?: SortOrder
   }
 
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
   }
 
   export type BetCountOrderByAggregateInput = {
@@ -8817,10 +11696,185 @@ export namespace Prisma {
     resolvedAt?: SortOrder
   }
 
-  export type WalletCreateNestedOneWithoutUserInput = {
-    create?: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
-    connectOrCreate?: WalletCreateOrConnectWithoutUserInput
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type UserTaskUserIdTaskIdCompoundUniqueInput = {
+    userId: string
+    taskId: string
+  }
+
+  export type UserTaskCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    taskId?: SortOrder
+    completed?: SortOrder
+    points?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserTaskAvgOrderByAggregateInput = {
+    points?: SortOrder
+  }
+
+  export type UserTaskMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    taskId?: SortOrder
+    completed?: SortOrder
+    points?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserTaskMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    taskId?: SortOrder
+    completed?: SortOrder
+    points?: SortOrder
+    completedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserTaskSumOrderByAggregateInput = {
+    points?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type ReferralReferrerIdReferredIdCompoundUniqueInput = {
+    referrerId: string
+    referredId: string
+  }
+
+  export type ReferralCountOrderByAggregateInput = {
+    id?: SortOrder
+    referrerId?: SortOrder
+    referredId?: SortOrder
+    points?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ReferralAvgOrderByAggregateInput = {
+    points?: SortOrder
+  }
+
+  export type ReferralMaxOrderByAggregateInput = {
+    id?: SortOrder
+    referrerId?: SortOrder
+    referredId?: SortOrder
+    points?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ReferralMinOrderByAggregateInput = {
+    id?: SortOrder
+    referrerId?: SortOrder
+    referredId?: SortOrder
+    points?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ReferralSumOrderByAggregateInput = {
+    points?: SortOrder
+  }
+
+  export type WalletCreateNestedOneWithoutCustodialWalletInput = {
+    create?: XOR<WalletCreateWithoutCustodialWalletInput, WalletUncheckedCreateWithoutCustodialWalletInput>
+    connectOrCreate?: WalletCreateOrConnectWithoutCustodialWalletInput
     connect?: WalletWhereUniqueInput
+  }
+
+  export type UserCreateNestedManyWithoutCustodialWalletInput = {
+    create?: XOR<UserCreateWithoutCustodialWalletInput, UserUncheckedCreateWithoutCustodialWalletInput> | UserCreateWithoutCustodialWalletInput[] | UserUncheckedCreateWithoutCustodialWalletInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutCustodialWalletInput | UserCreateOrConnectWithoutCustodialWalletInput[]
+    createMany?: UserCreateManyCustodialWalletInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
+  export type WalletUncheckedCreateNestedOneWithoutCustodialWalletInput = {
+    create?: XOR<WalletCreateWithoutCustodialWalletInput, WalletUncheckedCreateWithoutCustodialWalletInput>
+    connectOrCreate?: WalletCreateOrConnectWithoutCustodialWalletInput
+    connect?: WalletWhereUniqueInput
+  }
+
+  export type UserUncheckedCreateNestedManyWithoutCustodialWalletInput = {
+    create?: XOR<UserCreateWithoutCustodialWalletInput, UserUncheckedCreateWithoutCustodialWalletInput> | UserCreateWithoutCustodialWalletInput[] | UserUncheckedCreateWithoutCustodialWalletInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutCustodialWalletInput | UserCreateOrConnectWithoutCustodialWalletInput[]
+    createMany?: UserCreateManyCustodialWalletInputEnvelope
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type WalletUpdateOneWithoutCustodialWalletNestedInput = {
+    create?: XOR<WalletCreateWithoutCustodialWalletInput, WalletUncheckedCreateWithoutCustodialWalletInput>
+    connectOrCreate?: WalletCreateOrConnectWithoutCustodialWalletInput
+    upsert?: WalletUpsertWithoutCustodialWalletInput
+    disconnect?: WalletWhereInput | boolean
+    delete?: WalletWhereInput | boolean
+    connect?: WalletWhereUniqueInput
+    update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutCustodialWalletInput, WalletUpdateWithoutCustodialWalletInput>, WalletUncheckedUpdateWithoutCustodialWalletInput>
+  }
+
+  export type UserUpdateManyWithoutCustodialWalletNestedInput = {
+    create?: XOR<UserCreateWithoutCustodialWalletInput, UserUncheckedCreateWithoutCustodialWalletInput> | UserCreateWithoutCustodialWalletInput[] | UserUncheckedCreateWithoutCustodialWalletInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutCustodialWalletInput | UserCreateOrConnectWithoutCustodialWalletInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutCustodialWalletInput | UserUpsertWithWhereUniqueWithoutCustodialWalletInput[]
+    createMany?: UserCreateManyCustodialWalletInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutCustodialWalletInput | UserUpdateWithWhereUniqueWithoutCustodialWalletInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutCustodialWalletInput | UserUpdateManyWithWhereWithoutCustodialWalletInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
+  }
+
+  export type WalletUncheckedUpdateOneWithoutCustodialWalletNestedInput = {
+    create?: XOR<WalletCreateWithoutCustodialWalletInput, WalletUncheckedCreateWithoutCustodialWalletInput>
+    connectOrCreate?: WalletCreateOrConnectWithoutCustodialWalletInput
+    upsert?: WalletUpsertWithoutCustodialWalletInput
+    disconnect?: WalletWhereInput | boolean
+    delete?: WalletWhereInput | boolean
+    connect?: WalletWhereUniqueInput
+    update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutCustodialWalletInput, WalletUpdateWithoutCustodialWalletInput>, WalletUncheckedUpdateWithoutCustodialWalletInput>
+  }
+
+  export type UserUncheckedUpdateManyWithoutCustodialWalletNestedInput = {
+    create?: XOR<UserCreateWithoutCustodialWalletInput, UserUncheckedCreateWithoutCustodialWalletInput> | UserCreateWithoutCustodialWalletInput[] | UserUncheckedCreateWithoutCustodialWalletInput[]
+    connectOrCreate?: UserCreateOrConnectWithoutCustodialWalletInput | UserCreateOrConnectWithoutCustodialWalletInput[]
+    upsert?: UserUpsertWithWhereUniqueWithoutCustodialWalletInput | UserUpsertWithWhereUniqueWithoutCustodialWalletInput[]
+    createMany?: UserCreateManyCustodialWalletInputEnvelope
+    set?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    disconnect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    delete?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    connect?: UserWhereUniqueInput | UserWhereUniqueInput[]
+    update?: UserUpdateWithWhereUniqueWithoutCustodialWalletInput | UserUpdateWithWhereUniqueWithoutCustodialWalletInput[]
+    updateMany?: UserUpdateManyWithWhereWithoutCustodialWalletInput | UserUpdateManyWithWhereWithoutCustodialWalletInput[]
+    deleteMany?: UserScalarWhereInput | UserScalarWhereInput[]
+  }
+
+  export type CustodialWalletCreateNestedOneWithoutUsersInput = {
+    create?: XOR<CustodialWalletCreateWithoutUsersInput, CustodialWalletUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: CustodialWalletCreateOrConnectWithoutUsersInput
+    connect?: CustodialWalletWhereUniqueInput
   }
 
   export type BetCreateNestedManyWithoutUserInput = {
@@ -8830,17 +11884,25 @@ export namespace Prisma {
     connect?: BetWhereUniqueInput | BetWhereUniqueInput[]
   }
 
-  export type SessionCreateNestedManyWithoutUserInput = {
-    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
-    createMany?: SessionCreateManyUserInputEnvelope
-    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
+  export type UserTaskCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserTaskCreateWithoutUserInput, UserTaskUncheckedCreateWithoutUserInput> | UserTaskCreateWithoutUserInput[] | UserTaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserTaskCreateOrConnectWithoutUserInput | UserTaskCreateOrConnectWithoutUserInput[]
+    createMany?: UserTaskCreateManyUserInputEnvelope
+    connect?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
   }
 
-  export type WalletUncheckedCreateNestedOneWithoutUserInput = {
-    create?: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
-    connectOrCreate?: WalletCreateOrConnectWithoutUserInput
-    connect?: WalletWhereUniqueInput
+  export type ReferralCreateNestedManyWithoutReferrerInput = {
+    create?: XOR<ReferralCreateWithoutReferrerInput, ReferralUncheckedCreateWithoutReferrerInput> | ReferralCreateWithoutReferrerInput[] | ReferralUncheckedCreateWithoutReferrerInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferrerInput | ReferralCreateOrConnectWithoutReferrerInput[]
+    createMany?: ReferralCreateManyReferrerInputEnvelope
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+  }
+
+  export type ReferralCreateNestedManyWithoutReferredInput = {
+    create?: XOR<ReferralCreateWithoutReferredInput, ReferralUncheckedCreateWithoutReferredInput> | ReferralCreateWithoutReferredInput[] | ReferralUncheckedCreateWithoutReferredInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferredInput | ReferralCreateOrConnectWithoutReferredInput[]
+    createMany?: ReferralCreateManyReferredInputEnvelope
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
   }
 
   export type BetUncheckedCreateNestedManyWithoutUserInput = {
@@ -8850,15 +11912,25 @@ export namespace Prisma {
     connect?: BetWhereUniqueInput | BetWhereUniqueInput[]
   }
 
-  export type SessionUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
-    createMany?: SessionCreateManyUserInputEnvelope
-    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
+  export type UserTaskUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserTaskCreateWithoutUserInput, UserTaskUncheckedCreateWithoutUserInput> | UserTaskCreateWithoutUserInput[] | UserTaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserTaskCreateOrConnectWithoutUserInput | UserTaskCreateOrConnectWithoutUserInput[]
+    createMany?: UserTaskCreateManyUserInputEnvelope
+    connect?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
   }
 
-  export type StringFieldUpdateOperationsInput = {
-    set?: string
+  export type ReferralUncheckedCreateNestedManyWithoutReferrerInput = {
+    create?: XOR<ReferralCreateWithoutReferrerInput, ReferralUncheckedCreateWithoutReferrerInput> | ReferralCreateWithoutReferrerInput[] | ReferralUncheckedCreateWithoutReferrerInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferrerInput | ReferralCreateOrConnectWithoutReferrerInput[]
+    createMany?: ReferralCreateManyReferrerInputEnvelope
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+  }
+
+  export type ReferralUncheckedCreateNestedManyWithoutReferredInput = {
+    create?: XOR<ReferralCreateWithoutReferredInput, ReferralUncheckedCreateWithoutReferredInput> | ReferralCreateWithoutReferredInput[] | ReferralUncheckedCreateWithoutReferredInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferredInput | ReferralCreateOrConnectWithoutReferredInput[]
+    createMany?: ReferralCreateManyReferredInputEnvelope
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -8869,18 +11941,20 @@ export namespace Prisma {
     set?: Date | string | null
   }
 
-  export type DateTimeFieldUpdateOperationsInput = {
-    set?: Date | string
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
-  export type WalletUpdateOneWithoutUserNestedInput = {
-    create?: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
-    connectOrCreate?: WalletCreateOrConnectWithoutUserInput
-    upsert?: WalletUpsertWithoutUserInput
-    disconnect?: WalletWhereInput | boolean
-    delete?: WalletWhereInput | boolean
-    connect?: WalletWhereUniqueInput
-    update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutUserInput, WalletUpdateWithoutUserInput>, WalletUncheckedUpdateWithoutUserInput>
+  export type CustodialWalletUpdateOneRequiredWithoutUsersNestedInput = {
+    create?: XOR<CustodialWalletCreateWithoutUsersInput, CustodialWalletUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: CustodialWalletCreateOrConnectWithoutUsersInput
+    upsert?: CustodialWalletUpsertWithoutUsersInput
+    connect?: CustodialWalletWhereUniqueInput
+    update?: XOR<XOR<CustodialWalletUpdateToOneWithWhereWithoutUsersInput, CustodialWalletUpdateWithoutUsersInput>, CustodialWalletUncheckedUpdateWithoutUsersInput>
   }
 
   export type BetUpdateManyWithoutUserNestedInput = {
@@ -8897,28 +11971,46 @@ export namespace Prisma {
     deleteMany?: BetScalarWhereInput | BetScalarWhereInput[]
   }
 
-  export type SessionUpdateManyWithoutUserNestedInput = {
-    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
-    upsert?: SessionUpsertWithWhereUniqueWithoutUserInput | SessionUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: SessionCreateManyUserInputEnvelope
-    set?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    disconnect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    delete?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    update?: SessionUpdateWithWhereUniqueWithoutUserInput | SessionUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: SessionUpdateManyWithWhereWithoutUserInput | SessionUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: SessionScalarWhereInput | SessionScalarWhereInput[]
+  export type UserTaskUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserTaskCreateWithoutUserInput, UserTaskUncheckedCreateWithoutUserInput> | UserTaskCreateWithoutUserInput[] | UserTaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserTaskCreateOrConnectWithoutUserInput | UserTaskCreateOrConnectWithoutUserInput[]
+    upsert?: UserTaskUpsertWithWhereUniqueWithoutUserInput | UserTaskUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserTaskCreateManyUserInputEnvelope
+    set?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    disconnect?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    delete?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    connect?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    update?: UserTaskUpdateWithWhereUniqueWithoutUserInput | UserTaskUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserTaskUpdateManyWithWhereWithoutUserInput | UserTaskUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserTaskScalarWhereInput | UserTaskScalarWhereInput[]
   }
 
-  export type WalletUncheckedUpdateOneWithoutUserNestedInput = {
-    create?: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
-    connectOrCreate?: WalletCreateOrConnectWithoutUserInput
-    upsert?: WalletUpsertWithoutUserInput
-    disconnect?: WalletWhereInput | boolean
-    delete?: WalletWhereInput | boolean
-    connect?: WalletWhereUniqueInput
-    update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutUserInput, WalletUpdateWithoutUserInput>, WalletUncheckedUpdateWithoutUserInput>
+  export type ReferralUpdateManyWithoutReferrerNestedInput = {
+    create?: XOR<ReferralCreateWithoutReferrerInput, ReferralUncheckedCreateWithoutReferrerInput> | ReferralCreateWithoutReferrerInput[] | ReferralUncheckedCreateWithoutReferrerInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferrerInput | ReferralCreateOrConnectWithoutReferrerInput[]
+    upsert?: ReferralUpsertWithWhereUniqueWithoutReferrerInput | ReferralUpsertWithWhereUniqueWithoutReferrerInput[]
+    createMany?: ReferralCreateManyReferrerInputEnvelope
+    set?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    disconnect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    delete?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    update?: ReferralUpdateWithWhereUniqueWithoutReferrerInput | ReferralUpdateWithWhereUniqueWithoutReferrerInput[]
+    updateMany?: ReferralUpdateManyWithWhereWithoutReferrerInput | ReferralUpdateManyWithWhereWithoutReferrerInput[]
+    deleteMany?: ReferralScalarWhereInput | ReferralScalarWhereInput[]
+  }
+
+  export type ReferralUpdateManyWithoutReferredNestedInput = {
+    create?: XOR<ReferralCreateWithoutReferredInput, ReferralUncheckedCreateWithoutReferredInput> | ReferralCreateWithoutReferredInput[] | ReferralUncheckedCreateWithoutReferredInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferredInput | ReferralCreateOrConnectWithoutReferredInput[]
+    upsert?: ReferralUpsertWithWhereUniqueWithoutReferredInput | ReferralUpsertWithWhereUniqueWithoutReferredInput[]
+    createMany?: ReferralCreateManyReferredInputEnvelope
+    set?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    disconnect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    delete?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    update?: ReferralUpdateWithWhereUniqueWithoutReferredInput | ReferralUpdateWithWhereUniqueWithoutReferredInput[]
+    updateMany?: ReferralUpdateManyWithWhereWithoutReferredInput | ReferralUpdateManyWithWhereWithoutReferredInput[]
+    deleteMany?: ReferralScalarWhereInput | ReferralScalarWhereInput[]
   }
 
   export type BetUncheckedUpdateManyWithoutUserNestedInput = {
@@ -8935,38 +12027,52 @@ export namespace Prisma {
     deleteMany?: BetScalarWhereInput | BetScalarWhereInput[]
   }
 
-  export type SessionUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput> | SessionCreateWithoutUserInput[] | SessionUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: SessionCreateOrConnectWithoutUserInput | SessionCreateOrConnectWithoutUserInput[]
-    upsert?: SessionUpsertWithWhereUniqueWithoutUserInput | SessionUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: SessionCreateManyUserInputEnvelope
-    set?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    disconnect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    delete?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    connect?: SessionWhereUniqueInput | SessionWhereUniqueInput[]
-    update?: SessionUpdateWithWhereUniqueWithoutUserInput | SessionUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: SessionUpdateManyWithWhereWithoutUserInput | SessionUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: SessionScalarWhereInput | SessionScalarWhereInput[]
+  export type UserTaskUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserTaskCreateWithoutUserInput, UserTaskUncheckedCreateWithoutUserInput> | UserTaskCreateWithoutUserInput[] | UserTaskUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserTaskCreateOrConnectWithoutUserInput | UserTaskCreateOrConnectWithoutUserInput[]
+    upsert?: UserTaskUpsertWithWhereUniqueWithoutUserInput | UserTaskUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserTaskCreateManyUserInputEnvelope
+    set?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    disconnect?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    delete?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    connect?: UserTaskWhereUniqueInput | UserTaskWhereUniqueInput[]
+    update?: UserTaskUpdateWithWhereUniqueWithoutUserInput | UserTaskUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserTaskUpdateManyWithWhereWithoutUserInput | UserTaskUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserTaskScalarWhereInput | UserTaskScalarWhereInput[]
   }
 
-  export type UserCreateNestedOneWithoutSessionsInput = {
-    create?: XOR<UserCreateWithoutSessionsInput, UserUncheckedCreateWithoutSessionsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSessionsInput
-    connect?: UserWhereUniqueInput
+  export type ReferralUncheckedUpdateManyWithoutReferrerNestedInput = {
+    create?: XOR<ReferralCreateWithoutReferrerInput, ReferralUncheckedCreateWithoutReferrerInput> | ReferralCreateWithoutReferrerInput[] | ReferralUncheckedCreateWithoutReferrerInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferrerInput | ReferralCreateOrConnectWithoutReferrerInput[]
+    upsert?: ReferralUpsertWithWhereUniqueWithoutReferrerInput | ReferralUpsertWithWhereUniqueWithoutReferrerInput[]
+    createMany?: ReferralCreateManyReferrerInputEnvelope
+    set?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    disconnect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    delete?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    update?: ReferralUpdateWithWhereUniqueWithoutReferrerInput | ReferralUpdateWithWhereUniqueWithoutReferrerInput[]
+    updateMany?: ReferralUpdateManyWithWhereWithoutReferrerInput | ReferralUpdateManyWithWhereWithoutReferrerInput[]
+    deleteMany?: ReferralScalarWhereInput | ReferralScalarWhereInput[]
   }
 
-  export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
-    create?: XOR<UserCreateWithoutSessionsInput, UserUncheckedCreateWithoutSessionsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutSessionsInput
-    upsert?: UserUpsertWithoutSessionsInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSessionsInput, UserUpdateWithoutSessionsInput>, UserUncheckedUpdateWithoutSessionsInput>
+  export type ReferralUncheckedUpdateManyWithoutReferredNestedInput = {
+    create?: XOR<ReferralCreateWithoutReferredInput, ReferralUncheckedCreateWithoutReferredInput> | ReferralCreateWithoutReferredInput[] | ReferralUncheckedCreateWithoutReferredInput[]
+    connectOrCreate?: ReferralCreateOrConnectWithoutReferredInput | ReferralCreateOrConnectWithoutReferredInput[]
+    upsert?: ReferralUpsertWithWhereUniqueWithoutReferredInput | ReferralUpsertWithWhereUniqueWithoutReferredInput[]
+    createMany?: ReferralCreateManyReferredInputEnvelope
+    set?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    disconnect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    delete?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    connect?: ReferralWhereUniqueInput | ReferralWhereUniqueInput[]
+    update?: ReferralUpdateWithWhereUniqueWithoutReferredInput | ReferralUpdateWithWhereUniqueWithoutReferredInput[]
+    updateMany?: ReferralUpdateManyWithWhereWithoutReferredInput | ReferralUpdateManyWithWhereWithoutReferredInput[]
+    deleteMany?: ReferralScalarWhereInput | ReferralScalarWhereInput[]
   }
 
-  export type UserCreateNestedOneWithoutWalletInput = {
-    create?: XOR<UserCreateWithoutWalletInput, UserUncheckedCreateWithoutWalletInput>
-    connectOrCreate?: UserCreateOrConnectWithoutWalletInput
-    connect?: UserWhereUniqueInput
+  export type CustodialWalletCreateNestedOneWithoutWalletInput = {
+    create?: XOR<CustodialWalletCreateWithoutWalletInput, CustodialWalletUncheckedCreateWithoutWalletInput>
+    connectOrCreate?: CustodialWalletCreateOrConnectWithoutWalletInput
+    connect?: CustodialWalletWhereUniqueInput
   }
 
   export type WalletTransactionCreateNestedManyWithoutWalletInput = {
@@ -8999,12 +12105,12 @@ export namespace Prisma {
     divide?: bigint | number
   }
 
-  export type UserUpdateOneRequiredWithoutWalletNestedInput = {
-    create?: XOR<UserCreateWithoutWalletInput, UserUncheckedCreateWithoutWalletInput>
-    connectOrCreate?: UserCreateOrConnectWithoutWalletInput
-    upsert?: UserUpsertWithoutWalletInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutWalletInput, UserUpdateWithoutWalletInput>, UserUncheckedUpdateWithoutWalletInput>
+  export type CustodialWalletUpdateOneRequiredWithoutWalletNestedInput = {
+    create?: XOR<CustodialWalletCreateWithoutWalletInput, CustodialWalletUncheckedCreateWithoutWalletInput>
+    connectOrCreate?: CustodialWalletCreateOrConnectWithoutWalletInput
+    upsert?: CustodialWalletUpsertWithoutWalletInput
+    connect?: CustodialWalletWhereUniqueInput
+    update?: XOR<XOR<CustodialWalletUpdateToOneWithWhereWithoutWalletInput, CustodialWalletUpdateWithoutWalletInput>, CustodialWalletUncheckedUpdateWithoutWalletInput>
   }
 
   export type WalletTransactionUpdateManyWithoutWalletNestedInput = {
@@ -9049,14 +12155,6 @@ export namespace Prisma {
     update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutTransactionsInput, WalletUpdateWithoutTransactionsInput>, WalletUncheckedUpdateWithoutTransactionsInput>
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type UserCreateNestedOneWithoutBetsInput = {
     create?: XOR<UserCreateWithoutBetsInput, UserUncheckedCreateWithoutBetsInput>
     connectOrCreate?: UserCreateOrConnectWithoutBetsInput
@@ -9071,6 +12169,52 @@ export namespace Prisma {
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBetsInput, UserUpdateWithoutBetsInput>, UserUncheckedUpdateWithoutBetsInput>
   }
 
+  export type UserCreateNestedOneWithoutUserTasksInput = {
+    create?: XOR<UserCreateWithoutUserTasksInput, UserUncheckedCreateWithoutUserTasksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutUserTasksInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type UserUpdateOneRequiredWithoutUserTasksNestedInput = {
+    create?: XOR<UserCreateWithoutUserTasksInput, UserUncheckedCreateWithoutUserTasksInput>
+    connectOrCreate?: UserCreateOrConnectWithoutUserTasksInput
+    upsert?: UserUpsertWithoutUserTasksInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutUserTasksInput, UserUpdateWithoutUserTasksInput>, UserUncheckedUpdateWithoutUserTasksInput>
+  }
+
+  export type UserCreateNestedOneWithoutReferralsGivenInput = {
+    create?: XOR<UserCreateWithoutReferralsGivenInput, UserUncheckedCreateWithoutReferralsGivenInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReferralsGivenInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutReferralsReceivedInput = {
+    create?: XOR<UserCreateWithoutReferralsReceivedInput, UserUncheckedCreateWithoutReferralsReceivedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReferralsReceivedInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutReferralsGivenNestedInput = {
+    create?: XOR<UserCreateWithoutReferralsGivenInput, UserUncheckedCreateWithoutReferralsGivenInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReferralsGivenInput
+    upsert?: UserUpsertWithoutReferralsGivenInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutReferralsGivenInput, UserUpdateWithoutReferralsGivenInput>, UserUncheckedUpdateWithoutReferralsGivenInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutReferralsReceivedNestedInput = {
+    create?: XOR<UserCreateWithoutReferralsReceivedInput, UserUncheckedCreateWithoutReferralsReceivedInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReferralsReceivedInput
+    upsert?: UserUpsertWithoutReferralsReceivedInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutReferralsReceivedInput, UserUpdateWithoutReferralsReceivedInput>, UserUncheckedUpdateWithoutReferralsReceivedInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -9083,31 +12227,6 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringFilter<$PrismaModel> | string
-  }
-
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -9147,6 +12266,45 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -9191,18 +12349,31 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
-  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
     _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedDateTimeFilter<$PrismaModel>
-    _max?: NestedDateTimeFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
   }
 
   export type NestedBigIntFilter<$PrismaModel = never> = {
@@ -9243,17 +12414,6 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
-  export type NestedFloatFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel>
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
   export type NestedBigIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel> | null
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel> | null
@@ -9281,23 +12441,20 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
-  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
-  export type WalletCreateWithoutUserInput = {
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type WalletCreateWithoutCustodialWalletInput = {
     address: string
     encryptedPrivateKey: string
     createdAt: bigint | number
@@ -9309,7 +12466,7 @@ export namespace Prisma {
     transactions?: WalletTransactionCreateNestedManyWithoutWalletInput
   }
 
-  export type WalletUncheckedCreateWithoutUserInput = {
+  export type WalletUncheckedCreateWithoutCustodialWalletInput = {
     address: string
     encryptedPrivateKey: string
     createdAt: bigint | number
@@ -9321,9 +12478,139 @@ export namespace Prisma {
     transactions?: WalletTransactionUncheckedCreateNestedManyWithoutWalletInput
   }
 
-  export type WalletCreateOrConnectWithoutUserInput = {
+  export type WalletCreateOrConnectWithoutCustodialWalletInput = {
     where: WalletWhereUniqueInput
-    create: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
+    create: XOR<WalletCreateWithoutCustodialWalletInput, WalletUncheckedCreateWithoutCustodialWalletInput>
+  }
+
+  export type UserCreateWithoutCustodialWalletInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bets?: BetCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralCreateNestedManyWithoutReferredInput
+  }
+
+  export type UserUncheckedCreateWithoutCustodialWalletInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bets?: BetUncheckedCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskUncheckedCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralUncheckedCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralUncheckedCreateNestedManyWithoutReferredInput
+  }
+
+  export type UserCreateOrConnectWithoutCustodialWalletInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCustodialWalletInput, UserUncheckedCreateWithoutCustodialWalletInput>
+  }
+
+  export type UserCreateManyCustodialWalletInputEnvelope = {
+    data: UserCreateManyCustodialWalletInput | UserCreateManyCustodialWalletInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WalletUpsertWithoutCustodialWalletInput = {
+    update: XOR<WalletUpdateWithoutCustodialWalletInput, WalletUncheckedUpdateWithoutCustodialWalletInput>
+    create: XOR<WalletCreateWithoutCustodialWalletInput, WalletUncheckedCreateWithoutCustodialWalletInput>
+    where?: WalletWhereInput
+  }
+
+  export type WalletUpdateToOneWithWhereWithoutCustodialWalletInput = {
+    where?: WalletWhereInput
+    data: XOR<WalletUpdateWithoutCustodialWalletInput, WalletUncheckedUpdateWithoutCustodialWalletInput>
+  }
+
+  export type WalletUpdateWithoutCustodialWalletInput = {
+    address?: StringFieldUpdateOperationsInput | string
+    encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
+    balance?: StringFieldUpdateOperationsInput | string
+    lockedBalance?: StringFieldUpdateOperationsInput | string
+    lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: WalletTransactionUpdateManyWithoutWalletNestedInput
+  }
+
+  export type WalletUncheckedUpdateWithoutCustodialWalletInput = {
+    address?: StringFieldUpdateOperationsInput | string
+    encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
+    createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
+    balance?: StringFieldUpdateOperationsInput | string
+    lockedBalance?: StringFieldUpdateOperationsInput | string
+    lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+    createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    transactions?: WalletTransactionUncheckedUpdateManyWithoutWalletNestedInput
+  }
+
+  export type UserUpsertWithWhereUniqueWithoutCustodialWalletInput = {
+    where: UserWhereUniqueInput
+    update: XOR<UserUpdateWithoutCustodialWalletInput, UserUncheckedUpdateWithoutCustodialWalletInput>
+    create: XOR<UserCreateWithoutCustodialWalletInput, UserUncheckedCreateWithoutCustodialWalletInput>
+  }
+
+  export type UserUpdateWithWhereUniqueWithoutCustodialWalletInput = {
+    where: UserWhereUniqueInput
+    data: XOR<UserUpdateWithoutCustodialWalletInput, UserUncheckedUpdateWithoutCustodialWalletInput>
+  }
+
+  export type UserUpdateManyWithWhereWithoutCustodialWalletInput = {
+    where: UserScalarWhereInput
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyWithoutCustodialWalletInput>
+  }
+
+  export type UserScalarWhereInput = {
+    AND?: UserScalarWhereInput | UserScalarWhereInput[]
+    OR?: UserScalarWhereInput[]
+    NOT?: UserScalarWhereInput | UserScalarWhereInput[]
+    id?: StringFilter<"User"> | string
+    wallet_address?: StringFilter<"User"> | string
+    custodial_wallet_id?: StringFilter<"User"> | string
+    sessionId?: StringNullableFilter<"User"> | string | null
+    siwe_message?: StringNullableFilter<"User"> | string | null
+    siwe_signature?: StringNullableFilter<"User"> | string | null
+    siwe_expires_at?: DateTimeNullableFilter<"User"> | Date | string | null
+    totalPoints?: IntFilter<"User"> | number
+    createdAt?: DateTimeFilter<"User"> | Date | string
+    updatedAt?: DateTimeFilter<"User"> | Date | string
+  }
+
+  export type CustodialWalletCreateWithoutUsersInput = {
+    id?: string
+    address: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wallet?: WalletCreateNestedOneWithoutCustodialWalletInput
+  }
+
+  export type CustodialWalletUncheckedCreateWithoutUsersInput = {
+    id?: string
+    address: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    wallet?: WalletUncheckedCreateNestedOneWithoutCustodialWalletInput
+  }
+
+  export type CustodialWalletCreateOrConnectWithoutUsersInput = {
+    where: CustodialWalletWhereUniqueInput
+    create: XOR<CustodialWalletCreateWithoutUsersInput, CustodialWalletUncheckedCreateWithoutUsersInput>
   }
 
   export type BetCreateWithoutUserInput = {
@@ -9386,61 +12673,107 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type SessionCreateWithoutUserInput = {
+  export type UserTaskCreateWithoutUserInput = {
     id?: string
-    expiresAt: Date | string
+    taskId: string
+    completed?: boolean
+    points?: number
+    completedAt?: Date | string | null
     createdAt?: Date | string
   }
 
-  export type SessionUncheckedCreateWithoutUserInput = {
+  export type UserTaskUncheckedCreateWithoutUserInput = {
     id?: string
-    expiresAt: Date | string
+    taskId: string
+    completed?: boolean
+    points?: number
+    completedAt?: Date | string | null
     createdAt?: Date | string
   }
 
-  export type SessionCreateOrConnectWithoutUserInput = {
-    where: SessionWhereUniqueInput
-    create: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput>
+  export type UserTaskCreateOrConnectWithoutUserInput = {
+    where: UserTaskWhereUniqueInput
+    create: XOR<UserTaskCreateWithoutUserInput, UserTaskUncheckedCreateWithoutUserInput>
   }
 
-  export type SessionCreateManyUserInputEnvelope = {
-    data: SessionCreateManyUserInput | SessionCreateManyUserInput[]
+  export type UserTaskCreateManyUserInputEnvelope = {
+    data: UserTaskCreateManyUserInput | UserTaskCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
-  export type WalletUpsertWithoutUserInput = {
-    update: XOR<WalletUpdateWithoutUserInput, WalletUncheckedUpdateWithoutUserInput>
-    create: XOR<WalletCreateWithoutUserInput, WalletUncheckedCreateWithoutUserInput>
-    where?: WalletWhereInput
+  export type ReferralCreateWithoutReferrerInput = {
+    id?: string
+    points?: number
+    createdAt?: Date | string
+    referred: UserCreateNestedOneWithoutReferralsReceivedInput
   }
 
-  export type WalletUpdateToOneWithWhereWithoutUserInput = {
-    where?: WalletWhereInput
-    data: XOR<WalletUpdateWithoutUserInput, WalletUncheckedUpdateWithoutUserInput>
+  export type ReferralUncheckedCreateWithoutReferrerInput = {
+    id?: string
+    referredId: string
+    points?: number
+    createdAt?: Date | string
   }
 
-  export type WalletUpdateWithoutUserInput = {
+  export type ReferralCreateOrConnectWithoutReferrerInput = {
+    where: ReferralWhereUniqueInput
+    create: XOR<ReferralCreateWithoutReferrerInput, ReferralUncheckedCreateWithoutReferrerInput>
+  }
+
+  export type ReferralCreateManyReferrerInputEnvelope = {
+    data: ReferralCreateManyReferrerInput | ReferralCreateManyReferrerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ReferralCreateWithoutReferredInput = {
+    id?: string
+    points?: number
+    createdAt?: Date | string
+    referrer: UserCreateNestedOneWithoutReferralsGivenInput
+  }
+
+  export type ReferralUncheckedCreateWithoutReferredInput = {
+    id?: string
+    referrerId: string
+    points?: number
+    createdAt?: Date | string
+  }
+
+  export type ReferralCreateOrConnectWithoutReferredInput = {
+    where: ReferralWhereUniqueInput
+    create: XOR<ReferralCreateWithoutReferredInput, ReferralUncheckedCreateWithoutReferredInput>
+  }
+
+  export type ReferralCreateManyReferredInputEnvelope = {
+    data: ReferralCreateManyReferredInput | ReferralCreateManyReferredInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CustodialWalletUpsertWithoutUsersInput = {
+    update: XOR<CustodialWalletUpdateWithoutUsersInput, CustodialWalletUncheckedUpdateWithoutUsersInput>
+    create: XOR<CustodialWalletCreateWithoutUsersInput, CustodialWalletUncheckedCreateWithoutUsersInput>
+    where?: CustodialWalletWhereInput
+  }
+
+  export type CustodialWalletUpdateToOneWithWhereWithoutUsersInput = {
+    where?: CustodialWalletWhereInput
+    data: XOR<CustodialWalletUpdateWithoutUsersInput, CustodialWalletUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type CustodialWalletUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
     address?: StringFieldUpdateOperationsInput | string
-    encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
-    createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
-    balance?: StringFieldUpdateOperationsInput | string
-    lockedBalance?: StringFieldUpdateOperationsInput | string
-    lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    transactions?: WalletTransactionUpdateManyWithoutWalletNestedInput
+    wallet?: WalletUpdateOneWithoutCustodialWalletNestedInput
   }
 
-  export type WalletUncheckedUpdateWithoutUserInput = {
+  export type CustodialWalletUncheckedUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
     address?: StringFieldUpdateOperationsInput | string
-    encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
-    createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
-    balance?: StringFieldUpdateOperationsInput | string
-    lockedBalance?: StringFieldUpdateOperationsInput | string
-    lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
-    createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    transactions?: WalletTransactionUncheckedUpdateManyWithoutWalletNestedInput
+    wallet?: WalletUncheckedUpdateOneWithoutCustodialWalletNestedInput
   }
 
   export type BetUpsertWithWhereUniqueWithoutUserInput = {
@@ -9488,147 +12821,97 @@ export namespace Prisma {
     resolvedAt?: DateTimeNullableFilter<"Bet"> | Date | string | null
   }
 
-  export type SessionUpsertWithWhereUniqueWithoutUserInput = {
-    where: SessionWhereUniqueInput
-    update: XOR<SessionUpdateWithoutUserInput, SessionUncheckedUpdateWithoutUserInput>
-    create: XOR<SessionCreateWithoutUserInput, SessionUncheckedCreateWithoutUserInput>
+  export type UserTaskUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserTaskWhereUniqueInput
+    update: XOR<UserTaskUpdateWithoutUserInput, UserTaskUncheckedUpdateWithoutUserInput>
+    create: XOR<UserTaskCreateWithoutUserInput, UserTaskUncheckedCreateWithoutUserInput>
   }
 
-  export type SessionUpdateWithWhereUniqueWithoutUserInput = {
-    where: SessionWhereUniqueInput
-    data: XOR<SessionUpdateWithoutUserInput, SessionUncheckedUpdateWithoutUserInput>
+  export type UserTaskUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserTaskWhereUniqueInput
+    data: XOR<UserTaskUpdateWithoutUserInput, UserTaskUncheckedUpdateWithoutUserInput>
   }
 
-  export type SessionUpdateManyWithWhereWithoutUserInput = {
-    where: SessionScalarWhereInput
-    data: XOR<SessionUpdateManyMutationInput, SessionUncheckedUpdateManyWithoutUserInput>
+  export type UserTaskUpdateManyWithWhereWithoutUserInput = {
+    where: UserTaskScalarWhereInput
+    data: XOR<UserTaskUpdateManyMutationInput, UserTaskUncheckedUpdateManyWithoutUserInput>
   }
 
-  export type SessionScalarWhereInput = {
-    AND?: SessionScalarWhereInput | SessionScalarWhereInput[]
-    OR?: SessionScalarWhereInput[]
-    NOT?: SessionScalarWhereInput | SessionScalarWhereInput[]
-    id?: StringFilter<"Session"> | string
-    userId?: StringFilter<"Session"> | string
-    expiresAt?: DateTimeFilter<"Session"> | Date | string
-    createdAt?: DateTimeFilter<"Session"> | Date | string
+  export type UserTaskScalarWhereInput = {
+    AND?: UserTaskScalarWhereInput | UserTaskScalarWhereInput[]
+    OR?: UserTaskScalarWhereInput[]
+    NOT?: UserTaskScalarWhereInput | UserTaskScalarWhereInput[]
+    id?: StringFilter<"UserTask"> | string
+    userId?: StringFilter<"UserTask"> | string
+    taskId?: StringFilter<"UserTask"> | string
+    completed?: BoolFilter<"UserTask"> | boolean
+    points?: IntFilter<"UserTask"> | number
+    completedAt?: DateTimeNullableFilter<"UserTask"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserTask"> | Date | string
   }
 
-  export type UserCreateWithoutSessionsInput = {
+  export type ReferralUpsertWithWhereUniqueWithoutReferrerInput = {
+    where: ReferralWhereUniqueInput
+    update: XOR<ReferralUpdateWithoutReferrerInput, ReferralUncheckedUpdateWithoutReferrerInput>
+    create: XOR<ReferralCreateWithoutReferrerInput, ReferralUncheckedCreateWithoutReferrerInput>
+  }
+
+  export type ReferralUpdateWithWhereUniqueWithoutReferrerInput = {
+    where: ReferralWhereUniqueInput
+    data: XOR<ReferralUpdateWithoutReferrerInput, ReferralUncheckedUpdateWithoutReferrerInput>
+  }
+
+  export type ReferralUpdateManyWithWhereWithoutReferrerInput = {
+    where: ReferralScalarWhereInput
+    data: XOR<ReferralUpdateManyMutationInput, ReferralUncheckedUpdateManyWithoutReferrerInput>
+  }
+
+  export type ReferralScalarWhereInput = {
+    AND?: ReferralScalarWhereInput | ReferralScalarWhereInput[]
+    OR?: ReferralScalarWhereInput[]
+    NOT?: ReferralScalarWhereInput | ReferralScalarWhereInput[]
+    id?: StringFilter<"Referral"> | string
+    referrerId?: StringFilter<"Referral"> | string
+    referredId?: StringFilter<"Referral"> | string
+    points?: IntFilter<"Referral"> | number
+    createdAt?: DateTimeFilter<"Referral"> | Date | string
+  }
+
+  export type ReferralUpsertWithWhereUniqueWithoutReferredInput = {
+    where: ReferralWhereUniqueInput
+    update: XOR<ReferralUpdateWithoutReferredInput, ReferralUncheckedUpdateWithoutReferredInput>
+    create: XOR<ReferralCreateWithoutReferredInput, ReferralUncheckedCreateWithoutReferredInput>
+  }
+
+  export type ReferralUpdateWithWhereUniqueWithoutReferredInput = {
+    where: ReferralWhereUniqueInput
+    data: XOR<ReferralUpdateWithoutReferredInput, ReferralUncheckedUpdateWithoutReferredInput>
+  }
+
+  export type ReferralUpdateManyWithWhereWithoutReferredInput = {
+    where: ReferralScalarWhereInput
+    data: XOR<ReferralUpdateManyMutationInput, ReferralUncheckedUpdateManyWithoutReferredInput>
+  }
+
+  export type CustodialWalletCreateWithoutWalletInput = {
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    address: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    wallet?: WalletCreateNestedOneWithoutUserInput
-    bets?: BetCreateNestedManyWithoutUserInput
+    users?: UserCreateNestedManyWithoutCustodialWalletInput
   }
 
-  export type UserUncheckedCreateWithoutSessionsInput = {
+  export type CustodialWalletUncheckedCreateWithoutWalletInput = {
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    address: string
     createdAt?: Date | string
     updatedAt?: Date | string
-    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
-    bets?: BetUncheckedCreateNestedManyWithoutUserInput
+    users?: UserUncheckedCreateNestedManyWithoutCustodialWalletInput
   }
 
-  export type UserCreateOrConnectWithoutSessionsInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutSessionsInput, UserUncheckedCreateWithoutSessionsInput>
-  }
-
-  export type UserUpsertWithoutSessionsInput = {
-    update: XOR<UserUpdateWithoutSessionsInput, UserUncheckedUpdateWithoutSessionsInput>
-    create: XOR<UserCreateWithoutSessionsInput, UserUncheckedCreateWithoutSessionsInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutSessionsInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutSessionsInput, UserUncheckedUpdateWithoutSessionsInput>
-  }
-
-  export type UserUpdateWithoutSessionsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    wallet?: WalletUpdateOneWithoutUserNestedInput
-    bets?: BetUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutSessionsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
-    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserCreateWithoutWalletInput = {
-    id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    bets?: BetCreateNestedManyWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutWalletInput = {
-    id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    bets?: BetUncheckedCreateNestedManyWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutWalletInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutWalletInput, UserUncheckedCreateWithoutWalletInput>
+  export type CustodialWalletCreateOrConnectWithoutWalletInput = {
+    where: CustodialWalletWhereUniqueInput
+    create: XOR<CustodialWalletCreateWithoutWalletInput, CustodialWalletUncheckedCreateWithoutWalletInput>
   }
 
   export type WalletTransactionCreateWithoutWalletInput = {
@@ -9664,47 +12947,31 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type UserUpsertWithoutWalletInput = {
-    update: XOR<UserUpdateWithoutWalletInput, UserUncheckedUpdateWithoutWalletInput>
-    create: XOR<UserCreateWithoutWalletInput, UserUncheckedCreateWithoutWalletInput>
-    where?: UserWhereInput
+  export type CustodialWalletUpsertWithoutWalletInput = {
+    update: XOR<CustodialWalletUpdateWithoutWalletInput, CustodialWalletUncheckedUpdateWithoutWalletInput>
+    create: XOR<CustodialWalletCreateWithoutWalletInput, CustodialWalletUncheckedCreateWithoutWalletInput>
+    where?: CustodialWalletWhereInput
   }
 
-  export type UserUpdateToOneWithWhereWithoutWalletInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutWalletInput, UserUncheckedUpdateWithoutWalletInput>
+  export type CustodialWalletUpdateToOneWithWhereWithoutWalletInput = {
+    where?: CustodialWalletWhereInput
+    data: XOR<CustodialWalletUpdateWithoutWalletInput, CustodialWalletUncheckedUpdateWithoutWalletInput>
   }
 
-  export type UserUpdateWithoutWalletInput = {
+  export type CustodialWalletUpdateWithoutWalletInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    address?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    bets?: BetUpdateManyWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
+    users?: UserUpdateManyWithoutCustodialWalletNestedInput
   }
 
-  export type UserUncheckedUpdateWithoutWalletInput = {
+  export type CustodialWalletUncheckedUpdateWithoutWalletInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    address?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    users?: UserUncheckedUpdateManyWithoutCustodialWalletNestedInput
   }
 
   export type WalletTransactionUpsertWithWhereUniqueWithoutWalletInput = {
@@ -9728,7 +12995,7 @@ export namespace Prisma {
     OR?: WalletTransactionScalarWhereInput[]
     NOT?: WalletTransactionScalarWhereInput | WalletTransactionScalarWhereInput[]
     id?: IntFilter<"WalletTransaction"> | number
-    userId?: StringFilter<"WalletTransaction"> | string
+    custodialWalletId?: StringFilter<"WalletTransaction"> | string
     txHash?: StringNullableFilter<"WalletTransaction"> | string | null
     txType?: StringFilter<"WalletTransaction"> | string
     amount?: StringFilter<"WalletTransaction"> | string
@@ -9748,11 +13015,11 @@ export namespace Prisma {
     lastUsed?: bigint | number | null
     createdAtTimestamp?: Date | string
     updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutWalletInput
+    custodialWallet: CustodialWalletCreateNestedOneWithoutWalletInput
   }
 
   export type WalletUncheckedCreateWithoutTransactionsInput = {
-    userId: string
+    custodialWalletId: string
     address: string
     encryptedPrivateKey: string
     createdAt: bigint | number
@@ -9788,11 +13055,11 @@ export namespace Prisma {
     lastUsed?: NullableBigIntFieldUpdateOperationsInput | bigint | number | null
     createdAtTimestamp?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutWalletNestedInput
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutWalletNestedInput
   }
 
   export type WalletUncheckedUpdateWithoutTransactionsInput = {
-    userId?: StringFieldUpdateOperationsInput | string
+    custodialWalletId?: StringFieldUpdateOperationsInput | string
     address?: StringFieldUpdateOperationsInput | string
     encryptedPrivateKey?: StringFieldUpdateOperationsInput | string
     createdAt?: BigIntFieldUpdateOperationsInput | bigint | number
@@ -9805,34 +13072,34 @@ export namespace Prisma {
 
   export type UserCreateWithoutBetsInput = {
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    wallet?: WalletCreateNestedOneWithoutUserInput
-    sessions?: SessionCreateNestedManyWithoutUserInput
+    custodialWallet: CustodialWalletCreateNestedOneWithoutUsersInput
+    userTasks?: UserTaskCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralCreateNestedManyWithoutReferredInput
   }
 
   export type UserUncheckedCreateWithoutBetsInput = {
     id?: string
-    farcaster_id: string
-    farcaster_username: string
-    farcaster_pfp?: string | null
-    wallet_address?: string | null
-    server_wallet_address?: string | null
-    siweSignature?: string | null
-    siweMessage?: string | null
-    siweExpiresAt?: Date | string | null
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
     createdAt?: Date | string
     updatedAt?: Date | string
-    wallet?: WalletUncheckedCreateNestedOneWithoutUserInput
-    sessions?: SessionUncheckedCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskUncheckedCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralUncheckedCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralUncheckedCreateNestedManyWithoutReferredInput
   }
 
   export type UserCreateOrConnectWithoutBetsInput = {
@@ -9853,34 +13120,330 @@ export namespace Prisma {
 
   export type UserUpdateWithoutBetsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    wallet?: WalletUpdateOneWithoutUserNestedInput
-    sessions?: SessionUpdateManyWithoutUserNestedInput
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutUsersNestedInput
+    userTasks?: UserTaskUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUpdateManyWithoutReferredNestedInput
   }
 
   export type UserUncheckedUpdateWithoutBetsInput = {
     id?: StringFieldUpdateOperationsInput | string
-    farcaster_id?: StringFieldUpdateOperationsInput | string
-    farcaster_username?: StringFieldUpdateOperationsInput | string
-    farcaster_pfp?: NullableStringFieldUpdateOperationsInput | string | null
-    wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    server_wallet_address?: NullableStringFieldUpdateOperationsInput | string | null
-    siweSignature?: NullableStringFieldUpdateOperationsInput | string | null
-    siweMessage?: NullableStringFieldUpdateOperationsInput | string | null
-    siweExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    custodial_wallet_id?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    wallet?: WalletUncheckedUpdateOneWithoutUserNestedInput
-    sessions?: SessionUncheckedUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUncheckedUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUncheckedUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserCreateWithoutUserTasksInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    custodialWallet: CustodialWalletCreateNestedOneWithoutUsersInput
+    bets?: BetCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralCreateNestedManyWithoutReferredInput
+  }
+
+  export type UserUncheckedCreateWithoutUserTasksInput = {
+    id?: string
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bets?: BetUncheckedCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralUncheckedCreateNestedManyWithoutReferrerInput
+    referralsReceived?: ReferralUncheckedCreateNestedManyWithoutReferredInput
+  }
+
+  export type UserCreateOrConnectWithoutUserTasksInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutUserTasksInput, UserUncheckedCreateWithoutUserTasksInput>
+  }
+
+  export type UserUpsertWithoutUserTasksInput = {
+    update: XOR<UserUpdateWithoutUserTasksInput, UserUncheckedUpdateWithoutUserTasksInput>
+    create: XOR<UserCreateWithoutUserTasksInput, UserUncheckedCreateWithoutUserTasksInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutUserTasksInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutUserTasksInput, UserUncheckedUpdateWithoutUserTasksInput>
+  }
+
+  export type UserUpdateWithoutUserTasksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutUsersNestedInput
+    bets?: BetUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutUserTasksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    custodial_wallet_id?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUncheckedUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserCreateWithoutReferralsGivenInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    custodialWallet: CustodialWalletCreateNestedOneWithoutUsersInput
+    bets?: BetCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskCreateNestedManyWithoutUserInput
+    referralsReceived?: ReferralCreateNestedManyWithoutReferredInput
+  }
+
+  export type UserUncheckedCreateWithoutReferralsGivenInput = {
+    id?: string
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bets?: BetUncheckedCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskUncheckedCreateNestedManyWithoutUserInput
+    referralsReceived?: ReferralUncheckedCreateNestedManyWithoutReferredInput
+  }
+
+  export type UserCreateOrConnectWithoutReferralsGivenInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutReferralsGivenInput, UserUncheckedCreateWithoutReferralsGivenInput>
+  }
+
+  export type UserCreateWithoutReferralsReceivedInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    custodialWallet: CustodialWalletCreateNestedOneWithoutUsersInput
+    bets?: BetCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralCreateNestedManyWithoutReferrerInput
+  }
+
+  export type UserUncheckedCreateWithoutReferralsReceivedInput = {
+    id?: string
+    wallet_address: string
+    custodial_wallet_id: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    bets?: BetUncheckedCreateNestedManyWithoutUserInput
+    userTasks?: UserTaskUncheckedCreateNestedManyWithoutUserInput
+    referralsGiven?: ReferralUncheckedCreateNestedManyWithoutReferrerInput
+  }
+
+  export type UserCreateOrConnectWithoutReferralsReceivedInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutReferralsReceivedInput, UserUncheckedCreateWithoutReferralsReceivedInput>
+  }
+
+  export type UserUpsertWithoutReferralsGivenInput = {
+    update: XOR<UserUpdateWithoutReferralsGivenInput, UserUncheckedUpdateWithoutReferralsGivenInput>
+    create: XOR<UserCreateWithoutReferralsGivenInput, UserUncheckedCreateWithoutReferralsGivenInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutReferralsGivenInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutReferralsGivenInput, UserUncheckedUpdateWithoutReferralsGivenInput>
+  }
+
+  export type UserUpdateWithoutReferralsGivenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutUsersNestedInput
+    bets?: BetUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUpdateManyWithoutUserNestedInput
+    referralsReceived?: ReferralUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutReferralsGivenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    custodial_wallet_id?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUncheckedUpdateManyWithoutUserNestedInput
+    referralsReceived?: ReferralUncheckedUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserUpsertWithoutReferralsReceivedInput = {
+    update: XOR<UserUpdateWithoutReferralsReceivedInput, UserUncheckedUpdateWithoutReferralsReceivedInput>
+    create: XOR<UserCreateWithoutReferralsReceivedInput, UserUncheckedCreateWithoutReferralsReceivedInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutReferralsReceivedInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutReferralsReceivedInput, UserUncheckedUpdateWithoutReferralsReceivedInput>
+  }
+
+  export type UserUpdateWithoutReferralsReceivedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    custodialWallet?: CustodialWalletUpdateOneRequiredWithoutUsersNestedInput
+    bets?: BetUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUpdateManyWithoutReferrerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutReferralsReceivedInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    custodial_wallet_id?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUncheckedUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+  }
+
+  export type UserCreateManyCustodialWalletInput = {
+    id?: string
+    wallet_address: string
+    sessionId?: string | null
+    siwe_message?: string | null
+    siwe_signature?: string | null
+    siwe_expires_at?: Date | string | null
+    totalPoints?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUpdateWithoutCustodialWalletInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCustodialWalletInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    bets?: BetUncheckedUpdateManyWithoutUserNestedInput
+    userTasks?: UserTaskUncheckedUpdateManyWithoutUserNestedInput
+    referralsGiven?: ReferralUncheckedUpdateManyWithoutReferrerNestedInput
+    referralsReceived?: ReferralUncheckedUpdateManyWithoutReferredNestedInput
+  }
+
+  export type UserUncheckedUpdateManyWithoutCustodialWalletInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    wallet_address?: StringFieldUpdateOperationsInput | string
+    sessionId?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_message?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_signature?: NullableStringFieldUpdateOperationsInput | string | null
+    siwe_expires_at?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    totalPoints?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type BetCreateManyUserInput = {
@@ -9908,9 +13471,26 @@ export namespace Prisma {
     resolvedAt?: Date | string | null
   }
 
-  export type SessionCreateManyUserInput = {
+  export type UserTaskCreateManyUserInput = {
     id?: string
-    expiresAt: Date | string
+    taskId: string
+    completed?: boolean
+    points?: number
+    completedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type ReferralCreateManyReferrerInput = {
+    id?: string
+    referredId: string
+    points?: number
+    createdAt?: Date | string
+  }
+
+  export type ReferralCreateManyReferredInput = {
+    id?: string
+    referrerId: string
+    points?: number
     createdAt?: Date | string
   }
 
@@ -9989,21 +13569,72 @@ export namespace Prisma {
     resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
-  export type SessionUpdateWithoutUserInput = {
+  export type UserTaskUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type SessionUncheckedUpdateWithoutUserInput = {
+  export type UserTaskUncheckedUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type SessionUncheckedUpdateManyWithoutUserInput = {
+  export type UserTaskUncheckedUpdateManyWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
-    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    taskId?: StringFieldUpdateOperationsInput | string
+    completed?: BoolFieldUpdateOperationsInput | boolean
+    points?: IntFieldUpdateOperationsInput | number
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralUpdateWithoutReferrerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referred?: UserUpdateOneRequiredWithoutReferralsReceivedNestedInput
+  }
+
+  export type ReferralUncheckedUpdateWithoutReferrerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    referredId?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralUncheckedUpdateManyWithoutReferrerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    referredId?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralUpdateWithoutReferredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    referrer?: UserUpdateOneRequiredWithoutReferralsGivenNestedInput
+  }
+
+  export type ReferralUncheckedUpdateWithoutReferredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    referrerId?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReferralUncheckedUpdateManyWithoutReferredInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    referrerId?: StringFieldUpdateOperationsInput | string
+    points?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

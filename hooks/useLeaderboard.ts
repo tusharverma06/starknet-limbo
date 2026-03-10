@@ -2,11 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface LeaderboardEntry {
   rank: number;
-  fid: string;
-  username: string;
-  pfp: string | null;
+  displayName: string;
+  avatarUrl: string | null;
+  email: string | null;
+  address: string | null;
   points: number;
   referrals: number;
+  isCurrentUser?: boolean;
 }
 
 interface LeaderboardResponse {
@@ -18,15 +20,15 @@ interface LeaderboardResponse {
 /**
  * Hook to manage leaderboard data and user rank
  */
-export function useLeaderboard(userFid: string | null) {
+export function useLeaderboard(address: string | null) {
   const queryClient = useQueryClient();
 
   // Fetch leaderboard with user rank
   const { data, isLoading, error } = useQuery<LeaderboardResponse>({
-    queryKey: ["leaderboard", userFid],
+    queryKey: ["leaderboard", address],
     queryFn: async () => {
-      const url = userFid
-        ? `/api/leaderboard?fid=${userFid}&limit=100`
+      const url = address
+        ? `/api/leaderboard?address=${address}&limit=100`
         : `/api/leaderboard?limit=100`;
       const response = await fetch(url);
 
@@ -36,23 +38,23 @@ export function useLeaderboard(userFid: string | null) {
 
       return response.json();
     },
-    enabled: !!userFid,
+    enabled: !!address,
     staleTime: 30000, // 30 seconds
   });
 
   // Process referral mutation
   const processReferralMutation = useMutation({
     mutationFn: async ({
-      fid,
-      referrerFid,
+      address,
+      referrerAddress,
     }: {
-      fid: string;
-      referrerFid: string;
+      address: string;
+      referrerAddress: string;
     }) => {
       const response = await fetch("/api/referral/use", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fid, referrerFid }),
+        body: JSON.stringify({ address, referrerAddress }),
       });
 
       if (!response.ok) {

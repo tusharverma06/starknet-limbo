@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useFarcaster } from "./useFarcaster";
+import { useAccount } from "wagmi";
 
 interface Task {
   id: string;
@@ -17,9 +17,7 @@ interface TasksResponse {
   totalPoints: number;
   referralCount: number;
   user: {
-    fid: string;
-    username: string;
-    pfp: string | null;
+    address: string;
   };
 }
 
@@ -27,12 +25,10 @@ interface TasksResponse {
  * Fetch tasks for the current user
  */
 const fetchTasks = async (
-  fid: string,
-  username: string,
-  pfp: string
+  address: string
 ): Promise<TasksResponse> => {
   const response = await fetch(
-    `/api/tasks?fid=${fid}&username=${username}&pfp=${pfp}`,
+    `/api/tasks?address=${address}`,
     {
       credentials: "include",
     }
@@ -51,39 +47,14 @@ const fetchTasks = async (
 /**
  * Complete a task
  */
-const completeTask = async (fid: string, taskId: string) => {
+const completeTask = async (address: string, taskId: string) => {
   const response = await fetch("/api/tasks/complete", {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ fid, taskId }),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to complete task");
-  }
-
-  return response.json();
-};
-
-/**
- * Complete add miniapp task
- */
-const completeAddMiniapp = async (
-  fid: string,
-  url: string,
-  token: string
-) => {
-  const response = await fetch("/api/tasks/add-miniapp", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ fid, url, token }),
+    body: JSON.stringify({ address, taskId }),
   });
 
   if (!response.ok) {
@@ -98,12 +69,8 @@ const completeAddMiniapp = async (
  * Hook to manage tasks
  */
 export function useTasks() {
-  const { user } = useFarcaster();
+  const { address } = useAccount();
   const queryClient = useQueryClient();
-
-  const fid = user?.fid?.toString();
-  const username = user?.username || "anonymous";
-  const pfp = user?.pfpUrl || "";
 
   // Fetch tasks query
   const {
@@ -112,26 +79,26 @@ export function useTasks() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["tasks", fid],
-    queryFn: () => fetchTasks(fid!, username, pfp),
-    enabled: !!fid,
+    queryKey: ["tasks", address],
+    queryFn: () => fetchTasks(address!),
+    enabled: !!address,
     staleTime: 30000, // 30 seconds
   });
 
   // Complete task mutation
   const completeTaskMutation = useMutation({
     mutationFn: ({ taskId }: { taskId: string }) =>
-      completeTask(fid!, taskId),
+      completeTask(address!, taskId),
     onMutate: async (variables) => {
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["tasks", fid] });
+      await queryClient.cancelQueries({ queryKey: ["tasks", address] });
 
       // Snapshot previous value
-      const previous = queryClient.getQueryData<TasksResponse>(["tasks", fid]);
+      const previous = queryClient.getQueryData<TasksResponse>(["tasks", address]);
 
       // Optimistically update
       if (previous) {
-        queryClient.setQueryData<TasksResponse>(["tasks", fid], {
+        queryClient.setQueryData<TasksResponse>(["tasks", address], {
           ...previous,
           tasks: previous.tasks.map((t) =>
             t.id === variables.taskId
@@ -145,47 +112,14 @@ export function useTasks() {
     },
     onSuccess: (data) => {
       // Update with server data
-      queryClient.setQueryData<TasksResponse>(["tasks", fid], (old) =>
+      queryClient.setQueryData<TasksResponse>(["tasks", address], (old) =>
         old ? { ...old, totalPoints: data.totalPoints } : old
       );
     },
     onError: (_err, _variables, context) => {
       // Rollback on error
       if (context?.previous) {
-        queryClient.setQueryData(["tasks", fid], context.previous);
-      }
-    },
-  });
-
-  // Complete add miniapp mutation
-  const completeMiniappMutation = useMutation({
-    mutationFn: ({ url, token }: { url: string; token: string }) =>
-      completeAddMiniapp(fid!, url, token),
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: ["tasks", fid] });
-      const previous = queryClient.getQueryData<TasksResponse>(["tasks", fid]);
-
-      if (previous) {
-        queryClient.setQueryData<TasksResponse>(["tasks", fid], {
-          ...previous,
-          tasks: previous.tasks.map((t) =>
-            t.id === "add_miniapp"
-              ? { ...t, completed: true, completedAt: new Date().toISOString() }
-              : t
-          ),
-        });
-      }
-
-      return { previous };
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData<TasksResponse>(["tasks", fid], (old) =>
-        old ? { ...old, totalPoints: data.totalPoints } : old
-      );
-    },
-    onError: (_err, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["tasks", fid], context.previous);
+        queryClient.setQueryData(["tasks", address], context.previous);
       }
     },
   });
@@ -199,8 +133,6 @@ export function useTasks() {
     error: error as Error | null,
     refetch,
     completeTask: completeTaskMutation.mutateAsync,
-    completeMiniapp: completeMiniappMutation.mutateAsync,
-    isCompletingTask:
-      completeTaskMutation.isPending || completeMiniappMutation.isPending,
+    isCompletingTask: completeTaskMutation.isPending,
   };
 }

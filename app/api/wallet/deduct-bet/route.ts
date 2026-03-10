@@ -18,25 +18,40 @@ export async function POST(req: NextRequest) {
     if (internalApiKey !== expectedKey) {
       return NextResponse.json(
         { error: "Unauthorized - internal endpoint" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const body = await req.json();
-    const { betId, userId, encryptedPrivateKey, userWalletAddress, betAmount } =
-      body;
+    const {
+      betId,
+      userId,
+      custodialWalletId,
+      encryptedPrivateKey,
+      userWalletAddress,
+      betAmount,
+    } = body;
+
+    // userWalletAddress is actually the custodial wallet address
+    const custodialWallet = await prisma.custodialWallet.findUnique({
+      where: {
+        address: (userWalletAddress as string).toLowerCase(),
+      },
+    });
+
+    if (!custodialWallet?.id) {
+      console.error("Custodial wallet not found");
+      return NextResponse.json(
+        { error: "Custodial wallet not found" },
+        { status: 404 },
+      );
+    }
 
     // Validate inputs
-    if (
-      !betId ||
-      !userId ||
-      !encryptedPrivateKey ||
-      !userWalletAddress ||
-      !betAmount
-    ) {
+    if (!betId || !encryptedPrivateKey || !userWalletAddress || !betAmount) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,7 +87,7 @@ export async function POST(req: NextRequest) {
       // Update existing pending bet transaction with tx hash
       const existingBetTx = await prisma.walletTransaction.findFirst({
         where: {
-          userId: userId,
+          custodialWalletId: custodialWallet.id,
           txType: "bet_placed",
           status: "pending",
           txHash: null,
@@ -97,7 +112,7 @@ export async function POST(req: NextRequest) {
         // Fallback: create new transaction if pending one doesn't exist
         await prisma.walletTransaction.create({
           data: {
-            userId: userId,
+            custodialWalletId: custodialWallet.id,
             txHash: betTxHash,
             txType: "bet_placed",
             amount: betAmount,
@@ -113,7 +128,7 @@ export async function POST(req: NextRequest) {
 
       // CRITICAL: Unlock the locked balance now that blockchain confirmed
       const wallet = await prisma.wallet.findUnique({
-        where: { userId: userId },
+        where: { custodialWalletId: custodialWallet.id },
       });
 
       if (wallet) {
@@ -121,7 +136,7 @@ export async function POST(req: NextRequest) {
         const newLockedBalance = currentLockedBalance - BigInt(betAmount);
 
         await prisma.wallet.update({
-          where: { userId: userId },
+          where: { custodialWalletId: custodialWallet.id },
           data: {
             lockedBalance: newLockedBalance.toString(),
           },
@@ -155,7 +170,7 @@ export async function POST(req: NextRequest) {
 
       // Unlock the locked balance since deduction failed
       const wallet = await prisma.wallet.findUnique({
-        where: { userId: userId },
+        where: { custodialWalletId: custodialWallet.id },
       });
 
       if (wallet) {
@@ -163,7 +178,7 @@ export async function POST(req: NextRequest) {
         const newLockedBalance = currentLockedBalance - BigInt(betAmount);
 
         await prisma.wallet.update({
-          where: { userId: userId },
+          where: { custodialWalletId: custodialWallet.id },
           data: {
             lockedBalance: newLockedBalance.toString(),
           },
@@ -180,7 +195,7 @@ export async function POST(req: NextRequest) {
         error: "Failed to deduct bet",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

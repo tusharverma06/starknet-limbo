@@ -38,20 +38,20 @@ class WalletDatabase {
   }
 
   /**
-   * Create a new wallet for a user
-   * @param userId - Must be a valid User.id (create User first via getOrCreateUser)
+   * Create a new wallet with encrypted keys
+   * @param custodialWalletId - Custodial wallet ID to link to
    * @param address - Ethereum wallet address
    * @param encryptedPrivateKey - AES-256-GCM encrypted private key
    */
   async createWallet(
-    userId: string,
+    custodialWalletId: string,
     address: string,
     encryptedPrivateKey: string
   ): Promise<WalletData> {
     try {
       const wallet = await prisma.wallet.create({
         data: {
-          userId,
+          custodialWalletId,
           address,
           encryptedPrivateKey,
           createdAt: BigInt(Date.now()),
@@ -60,7 +60,7 @@ class WalletDatabase {
       });
 
       return {
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
@@ -71,7 +71,7 @@ class WalletDatabase {
     } catch (error) {
       if ((error as { code?: string }).code === "P2002") {
         // Unique constraint violation
-        throw new Error("Wallet already exists for this user");
+        throw new Error("Wallet already exists for this custodial wallet");
       }
       console.error("Failed to create wallet:", error);
       throw new Error("Failed to create wallet");
@@ -80,17 +80,11 @@ class WalletDatabase {
 
   /**
    * Create a new custodial wallet with auto-generated keys
-   * This is a convenience method that generates a wallet, encrypts the key, and stores it
-   * @param userId - Must be a valid User.id (create User first via getOrCreateUser)
+   * This creates a CustodialWallet record and its associated Wallet with encrypted keys
+   * @returns WalletData including the custodial wallet address
    */
-  async createCustodialWallet(userId: string): Promise<WalletData> {
+  async createCustodialWallet(): Promise<WalletData & { custodialWalletId: string }> {
     try {
-      // Check if wallet already exists
-      const existing = await this.getWallet(userId);
-      if (existing) {
-        throw new Error("Wallet already exists for this user");
-      }
-
       // Generate new random wallet
       console.log("🔐 Generating new custodial wallet...");
       const wallet = Wallet.createRandom();
@@ -103,22 +97,37 @@ class WalletDatabase {
       const encryptedPrivateKey = encryptPrivateKey(privateKey);
       console.log("✅ Private key encrypted");
 
-      // Store in database
-      console.log("💾 Storing wallet in database for user ID:", userId);
-      const walletData = await this.createWallet(
-        userId,
-        address,
-        encryptedPrivateKey
-      );
-
-      // Update user with server wallet address
-      await prisma.user.update({
-        where: { id: userId },
-        data: { server_wallet_address: address },
+      // Create CustodialWallet record first
+      console.log("💾 Creating custodial wallet record...");
+      const custodialWallet = await prisma.custodialWallet.create({
+        data: {
+          address,
+        },
       });
-      console.log("✅ Updated user with server wallet address");
+      console.log("✅ Custodial wallet created:", custodialWallet.id);
 
-      return walletData;
+      // Store encrypted wallet keys
+      console.log("💾 Storing encrypted wallet keys...");
+      await prisma.wallet.create({
+        data: {
+          custodialWalletId: custodialWallet.id,
+          address,
+          encryptedPrivateKey,
+          createdAt: BigInt(Date.now()),
+          balance: "0",
+        },
+      });
+      console.log("✅ Wallet keys stored");
+
+      return {
+        userId: custodialWallet.id, // For backward compatibility
+        custodialWalletId: custodialWallet.id,
+        address,
+        encryptedPrivateKey,
+        createdAt: Date.now(),
+        balance: "0",
+        lockedBalance: "0",
+      };
     } catch (error) {
       console.error("Failed to create custodial wallet:", error);
       throw error;
@@ -126,12 +135,12 @@ class WalletDatabase {
   }
 
   /**
-   * Get wallet for a user
+   * Get wallet by custodial wallet ID
    */
-  async getWallet(userId: string): Promise<WalletData | null> {
+  async getWallet(custodialWalletId: string): Promise<WalletData | null> {
     try {
       const wallet = await prisma.wallet.findUnique({
-        where: { userId },
+        where: { custodialWalletId },
       });
 
       if (!wallet) {
@@ -139,7 +148,7 @@ class WalletDatabase {
       }
 
       return {
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
@@ -167,7 +176,7 @@ class WalletDatabase {
       }
 
       return {
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
@@ -185,7 +194,7 @@ class WalletDatabase {
    * Update wallet data
    */
   async updateWallet(
-    userId: string,
+    custodialWalletId: string,
     updates: Partial<WalletData>
   ): Promise<WalletData> {
     try {
@@ -203,12 +212,12 @@ class WalletDatabase {
       }
 
       const wallet = await prisma.wallet.update({
-        where: { userId },
+        where: { custodialWalletId },
         data: updateData,
       });
 
       return {
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
@@ -228,26 +237,26 @@ class WalletDatabase {
   /**
    * Update last used timestamp
    */
-  async updateLastUsed(userId: string): Promise<void> {
-    await this.updateWallet(userId, { lastUsed: Date.now() });
+  async updateLastUsed(custodialWalletId: string): Promise<void> {
+    await this.updateWallet(custodialWalletId, { lastUsed: Date.now() });
   }
 
   /**
    * Update cached balance
    */
-  async updateBalance(userId: string, balance: string): Promise<void> {
-    await this.updateWallet(userId, { balance });
+  async updateBalance(custodialWalletId: string, balance: string): Promise<void> {
+    await this.updateWallet(custodialWalletId, { balance });
   }
 
   /**
    * Delete wallet (use with caution!)
    */
-  async deleteWallet(userId: string): Promise<void> {
+  async deleteWallet(custodialWalletId: string): Promise<void> {
     try {
       await prisma.wallet.delete({
-        where: { userId },
+        where: { custodialWalletId },
       });
-      console.log(`🗑️  Wallet deleted for user: ${userId}`);
+      console.log(`🗑️  Wallet deleted for custodial wallet: ${custodialWalletId}`);
     } catch (error) {
       if ((error as { code?: string }).code === "P2025") {
         throw new Error("Wallet not found");
@@ -267,7 +276,7 @@ class WalletDatabase {
       });
 
       return wallets.map((wallet) => ({
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: wallet.encryptedPrivateKey,
         createdAt: Number(wallet.createdAt),
@@ -353,7 +362,7 @@ class WalletDatabase {
         orderBy: { createdAt: "desc" },
         take: limit,
         select: {
-          userId: true,
+          custodialWalletId: true,
           address: true,
           createdAt: true,
           balance: true,
@@ -363,7 +372,7 @@ class WalletDatabase {
       });
 
       return wallets.map((wallet) => ({
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: "", // Not returned for security
         createdAt: Number(wallet.createdAt),
@@ -391,7 +400,7 @@ class WalletDatabase {
         orderBy: { createdAt: "desc" },
         take: 50, // Limit results
         select: {
-          userId: true,
+          custodialWalletId: true,
           address: true,
           createdAt: true,
           balance: true,
@@ -401,7 +410,7 @@ class WalletDatabase {
       });
 
       return wallets.map((wallet) => ({
-        userId: wallet.userId,
+        userId: wallet.custodialWalletId, // For backward compatibility
         address: wallet.address,
         encryptedPrivateKey: "", // Not returned for security
         createdAt: Number(wallet.createdAt),

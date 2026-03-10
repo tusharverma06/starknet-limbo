@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { parseEther, formatEther, JsonRpcProvider } from "ethers";
 import { walletDb } from "@/lib/db/wallets";
 import { getEthValueFromUsd, getEthUsdPrice } from "@/lib/utils/price";
-import { MIN_BET_USD } from "@/lib/constants";
+import { MIN_BET_USD, MAX_BET_USD, MAX_MULTIPLIER } from "@/lib/constants";
 import { prisma } from "@/lib/db/prisma";
 import { generateBetResult } from "@/lib/utils/provablyFair";
 import { createBetMessage, signBetMessage } from "@/lib/utils/messageSigning";
 import { requireAuth } from "@/lib/auth/requireAuth";
+import { processBetDeduction } from "@/lib/blockchain/processBetDeduction";
+import { processPayoutTransfer } from "@/lib/blockchain/processPayoutTransfer";
+// import { validateBet, getBankrollLimits } from "@/lib/utils/bankrollManagement";
 
 // Import cached price for reuse
 let cachedEthPrice: number | null = null;
@@ -24,16 +27,17 @@ export async function POST(req: NextRequest) {
       return authResult.error;
     }
 
-    const { user } = authResult.data;
+    const { user, body: parsedBody } = authResult.data;
 
-    const body = await req.json();
-    const { usdBetAmount, targetMultiplier } = body;
+    // Use body from auth if available, otherwise parse it
+    const body = parsedBody || (await req.json());
+    const { usdBetAmount, targetMultiplier, address } = body;
 
     // Validate inputs
     if (!usdBetAmount || !targetMultiplier) {
       return NextResponse.json(
         { error: "usdBetAmount and targetMultiplier are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -42,7 +46,7 @@ export async function POST(req: NextRequest) {
     if (isNaN(usdAmountNum) || usdAmountNum <= 0) {
       return NextResponse.json(
         { error: "Invalid USD bet amount" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -50,7 +54,7 @@ export async function POST(req: NextRequest) {
     if (usdAmountNum < MIN_BET_USD) {
       return NextResponse.json(
         { error: `Minimum bet is $${MIN_BET_USD} USD` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
     if (ethAmount <= 0) {
       return NextResponse.json(
         { error: "Failed to convert USD to ETH" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -75,7 +79,7 @@ export async function POST(req: NextRequest) {
     if (ethAmount < minimumReasonableEth) {
       console.error(
         "⚠️ Suspiciously low ETH amount. Price conversion may have failed.",
-        { usdAmount: usdAmountNum, ethAmount, minimumReasonableEth }
+        { usdAmount: usdAmountNum, ethAmount, minimumReasonableEth },
       );
       return NextResponse.json(
         {
@@ -83,7 +87,7 @@ export async function POST(req: NextRequest) {
           message:
             "Unable to get accurate ETH price. Please try again in a moment.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -92,22 +96,37 @@ export async function POST(req: NextRequest) {
     if (isNaN(multiplierNum) || multiplierNum < 1.01) {
       return NextResponse.json(
         { error: "Invalid target multiplier" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // JWT authentication already verified user and SIWE
     console.log(
       "✅ JWT authentication valid, processing bet for user:",
-      user.id
+      user.id,
     );
 
-    // Get wallet from database
-    const walletData = await walletDb.getWallet(user.id);
-    if (!walletData) {
+    const userCustodialWallet = await prisma.user.findUnique({
+      where: {
+        wallet_address: (address as string).toLowerCase(),
+      },
+      select: {
+        custodial_wallet_id: true,
+        custodialWallet: {
+          select: {
+            address: true,
+            wallet: true,
+            id: true,
+          },
+        },
+      },
+    });
+    console.log(userCustodialWallet, address);
+
+    if (!userCustodialWallet?.custodial_wallet_id) {
       return NextResponse.json(
         { error: "Wallet not found. Please create a wallet first." },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -117,17 +136,64 @@ export async function POST(req: NextRequest) {
 
     console.log("💰 Bet amount:", betAmountWei.toString());
 
+    // Simple validation: Max bet and max multiplier
+    if (usdAmountNum > MAX_BET_USD) {
+      return NextResponse.json(
+        {
+          error: "Bet exceeds maximum",
+          message: `Maximum bet allowed is $${MAX_BET_USD}`,
+        },
+        { status: 400 },
+      );
+    }
+
+    if (multiplierNum > MAX_MULTIPLIER) {
+      return NextResponse.json(
+        {
+          error: "Multiplier exceeds maximum",
+          message: `Maximum multiplier allowed is ${MAX_MULTIPLIER}x`,
+        },
+        { status: 400 },
+      );
+    }
+
+    // COMMENTED OUT: Bankroll validation (will be re-enabled later)
+    // console.log("🏦 Validating bet against house bankroll limits...");
+    // const betValidation = await validateBet(betAmountWei, multiplierNum);
+    //
+    // if (!betValidation.allowed) {
+    //   console.log("❌ Bet rejected:", betValidation.reason);
+    //
+    //   // Get current limits for error message
+    //   const limits = await getBankrollLimits();
+    //
+    //   return NextResponse.json(
+    //     {
+    //       error: "Bet exceeds bankroll limits",
+    //       message: betValidation.reason,
+    //       limits: {
+    //         maxBet: formatEther(limits.maxBet),
+    //         maxPayout: formatEther(limits.maxPayout),
+    //         houseBalance: formatEther(limits.houseBalance),
+    //       },
+    //     },
+    //     { status: 400 },
+    //   );
+    // }
+    //
+    // console.log("✅ Bet validated against bankroll limits");
+
     // Check blockchain balance (source of truth)
     const rpcUrl =
       process.env.NEXT_PUBLIC_RPC_URL ||
       `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
     const provider = new JsonRpcProvider(rpcUrl);
-    const blockchainBalance = await provider.getBalance(walletData.address);
-    const lockedBalance = BigInt(walletData.lockedBalance || "0");
-    const availableBalance = blockchainBalance - lockedBalance;
+    const blockchainBalance = await provider.getBalance(
+      userCustodialWallet.custodialWallet.address,
+    );
+    const availableBalance = blockchainBalance;
 
     console.log("💰 Blockchain balance:", blockchainBalance.toString());
-    console.log("🔒 Locked balance:", lockedBalance.toString());
     console.log("✅ Available balance:", availableBalance.toString());
 
     // Check if user has enough AVAILABLE balance
@@ -137,10 +203,9 @@ export async function POST(req: NextRequest) {
           error: "Insufficient available balance",
           required: betAmountWei.toString(),
           available: availableBalance.toString(),
-          locked: lockedBalance.toString(),
           needsToFund: (betAmountWei - availableBalance).toString(),
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -156,54 +221,41 @@ export async function POST(req: NextRequest) {
       .toString(36)
       .substring(2, 15)}`;
 
-    // CRITICAL: Lock bet amount FIRST to prevent double-spending
-    // Balance will be deducted on blockchain, but we lock it immediately
-    console.log("🔒 Locking bet amount to prevent double-spend...");
-    const currentLockedBalance = BigInt(walletData.lockedBalance || "0");
-    const newLockedBalance = currentLockedBalance + betAmountWei;
-
-    await prisma.wallet.update({
-      where: { userId: user.id },
-      data: {
-        lockedBalance: newLockedBalance.toString(),
-        lastUsed: BigInt(Date.now()),
-      },
-    });
-    console.log("✅ Bet amount locked:", betAmountWei.toString());
-
-    // Fire blockchain deduction in background (DON'T WAIT)
+    // Process blockchain deduction in background (DON'T WAIT)
     // This sends user funds → house wallet on-chain
-    console.log("🔥 Firing blockchain deduction (non-blocking)...");
-    fetch(
-      `${
-        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-      }/api/wallet/deduct-bet`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-internal-api-key":
-            process.env.INTERNAL_API_KEY || "dev-internal-key",
-        },
-        body: JSON.stringify({
-          betId: tempBetId,
-          userId: user.id,
-          encryptedPrivateKey: walletData.encryptedPrivateKey,
-          userWalletAddress: walletData.address,
-          betAmount: betAmountWei.toString(),
-        }),
+    console.log("🔥 Processing blockchain deduction (non-blocking)...");
+    processBetDeduction({
+      betId: tempBetId,
+      userId: user.id,
+      encryptedPrivateKey:
+        userCustodialWallet.custodialWallet.wallet?.encryptedPrivateKey!,
+      userWalletAddress: userCustodialWallet.custodialWallet.address,
+      betAmount: betAmountWei.toString(),
+    }).catch(async (error) => {
+      console.error("❌ Blockchain deduction failed:", error);
+      // Mark pending bet transaction as failed
+      try {
+        await prisma.walletTransaction.updateMany({
+          where: {
+            custodialWalletId: userCustodialWallet.custodialWallet.id,
+            txType: "bet_placed",
+            status: "pending",
+            txHash: null,
+          },
+          data: { status: "failed" },
+        });
+      } catch (updateError) {
+        console.error("❌ Failed to update transaction status:", updateError);
       }
-    ).catch((error) => {
-      console.error("❌ Failed to trigger blockchain deduction:", error);
     });
 
     // NOW generate provably fair result immediately (don't wait for blockchain)
     // User gets instant result, blockchain settles in background
     const result = generateBetResult(
-      walletData.address.toLowerCase(),
+      userCustodialWallet.custodialWallet.address.toLowerCase(),
       tempBetId,
       betAmountWei.toString(),
-      targetMultiplierScaled
+      targetMultiplierScaled,
     );
 
     console.log("🎯 Result generated after deduction:", {
@@ -229,7 +281,7 @@ export async function POST(req: NextRequest) {
       data: {
         id: tempBetId,
         userId: user.id,
-        playerId: walletData.address.toLowerCase(),
+        playerId: userCustodialWallet.custodialWallet.address.toLowerCase(),
         wager: betAmountWei.toString(),
         targetMultiplier: targetMultiplierScaled,
         serverSeedHash: result.serverSeedHash,
@@ -259,7 +311,7 @@ export async function POST(req: NextRequest) {
     try {
       await prisma.walletTransaction.create({
         data: {
-          userId: user.id,
+          custodialWalletId: userCustodialWallet.custodialWallet.id,
           txHash: null, // Will be updated after blockchain confirmation
           txType: "bet_placed",
           amount: betAmountWei.toString(),
@@ -268,14 +320,14 @@ export async function POST(req: NextRequest) {
         },
       });
       console.log(
-        "✅ Bet transaction recorded (pending blockchain confirmation)"
+        "✅ Bet transaction recorded (pending blockchain confirmation)",
       );
 
       // If win, also record payout transaction immediately
       if (result.outcome === "win") {
         await prisma.walletTransaction.create({
           data: {
-            userId: user.id,
+            custodialWalletId: userCustodialWallet.custodialWallet.id,
             txHash: null, // Will be updated after blockchain confirmation
             txType: "payout",
             amount: result.payout,
@@ -284,7 +336,7 @@ export async function POST(req: NextRequest) {
           },
         });
         console.log(
-          "✅ Payout transaction recorded (pending blockchain confirmation)"
+          "✅ Payout transaction recorded (pending blockchain confirmation)",
         );
       }
     } catch (txError) {
@@ -294,7 +346,10 @@ export async function POST(req: NextRequest) {
 
     // Sign bet message AFTER returning response (non-critical path)
     // We'll update the signature in background
-    signBetMessage(betMessage, walletData.encryptedPrivateKey)
+    signBetMessage(
+      betMessage,
+      userCustodialWallet?.custodialWallet?.wallet?.encryptedPrivateKey!,
+    )
       .then(async (signature) => {
         await prisma.bet.update({
           where: { id: bet.id },
@@ -305,31 +360,32 @@ export async function POST(req: NextRequest) {
       .catch((err) => console.error("⚠️ Failed to add signature:", err));
 
     console.log(
-      "⚡ Returning instant result to user (blockchain processing in background)"
+      "⚡ Returning instant result to user (blockchain processing in background)",
     );
 
-    // Step 3: Trigger payout processing if win (fire and forget)
+    // Step 3: Process payout if win (fire and forget)
     if (result.outcome === "win") {
-      fetch(
-        `${
-          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-        }/api/wallet/process-payout`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-internal-api-key":
-              process.env.INTERNAL_API_KEY || "dev-internal-key",
-          },
-          body: JSON.stringify({
-            betId: bet.id,
-            userId: user.id,
-            userWalletAddress: walletData.address,
-            payout: result.payout,
-          }),
+      processPayoutTransfer({
+        betId: bet.id,
+        userId: user.id,
+        userWalletAddress: userCustodialWallet.custodialWallet.address,
+        payout: result.payout,
+      }).catch(async (error) => {
+        console.error("❌ Payout processing failed:", error);
+        // Mark pending payout transaction as failed
+        try {
+          await prisma.walletTransaction.updateMany({
+            where: {
+              custodialWalletId: userCustodialWallet.custodialWallet.id,
+              txType: "payout",
+              status: "pending",
+              txHash: null,
+            },
+            data: { status: "failed" },
+          });
+        } catch (updateError) {
+          console.error("❌ Failed to update payout transaction status:", updateError);
         }
-      ).catch((error) => {
-        console.error("❌ Failed to trigger payout processing:", error);
       });
     }
 
@@ -360,7 +416,7 @@ export async function POST(req: NextRequest) {
         error: "Bet placement failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

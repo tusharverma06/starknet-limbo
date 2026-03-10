@@ -10,21 +10,24 @@ const MAX_REFERRALS = 50;
  * Process a referral code when a new user lands on the site.
  * Awards points to the referrer if valid.
  *
- * Request: { fid: "123", referrerFid: "456" }
+ * Request: { address: "0x...", referrerAddress: "0x..." }
  */
 export async function POST(req: NextRequest) {
   try {
-    const { fid, referrerFid } = await req.json();
+    const { address, referrerAddress } = await req.json();
 
-    if (!fid || !referrerFid) {
+    if (!address || !referrerAddress) {
       return NextResponse.json(
-        { error: "fid and referrerFid are required" },
+        { error: "address and referrerAddress are required" },
         { status: 400 }
       );
     }
 
+    const normalizedAddress = address.toLowerCase();
+    const normalizedReferrerAddress = referrerAddress.toLowerCase();
+
     // Can't refer yourself
-    if (fid === referrerFid) {
+    if (normalizedAddress === normalizedReferrerAddress) {
       return NextResponse.json(
         { error: "Cannot use your own referral code" },
         { status: 400 }
@@ -33,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     // Check if user exists
     const user = await prisma.user.findUnique({
-      where: { farcaster_id: fid },
+      where: { wallet_address: normalizedAddress },
     });
 
     if (!user) {
@@ -42,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     // Check if referrer exists
     const referrer = await prisma.user.findUnique({
-      where: { farcaster_id: referrerFid },
+      where: { wallet_address: normalizedReferrerAddress },
       include: {
         _count: {
           select: { referralsGiven: true },
@@ -107,9 +110,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       points: REFERRAL_POINTS,
-      message: `${referrer.farcaster_username} earned ${REFERRAL_POINTS} points!`,
+      message: `Referrer earned ${REFERRAL_POINTS} points!`,
     });
   } catch (error) {
+    console.error("Referral error:", error);
     return NextResponse.json(
       { error: "Failed to process referral" },
       { status: 500 }

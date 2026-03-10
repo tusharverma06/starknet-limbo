@@ -34,8 +34,7 @@ export async function POST(req: NextRequest) {
       include: {
         user: {
           select: {
-            farcaster_username: true,
-            farcaster_pfp: true,
+            wallet_address: true,
           },
         },
       },
@@ -187,8 +186,7 @@ export async function POST(req: NextRequest) {
       bet: {
         betId: bet.id,
         player: bet.playerId,
-        playerName: bet.user.farcaster_username,
-        playerPfp: bet.user.farcaster_pfp,
+        playerAddress: bet.user.wallet_address,
         betAmount: bet.wager,
         targetMultiplier: Number(bet.targetMultiplier) / 100,
         limboMultiplier: bet.limboMultiplier

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { formatEther } from "viem";
-import { getAuthHeaders } from "./useSimpleSiwe";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount } from "wagmi";
 
 interface WalletInfo {
   address: string;
@@ -45,14 +44,10 @@ interface UseServerWalletReturn {
 }
 
 /**
- * Hook for managing server-side wallets
- * @param userId - User identifier (e.g., Farcaster FID)
- * @param isAuthenticated - Whether user is authenticated (triggers wallet fetch)
+ * Hook for managing server-side custodial wallets
+ * @param address - Currently connected wallet address
  */
-export function useServerWallet(userId: string | null, isAuthenticated?: boolean): UseServerWalletReturn {
-  const { address: connectedAddress } = useAccount();
-  const { signMessageAsync } = useSignMessage();
-
+export function useServerWallet(address: string | null): UseServerWalletReturn {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [balanceInUsd, setBalanceInUsd] = useState<number | null>(null);
@@ -64,27 +59,20 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetch wallet info from server
+   * Fetch custodial wallet info for connected wallet address
    */
   const fetchWallet = useCallback(async () => {
-    if (!userId) {
+    if (!address) {
       setIsInitialLoading(false);
       return;
     }
 
     try {
-      // GET endpoint uses session auth, no userId param needed
-      const response = await fetch(`/api/wallet/create`, {
-        credentials: 'include', // Required for cookies in cross-origin contexts
+      const response = await fetch(`/api/wallet/create?wallet_address=${address}`, {
+        credentials: 'include',
       });
 
       if (response.status === 404) {
-        setWallet(null);
-        return;
-      }
-
-      if (response.status === 401) {
-        console.log("⚠️ Not authenticated - wallet fetch requires sign in");
         setWallet(null);
         return;
       }
@@ -94,59 +82,35 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
       }
 
       const data = await response.json();
-      setWallet(data);
-      setBalance(data.balance);
+      setWallet({
+        address: data.custodial_address || data.address,
+        createdAt: data.createdAt,
+        balance: data.balance || "0",
+        lastUsed: data.lastUsed,
+      });
+      setBalance(data.balance || "0");
     } catch (err) {
       console.error("Error fetching wallet:", err);
-      // Don't set error for 404 - wallet just doesn't exist yet
     } finally {
       setIsInitialLoading(false);
     }
-  }, [userId]);
+  }, [address]);
 
   /**
-   * Create a new wallet
+   * Create wallet is no longer needed - wallets are created automatically when connecting
+   * This is kept for backward compatibility but does nothing
    */
   const createWallet = useCallback(async () => {
-    if (!userId) {
-      setError("User ID is required");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/wallet/create", {
-        method: "POST",
-        credentials: 'include', // Required for cookies in cross-origin contexts
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create wallet");
-      }
-
-      await fetchWallet();
-    } catch (err) {
-      console.error("Error creating wallet:", err);
-      setError(err instanceof Error ? err.message : "Failed to create wallet");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [userId, fetchWallet]);
+    console.log("⚠️ createWallet() is deprecated - wallets are created automatically");
+    await fetchWallet();
+  }, [fetchWallet]);
 
   /**
    * Refresh wallet balance
    */
   const refreshBalance = useCallback(async (isBackgroundRefresh = false) => {
-    if (!userId) return;
+    if (!address) return;
 
-    // Use isRefreshing for background auto-refresh, isLoading for manual refresh
     if (isBackgroundRefresh) {
       setIsRefreshing(true);
     } else {
@@ -155,9 +119,8 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
     setError(null);
 
     try {
-      // Balance endpoint uses session auth, no userId param needed
-      const response = await fetch(`/api/wallet/balance`, {
-        credentials: 'include', // Required for cookies in cross-origin contexts
+      const response = await fetch(`/api/wallet/balance?address=${address}`, {
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -168,13 +131,11 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
       setBalance(data.balance);
       setBalanceInUsd(data.balanceInUsd || null);
 
-      // Update wallet info too
       if (wallet) {
         setWallet({ ...wallet, balance: data.balance });
       }
     } catch (err) {
       console.error("Error fetching balance:", err);
-      // Don't show error for background refresh
       if (!isBackgroundRefresh) {
         setError(err instanceof Error ? err.message : "Failed to fetch balance");
       }
@@ -185,16 +146,15 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
         setIsLoading(false);
       }
     }
-  }, [userId, wallet]);
+  }, [address, wallet]);
 
   /**
    * Withdraw funds from custodial wallet to any address
-   * Requires JWT authentication (session cookie)
    */
   const withdraw = useCallback(
     async (toAddress: string, usdAmount: string) => {
-      if (!userId) {
-        throw new Error("User ID is required");
+      if (!address) {
+        throw new Error("Address is required");
       }
 
       setIsWithdrawing(true);
@@ -205,15 +165,8 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
 
         const response = await fetch("/api/wallet/withdraw", {
           method: "POST",
-          credentials: 'include', // Required for cookies in cross-origin contexts
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(connectedAddress || undefined),
-          },
-          body: JSON.stringify({
-            toAddress,
-            usdAmount,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address, toAddress, usdAmount }),
         });
 
         const data = await response.json();
@@ -224,7 +177,6 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
 
         console.log("✅ Withdrawal successful:", data.txHash);
 
-        // Update balance
         setBalance(data.newBalance);
         if (wallet) {
           setWallet({ ...wallet, balance: data.newBalance });
@@ -239,7 +191,7 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
         setIsWithdrawing(false);
       }
     },
-    [userId, wallet, connectedAddress]
+    [address, wallet]
   );
 
   /**
@@ -247,8 +199,8 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
    */
   const placeBet = useCallback(
     async (usdBetAmount: string, targetMultiplier: number) => {
-      if (!userId) {
-        throw new Error("User ID is required");
+      if (!address) {
+        throw new Error("Address is required");
       }
 
       if (!wallet) {
@@ -261,12 +213,8 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
       try {
         const response = await fetch("/api/wallet/place-bet", {
           method: "POST",
-          credentials: 'include', // Required for cookies in cross-origin contexts
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(connectedAddress || undefined),
-          },
-          body: JSON.stringify({ usdBetAmount, targetMultiplier }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address, usdBetAmount, targetMultiplier }),
         });
 
         const data = await response.json();
@@ -275,7 +223,6 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
           throw new Error(data.error || "Bet placement failed");
         }
 
-        // Update balance (handle both old and new response formats)
         const newBalance = data.balance?.current || data.newBalance;
         if (newBalance) {
           setBalance(newBalance);
@@ -284,7 +231,6 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
           }
         }
 
-        // Return full data object (supports both on-chain and off-chain responses)
         return {
           txHash: data.txHash,
           requestId: data.requestId,
@@ -300,26 +246,25 @@ export function useServerWallet(userId: string | null, isAuthenticated?: boolean
         setIsPlacingBet(false);
       }
     },
-    [userId, wallet, connectedAddress]
+    [address, wallet]
   );
 
-  // Fetch wallet on mount, when userId changes, or when authentication changes
+  // Fetch wallet on mount
   useEffect(() => {
     fetchWallet();
-  }, [fetchWallet, isAuthenticated]);
+  }, [fetchWallet]);
 
   // Auto-refresh balance every 30 seconds if wallet exists
   useEffect(() => {
     if (!wallet) return;
 
     const interval = setInterval(() => {
-      refreshBalance(true); // Pass true for background refresh
+      refreshBalance(true);
     }, 30000);
 
     return () => clearInterval(interval);
   }, [wallet, refreshBalance]);
 
-  // Convert balance to ETH for display
   const balanceInEth = balance ? formatEther(BigInt(balance)) : null;
 
   return {

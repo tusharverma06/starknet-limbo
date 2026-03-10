@@ -1,37 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { verifyRequest } from "@/lib/auth/quickAuthMiddleware";
+import { requireAuth } from "@/lib/auth/requireAuth";
 
 /**
  * GET /api/wallet/pending-settlements
  * Get pending bet settlements for the current user
- * Uses Quick Auth JWT tokens for authentication
+ * Uses session authentication
  *
  * Note: With instant house wallet payouts, this will typically return 0 pending bets.
  * Only bets with status "pending" are truly unresolved.
  */
 export async function GET(req: NextRequest) {
   try {
-    // Verify Quick Auth token
-    const authResult = await verifyRequest(req);
-    if (!authResult.success || !authResult.fid) {
-      return authResult.response;
+    // Verify authentication
+    const authResult = await requireAuth(req);
+    if ("error" in authResult) {
+      return authResult.error;
     }
 
-    // Get user from database by Farcaster ID
-    const user = await prisma.user.findUnique({
-      where: { farcaster_id: authResult.fid.toString() },
-      select: { id: true },
-    });
+    const { user: authUser } = authResult.data;
 
-    if (!user?.id) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    // User is already validated by requireAuth, use the ID directly
+    const userId = authUser.id;
 
     // Get all pending bets for this user (truly unresolved bets)
     const pendingBets = await prisma.bet.findMany({
       where: {
-        userId: user.id,
+        userId: userId,
         status: "pending",
       },
       orderBy: {

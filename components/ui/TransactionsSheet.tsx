@@ -52,12 +52,35 @@ export function TransactionsSheet({
 
   const transactions = transactionsData?.transactions || [];
 
-  // Refetch when sheet opens
+  // Check if there are pending transactions older than 2 minutes
+  const hasStalePending = transactions.some((tx) => {
+    if (tx.status !== "pending") return false;
+    const txTime = new Date(tx.createdAt).getTime();
+    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+    return txTime < twoMinutesAgo;
+  });
+
+  // Cleanup stuck transactions only if we detect stale pending transactions
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && userId && hasStalePending) {
+      console.log("🧹 Detected stale pending transactions, triggering cleanup...");
+      fetch("/api/wallet/cleanup-transactions", {
+        method: "POST",
+        credentials: "include",
+      })
+        .then(() => {
+          console.log("✅ Transaction cleanup completed");
+          // Refetch to show updated status
+          setTimeout(() => refetch(), 1000);
+        })
+        .catch((error) => {
+          console.error("❌ Transaction cleanup failed:", error);
+        });
+    } else if (isOpen) {
+      // Just refetch if no cleanup needed
       refetch();
     }
-  }, [isOpen, refetch]);
+  }, [isOpen, userId, hasStalePending, refetch]);
 
   if (!userId) {
     return null;
@@ -77,26 +100,49 @@ export function TransactionsSheet({
           >
             Transactions
           </h2>
-          <button
-            onClick={onClose}
-            className="flex items-center justify-center"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => refetch()}
+              className="flex items-center justify-center hover:opacity-80 transition-opacity"
+              title="Refresh transactions"
             >
-              <path
-                d="M15 5L5 15M5 5L15 15"
-                stroke="white"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C11.6569 3 13.1569 3.57857 14.3426 4.55635M14.3426 4.55635L12 2M14.3426 4.55635L12 7"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center hover:opacity-80 transition-opacity"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M15 5L5 15M5 5L15 15"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content - Scrollable Transactions List */}

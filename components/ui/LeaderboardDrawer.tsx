@@ -8,32 +8,32 @@ import Image from "next/image";
 interface LeaderboardDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  userFid: string | null;
+  privyUserId: string | null;
 }
 
 interface LeaderboardEntry {
   rank: number;
-  fid: string;
-  username: string;
-  pfp: string | null;
+  displayName: string;
+  avatarUrl: string | null;
   points: number;
   referrals: number;
+  isCurrentUser?: boolean;
 }
 
 export function LeaderboardDrawer({
   isOpen,
   onClose,
-  userFid,
+  privyUserId,
 }: LeaderboardDrawerProps) {
   const { data, isLoading } = useQuery<{
     leaderboard: LeaderboardEntry[];
     userRank: number | null;
     total: number;
   }>({
-    queryKey: ["leaderboard", userFid],
+    queryKey: ["leaderboard", privyUserId],
     queryFn: async () => {
-      const url = userFid
-        ? `/api/leaderboard?fid=${userFid}&limit=100`
+      const url = privyUserId
+        ? `/api/leaderboard?privyUserId=${privyUserId}&limit=100`
         : `/api/leaderboard?limit=100`;
       const response = await fetch(url);
 
@@ -70,9 +70,6 @@ export function LeaderboardDrawer({
     return null;
   };
 
-  console.log(data);
-  console.log(userFid);
-  console.log("388416" === String(userFid));
   return (
     <ModalWrapper isOpen={isOpen} onClose={onClose}>
       <div className="bg-white rounded-t-3xl h-[85vh] flex flex-col overflow-hidden">
@@ -96,7 +93,7 @@ export function LeaderboardDrawer({
         </div>
 
         {/* User Rank Banner */}
-        {userFid && data?.userRank && (
+        {privyUserId && data?.userRank && (
           <div className="bg-[#cfd9ff] border-b-2 border-black p-4">
             <div className="flex items-center justify-between">
               <p
@@ -123,11 +120,11 @@ export function LeaderboardDrawer({
             </div>
           ) : data?.leaderboard && data.leaderboard.length > 0 ? (
             <div className="space-y-2 relative">
-              {data.leaderboard.map((entry) => (
+              {data.leaderboard.map((entry, i) => (
                 <div
-                  key={entry.fid}
+                  key={`${entry.rank}-${entry.displayName}-${i}`}
                   className={` border-2 border-black rounded-xl p-3 shadow-[0px_2px_0px_0px_#000000] ${
-                    entry.fid === String(userFid)
+                    entry.isCurrentUser
                       ? "bg-[#2574ff] sticky -top-1"
                       : "bg-white"
                   }`}
@@ -137,11 +134,11 @@ export function LeaderboardDrawer({
                     <div className="flex items-center justify-center w-10">
                       {getRankIcon(
                         entry.rank,
-                        entry.fid === String(userFid)
+                        entry.isCurrentUser
                       ) || (
                         <span
                           className={`text-[18px] ${
-                            entry.fid === String(userFid)
+                            entry.isCurrentUser
                               ? "text-white"
                               : "text-gray-600"
                           }`}
@@ -153,10 +150,10 @@ export function LeaderboardDrawer({
                     </div>
 
                     {/* Avatar */}
-                    {entry.pfp ? (
+                    {entry.avatarUrl ? (
                       <Image
-                        src={entry.pfp}
-                        alt={entry.username}
+                        src={entry.avatarUrl}
+                        alt={entry.displayName}
                         width={40}
                         height={40}
                         loader={({ src }) => src}
@@ -165,20 +162,20 @@ export function LeaderboardDrawer({
                     ) : (
                       <div
                         className={`w-10 h-10 rounded-full border-2 border-black flex items-center justify-center ${
-                          entry.fid === String(userFid)
+                          entry.isCurrentUser
                             ? "bg-[#fff]"
                             : "bg-[#2574ff]"
                         }`}
                       >
                         <span
                           className={`text-[16px] ${
-                            entry.fid === String(userFid)
+                            entry.isCurrentUser
                               ? "text-white"
                               : "text-black"
                           }`}
                           style={{ fontFamily: "var(--font-lilita-one)" }}
                         >
-                          {entry.username[0].toUpperCase()}
+                          {(entry.displayName || "?")[0].toUpperCase()}
                         </span>
                       </div>
                     )}
@@ -187,17 +184,17 @@ export function LeaderboardDrawer({
                     <div className="flex-1">
                       <p
                         className={`text-[16px] ${
-                          entry.fid === String(userFid)
+                          entry.isCurrentUser
                             ? "text-white/90"
                             : "text-black"
                         } leading-[1.2]`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
-                        {entry.username}
+                        {entry.displayName}
                       </p>
                       <p
                         className={`text-[12px] ${
-                          entry.fid === String(userFid)
+                          entry.isCurrentUser
                             ? "text-white/90"
                             : "text-gray-600"
                         }`}
@@ -210,7 +207,7 @@ export function LeaderboardDrawer({
                     <div className="text-right">
                       <p
                         className={`text-[20px] ${
-                          entry.fid === String(userFid)
+                          entry.isCurrentUser
                             ? "text-white/90"
                             : "text-[#2574ff]"
                         } leading-[1]`}
@@ -220,7 +217,7 @@ export function LeaderboardDrawer({
                       </p>
                       <p
                         className={`text-[12px] ${
-                          entry.fid === String(userFid)
+                          entry.isCurrentUser
                             ? "text-white/90"
                             : "text-gray-600"
                         }`}

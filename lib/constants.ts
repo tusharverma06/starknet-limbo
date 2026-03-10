@@ -4,9 +4,9 @@ import { base } from "wagmi/chains";
 export const CHAIN = base; // Base (mainnet) - Chain ID: 8453
 
 export const MIN_BET_USD = 0.1; // USD
-export const MAX_BET_USD = 1000; // USD
+export const MAX_BET_USD = 50; // USD - Temporary limit (was 1000)
 export const MIN_MULTIPLIER = 1.01;
-export const MAX_MULTIPLIER = 10000.0;
+export const MAX_MULTIPLIER = 10; // Temporary limit (was 10000)
 
 export const GAME_STATES = {
   IDLE: "idle",

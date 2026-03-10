@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (internalApiKey !== expectedKey) {
       return NextResponse.json(
         { error: "Unauthorized - internal endpoint" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (!betId || !userId || !userWalletAddress || !payout) {
       return NextResponse.json(
         { error: "Missing required parameters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
           error: "Insufficient house balance",
           message: "Payout will be processed when funds are available",
         },
-        { status: 202 } // 202 Accepted - will process later
+        { status: 202 }, // 202 Accepted - will process later
       );
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
       const payoutTxHash = await sendFromHouseWallet(
         userWalletAddress,
-        payoutAmount
+        payoutAmount,
       );
 
       console.log(`✅ Payout transaction sent: ${payoutTxHash}`);
@@ -89,10 +89,23 @@ export async function POST(req: NextRequest) {
 
       console.log(`✅ Payout transaction confirmed: ${payoutTxHash}`);
 
+      // userWalletAddress is actually the custodial wallet address
+      const custodialWallet = await prisma.custodialWallet.findUnique({
+        where: {
+          address: (userWalletAddress as string).toLowerCase(),
+        },
+      });
+
+      if (!custodialWallet?.id) {
+        console.error("Custodial wallet not found");
+        return NextResponse.json({
+          message: "couldn't process payout",
+        });
+      }
       // Update existing pending payout transaction with tx hash
       const existingPayoutTx = await prisma.walletTransaction.findFirst({
         where: {
-          userId: userId,
+          custodialWalletId: custodialWallet.id,
           txType: "payout",
           status: "pending",
           txHash: null,
@@ -117,7 +130,7 @@ export async function POST(req: NextRequest) {
         // Fallback: create new transaction if pending one doesn't exist
         await prisma.walletTransaction.create({
           data: {
-            userId: userId,
+            custodialWalletId: custodialWallet.id,
             txHash: payoutTxHash,
             txType: "payout",
             amount: payout,
@@ -167,7 +180,7 @@ export async function POST(req: NextRequest) {
         error: "Failed to process payout",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/prisma';
-import { formatEther } from 'ethers';
-import { getUsdValueFromEth } from '@/lib/utils/price';
-import { requireAuth } from '@/lib/auth/requireAuth';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db/prisma";
+import { formatEther } from "ethers";
+import { getUsdValueFromEth } from "@/lib/utils/price";
 
 /**
  * GET /api/wallet/transactions
@@ -10,26 +9,33 @@ import { requireAuth } from '@/lib/auth/requireAuth';
  */
 export async function GET(req: NextRequest) {
   try {
-    // Verify authentication
-    const authResult = await requireAuth(req);
-    if ("error" in authResult) {
-      return authResult.error;
+    // Get userId from query params (this is actually wallet address from frontend)
+    const { searchParams } = new URL(req.url);
+    const walletAddress = searchParams.get("userId");
+
+    if (!walletAddress) {
+      return NextResponse.json(
+        { error: "userId (wallet address) is required" },
+        { status: 400 },
+      );
     }
 
-    const { user } = authResult.data;
+    // Look up user by wallet address
+    const user = await prisma.user.findUnique({
+      where: { wallet_address: walletAddress.toLowerCase() },
+    });
 
-    // Get transactions for authenticated user
     if (!user) {
-      return NextResponse.json(
-        { error: 'Failed to get or create user' },
-        { status: 500 }
-      );
+      // Return empty transactions if user doesn't exist yet
+      return NextResponse.json({
+        transactions: [],
+      });
     }
 
     // Get transactions for this user
     const transactions = await prisma.walletTransaction.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: 'desc' },
+      where: { custodialWalletId: user.custodial_wallet_id },
+      orderBy: { createdAt: "desc" },
       take: 50, // Limit to last 50 transactions
     });
 
@@ -54,13 +60,13 @@ export async function GET(req: NextRequest) {
             confirmedAt: tx.confirmedAt?.toISOString(),
           };
         } catch (error) {
-          console.error('Error converting transaction amount:', error);
+          console.error("Error converting transaction amount:", error);
           // Fallback to 0 if conversion fails
           return {
             id: tx.id,
             txHash: tx.txHash,
             txType: tx.txType,
-            amount: '0.00',
+            amount: "0.00",
             status: tx.status,
             blockNumber: tx.blockNumber?.toString(),
             gasUsed: tx.gasUsed,
@@ -68,17 +74,17 @@ export async function GET(req: NextRequest) {
             confirmedAt: tx.confirmedAt?.toISOString(),
           };
         }
-      })
+      }),
     );
 
     return NextResponse.json({
-      transactions: transactionsWithUsd
+      transactions: transactionsWithUsd,
     });
   } catch (error) {
-    console.error('Get wallet transactions error:', error);
+    console.error("Get wallet transactions error:", error);
     return NextResponse.json(
-      { error: 'Failed to get wallet transactions' },
-      { status: 500 }
+      { error: "Failed to get wallet transactions" },
+      { status: 500 },
     );
   }
 }

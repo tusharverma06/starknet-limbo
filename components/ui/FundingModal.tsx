@@ -38,6 +38,7 @@ export function FundingModal({
   const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const [txAmount, setTxAmount] = useState<string>("");
 
   const { address: userAddress, isConnected, chainId } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
@@ -81,7 +82,7 @@ export function FundingModal({
 
   // Handle transaction confirmation
   useEffect(() => {
-    if (isTxConfirmed && txHash && userId) {
+    if (isTxConfirmed && txHash && userAddress && txAmount) {
       // Log the deposit transaction
       const logDeposit = async () => {
         try {
@@ -90,9 +91,9 @@ export function FundingModal({
             credentials: 'include', // Required for cookies in cross-origin contexts
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              userId,
+              wallet_address: userAddress,
               txHash,
-              amount: ethAmount,
+              amount: txAmount,
             }),
           });
 
@@ -114,7 +115,7 @@ export function FundingModal({
       // Stop loading state but don't close modal - let user close it manually
       setIsFunding(false);
     }
-  }, [isTxConfirmed, txHash, userId, ethAmount, onSuccess]);
+  }, [isTxConfirmed, txHash, userAddress, txAmount, onSuccess]);
 
   if (!isOpen) return null;
 
@@ -130,11 +131,6 @@ export function FundingModal({
     // Comprehensive validation before allowing transaction
     if (!userAddress) {
       setError("Please connect your wallet");
-      return;
-    }
-
-    if (!userId) {
-      setError("User ID is required");
       return;
     }
 
@@ -198,8 +194,9 @@ export function FundingModal({
         value: parseEther(ethAmount),
       });
 
-      // Set the transaction hash to trigger waiting for confirmation
+      // Set the transaction hash and amount to trigger waiting for confirmation
       setTxHash(hash);
+      setTxAmount(ethAmount);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Funding failed");
       setIsFunding(false);
@@ -211,6 +208,7 @@ export function FundingModal({
     setEthAmount("");
     setUsdEquivalent("0.00");
     setTxHash(undefined);
+    setTxAmount("");
     setIsFunding(false);
     setError("");
     onClose();
@@ -482,7 +480,7 @@ export function FundingModal({
               >
                 {isFunding ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     {txHash ? "Confirming..." : "Funding..."}
                   </span>
                 ) : (

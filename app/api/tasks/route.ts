@@ -3,43 +3,37 @@ import { prisma } from "@/lib/db/prisma";
 import { TASKS } from "@/lib/utils/tasks";
 
 /**
- * WAITLIST SYSTEM - GAME DISABLED
+ * TASK SYSTEM
  *
- * This is a waitlist-only system to build attraction before launch.
- * Users can complete tasks to earn points and get on the waitlist.
- *
- * No wallet addresses or blockchain interaction until they want to play.
- * Everything is based on FID (Farcaster ID) from the miniapp user context.
+ * Users can complete tasks to earn points.
+ * Everything is based on wallet address.
  *
  * Flow:
- * 1. User opens miniapp → we get FID & Farcaster profile from context
- * 2. Find or create user based on FID
+ * 1. User connects wallet
+ * 2. Find or create user based on wallet address
  * 3. Auto-create task instances for user (pre-filled, they just complete them)
  * 4. User clicks task → button appears in task container
  * 5. User clicks complete → we update status and award points
  */
 
 /**
- * GET /api/tasks?fid=123&username=john&pfp=https://...
+ * GET /api/tasks?address=0x...
  *
- * Fetches all tasks for a user based on FID.
+ * Fetches all tasks for a user based on wallet address.
  * Auto-creates user and pre-fills tasks if first time.
- * No authentication needed - this is waitlist only.
  */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const fid = searchParams.get("fid");
-    const username = searchParams.get("username") || "anonymous";
-    const pfp = searchParams.get("pfp");
+    const address = searchParams.get("address");
 
-    if (!fid) {
-      return NextResponse.json({ error: "fid is required" }, { status: 400 });
+    if (!address) {
+      return NextResponse.json({ error: "address is required" }, { status: 400 });
     }
 
-    // Find or create user based on FID (Farcaster ID)
+    // Find or create user based on wallet address
     let user = await prisma.user.findUnique({
-      where: { farcaster_id: fid },
+      where: { wallet_address: address.toLowerCase() },
       include: {
         _count: {
           select: { referralsGiven: true },
@@ -48,13 +42,14 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user) {
-      // Create new user with Farcaster details from miniapp context
-      // No wallet address yet - they'll connect when they want to play
+      // Create new user with custodial wallet
+      const { walletDb } = await import("@/lib/db/wallets");
+      const custodialWallet = await walletDb.createCustodialWallet();
+
       user = await prisma.user.create({
         data: {
-          farcaster_id: fid,
-          farcaster_username: username,
-          farcaster_pfp: pfp,
+          wallet_address: address.toLowerCase(),
+          custodial_wallet_id: custodialWallet.custodialWalletId,
           totalPoints: 0,
         },
         include: {
@@ -102,9 +97,7 @@ export async function GET(req: NextRequest) {
       totalPoints: user.totalPoints || 0,
       referralCount: user._count.referralsGiven,
       user: {
-        fid: user.farcaster_id,
-        username: user.farcaster_username,
-        pfp: user.farcaster_pfp,
+        address: user.wallet_address,
       },
     });
   } catch (error) {

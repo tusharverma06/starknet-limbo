@@ -31,7 +31,15 @@ export async function processBlockchainTransactions({
 }: ProcessBetTransactionsParams): Promise<void> {
   let betTxHash: string | null = null;
   let payoutTxHash: string | null = null;
+  const user = await prisma.user.findUnique({
+    where: {
+      wallet_address: (userWalletAddress as string).toLowerCase(),
+    },
+  });
 
+  if (!user?.custodial_wallet_id) {
+    return;
+  }
   console.log(`📦 Processing bet ${betId} - outcome: ${outcome}`);
 
   try {
@@ -67,7 +75,7 @@ export async function processBlockchainTransactions({
       // Update existing pending bet transaction with tx hash
       const existingBetTx = await prisma.walletTransaction.findFirst({
         where: {
-          userId: userId,
+          custodialWalletId: user.custodial_wallet_id,
           txType: "bet_placed",
           status: "pending",
           txHash: null,
@@ -92,7 +100,7 @@ export async function processBlockchainTransactions({
         // Fallback: create new transaction if pending one doesn't exist
         await prisma.walletTransaction.create({
           data: {
-            userId: userId,
+            custodialWalletId: user.custodial_wallet_id,
             txHash: betTxHash,
             txType: "bet_placed",
             amount: betAmount,
@@ -130,7 +138,7 @@ export async function processBlockchainTransactions({
 
       if (houseBalance < payoutAmount) {
         console.log(
-          `⚠️ Insufficient house balance - marking as pending payout`
+          `⚠️ Insufficient house balance - marking as pending payout`,
         );
         // Mark as pending payout to be processed later
         await prisma.bet.update({
@@ -144,12 +152,12 @@ export async function processBlockchainTransactions({
 
       try {
         console.log(
-          `📤 Sending payout from house to user: ${userWalletAddress}`
+          `📤 Sending payout from house to user: ${userWalletAddress}`,
         );
 
         payoutTxHash = await sendFromHouseWallet(
           userWalletAddress,
-          payoutAmount
+          payoutAmount,
         );
 
         console.log(`✅ Payout transaction sent: ${payoutTxHash}`);
@@ -172,7 +180,7 @@ export async function processBlockchainTransactions({
         // Update existing pending payout transaction with tx hash
         const existingPayoutTx = await prisma.walletTransaction.findFirst({
           where: {
-            userId: userId,
+            custodialWalletId: user.custodial_wallet_id,
             txType: "payout",
             status: "pending",
             txHash: null,
@@ -197,7 +205,7 @@ export async function processBlockchainTransactions({
           // Fallback: create new transaction if pending one doesn't exist
           await prisma.walletTransaction.create({
             data: {
-              userId: userId,
+              custodialWalletId: user.custodial_wallet_id,
               txHash: payoutTxHash,
               txType: "payout",
               amount: payout,
@@ -225,7 +233,7 @@ export async function processBlockchainTransactions({
 
     // Step 3: Mark bet as fully resolved
     console.log(
-      `✅ Updating bet status to ${outcome === "win" ? "resolved" : "complete"}`
+      `✅ Updating bet status to ${outcome === "win" ? "resolved" : "complete"}`,
     );
 
     await prisma.bet.update({

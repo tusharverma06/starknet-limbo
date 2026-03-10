@@ -33,7 +33,11 @@ export async function POST(req: NextRequest) {
     const bet = await prisma.bet.findUnique({
       where: { id: betId },
       include: {
-        user: true,
+        user: {
+          include: {
+            custodialWallet: true,
+          },
+        },
       },
     });
 
@@ -42,38 +46,40 @@ export async function POST(req: NextRequest) {
     }
 
     const user = bet.user;
+    const custodialWalletAddress = user.custodialWallet?.address || null;
 
-    // STEP 0: User Authentication & Authorization - Display signer information
-    // This is informational only - we recover who signed the authorization message
-    let signerAddress = null;
-    let signatureError = null;
+    // STEP 0: User Authentication & Authorization via SIWE
+    // Verify that the connected wallet signed a message to authorize the custodial wallet
+    let siweSignatureValid = false;
+    let signatureError: string | null = null;
 
-    if (user.siweMessage && user.siweSignature) {
+    if (user.siwe_message && user.siwe_signature && user.wallet_address) {
       try {
-        // Import verifyMessage directly to recover the signer
-        const { verifyMessage } = await import("ethers");
-        signerAddress = verifyMessage(user.siweMessage, user.siweSignature);
-        console.log("✅ Recovered signer address:", signerAddress);
+        const { verifyMessage } = await import('viem');
+        siweSignatureValid = await verifyMessage({
+          address: user.wallet_address as `0x${string}`,
+          message: user.siwe_message,
+          signature: user.siwe_signature as `0x${string}`,
+        });
+        if (!siweSignatureValid) {
+          signatureError = "SIWE signature verification failed";
+        }
       } catch (error) {
-        signatureError = "Could not recover signer from signature";
-        console.error("❌ Error recovering signer:", error);
+        signatureError = error instanceof Error ? error.message : "Unknown verification error";
+        siweSignatureValid = false;
       }
     } else {
-      signatureError =
-        "Missing SIWE authentication data (message or signature)";
-      console.error("❌ Missing SIWE data:", {
-        hasMessage: !!user.siweMessage,
-        hasSignature: !!user.siweSignature,
-      });
+      signatureError = "Missing SIWE signature or message";
     }
 
     const step0 = {
       userWalletAddress: user.wallet_address,
-      custodialWalletAddress: user.server_wallet_address,
-      signerAddress,
-      siweSignature: user.siweSignature,
-      siweMessage: user.siweMessage,
-      siweExpiresAt: user.siweExpiresAt,
+      custodialWalletAddress,
+      signerAddress: user.wallet_address, // The wallet that signed the SIWE message
+      siweSignature: user.siwe_signature,
+      siweMessage: user.siwe_message,
+      siweExpiresAt: user.siwe_expires_at,
+      siweSignatureValid,
       signatureError,
     };
 
@@ -81,7 +87,7 @@ export async function POST(req: NextRequest) {
     const step1 = {
       betMessage: bet.betMessage,
       betSignature: bet.betSignature,
-      custodialWalletAddress: user.server_wallet_address,
+      custodialWalletAddress,
     };
 
     // Parse bet message
@@ -92,11 +98,11 @@ export async function POST(req: NextRequest) {
 
     // STEP 2: Verify bet signature is signed by custodial wallet
     let betSignatureValid = false;
-    if (bet.betMessage && bet.betSignature && user.server_wallet_address) {
+    if (bet.betMessage && bet.betSignature && custodialWalletAddress) {
       betSignatureValid = verifyBetSignature(
         bet.betMessage,
         bet.betSignature,
-        user.server_wallet_address
+        custodialWalletAddress
       );
     }
 
@@ -177,7 +183,7 @@ export async function POST(req: NextRequest) {
       "@/lib/security/houseWallet"
     );
     const houseWalletAddress = getHouseWalletAddress().toLowerCase();
-    const userCustodialWallet = user.server_wallet_address?.toLowerCase();
+    const userCustodialWallet = custodialWalletAddress?.toLowerCase();
 
     if (bet.txHash) {
       try {

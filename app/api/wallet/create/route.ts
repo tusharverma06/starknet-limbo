@@ -1,131 +1,68 @@
 import { NextRequest, NextResponse } from "next/server";
 import { walletDb } from "@/lib/db/wallets";
-import { getOrCreateUser } from "@/lib/getOrCreateUser";
-import { requireAuth } from "@/lib/auth/requireAuth";
+import { prisma } from "@/lib/db/prisma";
 
 /**
- * POST /api/wallet/create
- * Create a new server-side wallet for a user
- * This is a thin API wrapper for client-side calls
+ * GET /api/wallet/create
+ * Get custodial wallet info for a connected wallet address
  */
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId } = body;
+    const { searchParams } = new URL(req.url);
+    const wallet_address = searchParams.get("wallet_address");
 
-    if (!userId) {
+    if (!wallet_address) {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "wallet_address is required" },
         { status: 400 }
       );
     }
 
-    console.log("📝 Creating wallet for Farcaster FID:", userId);
+    console.log("🔍 Fetching custodial wallet for:", wallet_address);
 
-    // Get or create user in database (userId is Farcaster FID)
-    let user;
-    try {
-      user = await getOrCreateUser(userId);
-      if (!user) {
-        console.error("❌ getOrCreateUser returned null for FID:", userId);
-        return NextResponse.json(
-          {
-            error:
-              "Failed to get or create user. Please check your Farcaster account.",
+    // Find user by wallet address
+    const user = await prisma.user.findUnique({
+      where: { wallet_address: wallet_address.toLowerCase() },
+      include: {
+        custodialWallet: {
+          include: {
+            wallet: true,
           },
-          { status: 500 }
-        );
-      }
-      console.log(
-        "✅ User retrieved/created:",
-        user.id,
-        user.farcaster_username
-      );
-    } catch (userError) {
-      console.error("❌ Error in getOrCreateUser:", userError);
-      return NextResponse.json(
-        {
-          error: "Failed to fetch user from Farcaster",
-          details:
-            userError instanceof Error ? userError.message : "Unknown error",
         },
-        { status: 500 }
-      );
-    }
-
-    // Check if wallet already exists
-    const existingWallet = await walletDb.getWallet(user.id);
-    if (existingWallet) {
-      return NextResponse.json(
-        {
-          error: "Wallet already exists",
-          address: existingWallet.address,
-        },
-        { status: 409 }
-      );
-    }
-
-    // Use the centralized wallet creation method
-    const walletData = await walletDb.createCustodialWallet(user.id);
-
-    return NextResponse.json({
-      success: true,
-      address: walletData.address,
-      createdAt: walletData.createdAt,
-    });
-  } catch (error) {
-    console.error("❌ Wallet creation error:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    const errorStack = error instanceof Error ? error.stack : undefined;
-    console.error("Error details:", {
-      message: errorMessage,
-      stack: errorStack,
-    });
-
-    return NextResponse.json(
-      {
-        error: "Failed to create wallet",
-        details: errorMessage,
       },
-      { status: 500 }
-    );
-  }
-}
+    });
 
-/**
- * GET /api/wallet/create
- * Get wallet info for authenticated user
- */
-export async function GET(req: NextRequest) {
-  try {
-    // CRITICAL: Require authentication - only return user's OWN wallet
-    const authResult = await requireAuth(req);
-    if ("error" in authResult) {
-      return authResult.error;
+    if (!user || !user.custodialWallet) {
+      return NextResponse.json(
+        { error: "Custodial wallet not found. Please connect your wallet first." },
+        { status: 404 }
+      );
     }
 
-    const { user } = authResult.data;
-
-    console.log("✅ Fetching wallet for authenticated user:", user.id);
-
-    const wallet = await walletDb.getWallet(user.id);
+    const wallet = user.custodialWallet.wallet;
 
     if (!wallet) {
-      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Wallet keys not found" },
+        { status: 404 }
+      );
     }
 
     // Return wallet info without private key
     return NextResponse.json({
+      custodial_address: user.custodialWallet.address,
       address: wallet.address,
-      createdAt: wallet.createdAt,
+      createdAt: wallet.createdAt.toString(),
       balance: wallet.balance || "0",
-      lastUsed: wallet.lastUsed,
+      lastUsed: wallet.lastUsed ? wallet.lastUsed.toString() : null,
     });
   } catch (error) {
-    console.error("Get wallet error:", error);
+    console.error("❌ Get wallet error:", error);
     return NextResponse.json(
-      { error: "Failed to get wallet" },
+      {
+        error: "Failed to get wallet",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

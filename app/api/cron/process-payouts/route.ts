@@ -33,7 +33,11 @@ export async function GET(req: NextRequest) {
         outcome: "win",
       },
       include: {
-        user: true,
+        user: {
+          include: {
+            custodialWallet: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "asc", // Process oldest first
@@ -68,14 +72,14 @@ export async function GET(req: NextRequest) {
         console.log(`💰 [CRON] Processing payout for bet ${bet.id}`);
 
         const payoutAmount = BigInt(bet.payout);
-        const userWalletAddress = bet.user.server_wallet_address;
+        const userWalletAddress = bet.user.custodialWallet?.address;
 
         if (!userWalletAddress) {
-          console.error(`❌ [CRON] No wallet address for bet ${bet.id}`);
+          console.error(`❌ [CRON] No custodial wallet address for bet ${bet.id}`);
           results.failed++;
           results.errors.push({
             betId: bet.id,
-            error: "User wallet address not found",
+            error: "Custodial wallet address not found",
           });
           continue;
         }
@@ -121,7 +125,7 @@ export async function GET(req: NextRequest) {
         // Record payout transaction
         await prisma.walletTransaction.create({
           data: {
-            userId: bet.user.id,
+            custodialWalletId: bet.user.custodial_wallet_id,
             txHash: payoutTxHash,
             txType: "payout",
             amount: bet.payout,

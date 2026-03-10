@@ -12,60 +12,64 @@ generator client {
   output   = "lib/generated/prisma-client"
 }
         
-// User model to store Farcaster identity details
+// Custodial wallet - server-managed wallet that can be shared across multiple connected wallets
+// One custodial wallet can be linked to multiple external wallets
+model CustodialWallet {
+  id                String   @id @default(cuid())
+  address           String   @unique @db.VarChar(42)  // Custodial wallet address
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  wallet            Wallet?  // Encrypted keys (via userId = CustodialWallet.id)
+  users             User[]   // Connected wallets that use this custodial wallet
+
+  @@index([address])
+  @@map("custodial_wallets")
+}
+
+// User model - represents an external wallet that connects to the app
+// Each external wallet links to ONE custodial wallet
+// Multiple external wallets can share the SAME custodial wallet
 model User {
   id                    String   @id @default(cuid())
-  farcaster_id          String   @unique @db.VarChar(255)
-  farcaster_username    String   @db.VarChar(255)
-  farcaster_pfp         String?  @db.Text
-  wallet_address        String?  @db.VarChar(42)  // Farcaster connected wallet (initial wallet for SIWE)
-  server_wallet_address String?  @db.VarChar(42)  // Server-side custodial wallet address
+  wallet_address        String   @unique @db.VarChar(42)  // External wallet address (MetaMask, etc.)
+  custodial_wallet_id   String   @map("custodial_wallet_id")  // Links to custodial wallet
+  sessionId             String?  @map("session_id") // Browser session identifier to link multiple wallets to same custodial wallet
 
-  // SIWE Authentication fields
-  siweSignature         String?  @map("siwe_signature") @db.Text         // SIWE signature authorizing custodial wallet
-  siweMessage           String?  @map("siwe_message") @db.Text         // SIWE message that was signed
-  siweExpiresAt         DateTime? @map("siwe_expires_at") // Expiration of SIWE authorization
+  // SIWE Authentication (proves external wallet authorized custodial wallet)
+  siwe_message          String?  @db.Text  // The SIWE message that was signed
+  siwe_signature        String?  @db.Text  // Signature from external wallet
+  siwe_expires_at       DateTime? @map("siwe_expires_at")  // When the SIWE session expires
 
-  // Waitlist & Gamification
-  totalPoints                Int      @default(0) @map("total_points")
-  farcasterNotificationData  String?  @map("farcaster_notification_data") @db.Text // JSON: {url, token}
+  // Gamification
+  totalPoints           Int      @default(0) @map("total_points")
 
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
-  wallet Wallet?
-  bets   Bet[]
-  sessions Session[]
-  userTasks UserTask[]
-  referralsGiven Referral[] @relation("ReferrerUser")
-  referralsReceived Referral[] @relation("ReferredUser")
+  // Relations
+  custodialWallet       CustodialWallet @relation(fields: [custodial_wallet_id], references: [id], onDelete: Cascade)
+  bets                  Bet[]
+  userTasks             UserTask[]
+  referralsGiven        Referral[] @relation("ReferrerUser")
+  referralsReceived     Referral[] @relation("ReferredUser")
 
-  @@index([farcaster_id])
-  @@index([server_wallet_address])
+  @@index([wallet_address])
+  @@index([custodial_wallet_id])
   @@index([totalPoints])
+  @@index([sessionId])
   @@map("users")
 }
 
-// Session model for cookie-based authentication
-model Session {
-  id        String   @id @default(cuid())
-  userId    String   @map("user_id")
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("sessions")
-}
-
 // Server-side wallet management (separate from Ponder's onchain data)
+// Stores encrypted private keys for custodial wallets
 model Wallet {
-  // Primary identifier (Farcaster FID or other user ID)
-  userId String @id @map("user_id") @db.VarChar(255)
+  // Links to CustodialWallet.id
+  custodialWalletId String @id @map("custodial_wallet_id") @db.VarChar(255)
 
-  // Ethereum wallet address
+  // Ethereum wallet address (should match CustodialWallet.address)
   address String @unique @db.VarChar(42)
 
   // Encrypted private key (AES-256-GCM encrypted)
@@ -88,8 +92,8 @@ model Wallet {
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions WalletTransaction[]
+  custodialWallet CustodialWallet     @relation(fields: [custodialWalletId], references: [id], onDelete: Cascade)
+  transactions    WalletTransaction[]
 
   @@index([address])
   @@index([lastUsed])
@@ -108,23 +112,22 @@ model Wallet {
 // We only manage the Wallet table for server-side wallet encryption
 // All betting data comes from Ponder's GraphQL API
 
-// Optional: Transaction history model
-// Uncomment to track transaction history
+// Transaction history for custodial wallets
 model WalletTransaction {
-  id          Int       @id @default(autoincrement())
-  userId      String    @map("user_id") @db.VarChar(255)
-  txHash      String?   @map("tx_hash") @db.VarChar(66)
-  txType      String    @map("tx_type") @db.VarChar(50) // 'bet', 'withdraw', 'deposit', 'payout'
-  amount      String    @db.VarChar(78)
-  status      String    @db.VarChar(20) // 'pending', 'confirmed', 'failed'
-  blockNumber BigInt?   @map("block_number")
-  gasUsed     String?   @map("gas_used") @db.VarChar(78)
-  createdAt   DateTime  @default(now()) @map("created_at")
-  confirmedAt DateTime? @map("confirmed_at")
+  id                Int       @id @default(autoincrement())
+  custodialWalletId String    @map("custodial_wallet_id") @db.VarChar(255)
+  txHash            String?   @map("tx_hash") @db.VarChar(66)
+  txType            String    @map("tx_type") @db.VarChar(50) // 'bet', 'withdraw', 'deposit', 'payout'
+  amount            String    @db.VarChar(78)
+  status            String    @db.VarChar(20) // 'pending', 'confirmed', 'failed'
+  blockNumber       BigInt?   @map("block_number")
+  gasUsed           String?   @map("gas_used") @db.VarChar(78)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  confirmedAt       DateTime? @map("confirmed_at")
 
-  wallet Wallet @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  wallet Wallet @relation(fields: [custodialWalletId], references: [custodialWalletId], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([custodialWalletId])
   @@index([txHash])
   @@index([createdAt])
   @@map("wallet_transactions")
@@ -174,7 +177,7 @@ model Bet {
 model UserTask {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
-  taskId      String   @map("task_id") @db.VarChar(50) // 'follow', 'cast', 'join', 'add_miniapp'
+  taskId      String   @map("task_id") @db.VarChar(50) // 'twitter_follow', 'referral'
   completed   Boolean  @default(false)
   points      Int      @default(0)
   completedAt DateTime? @map("completed_at")

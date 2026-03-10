@@ -1,63 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Middleware to verify session cookie for protected routes
- * Just checks if cookie exists - full validation happens in API routes
+ * Middleware for wallet-based authentication
+ * Authentication handled by requireAuth in each API route using wallet address
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   console.log("[Middleware] Request:", pathname);
 
-  // Skip middleware for public routes
+  // Skip middleware for public routes - auth handled client-side or in API routes
   if (
     pathname.startsWith("/_next") || // Next.js internals
-    pathname.startsWith("/siwe") || // SIWE sign-in (creates session)
-    pathname.startsWith("/signout") || // Sign out
-    pathname.startsWith("/custodial-wallet") || // Get custodial wallet before signing
-    pathname.startsWith("/api/siwe") || // Legacy SIWE route
-    pathname.startsWith("/api/signout") || // Legacy signout route
-    pathname.startsWith("/api/custodial-wallet") || // Legacy custodial wallet route
-    pathname.startsWith("/api/wallet/create") || // Create wallet (public)
     pathname.startsWith("/ping") || // Health check
-    pathname === "/game" || // Game page (handles auth client-side)
+    pathname === "/game" || // Game page
     pathname === "/" || // Home page
+    pathname === "/bets" || // Bets page
+    pathname === "/verify" || // Verify page
     pathname.includes(".") // Static files
   ) {
     return NextResponse.next();
   }
 
-  // Protected routes require session cookie (except internal background processing)
+  // Skip auth check for internal background processing routes
   if (pathname.startsWith("/api/wallet/")) {
-    // Skip auth for internal background processing routes
-    if (pathname === "/api/wallet/process-bet" ||
-        pathname === "/api/wallet/process-bet-transactions" ||
-        pathname === "/api/wallet/deduct-bet" ||
-        pathname === "/api/wallet/process-payout") {
+    if (
+      pathname === "/api/wallet/process-bet" ||
+      pathname === "/api/wallet/process-bet-transactions" ||
+      pathname === "/api/wallet/deduct-bet" ||
+      pathname === "/api/wallet/process-payout"
+    ) {
       console.log("[Middleware] Allowing internal background process");
       return NextResponse.next();
     }
-
-    const sessionId = request.cookies.get("session_id")?.value;
-
-    if (!sessionId) {
-      console.log("[Middleware] No session cookie found");
-      return NextResponse.json(
-        {
-          error: "Please sign in first",
-          code: "NO_SESSION",
-          showToast: true
-        },
-        { status: 401 }
-      );
-    }
-
-    console.log("[Middleware] Session cookie found, passing to API route for validation");
-
-    // Don't verify session in middleware - let API routes handle it
-    // This avoids Prisma edge runtime issues
-    return NextResponse.next();
   }
+
+  // For all other routes, authentication is handled by requireAuth in each API route
+  // No need for session cookies - wallet address passed as query parameter
+  console.log("[Middleware] Passing request to API route for validation");
 
   return NextResponse.next();
 }

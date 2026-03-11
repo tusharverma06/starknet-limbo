@@ -27,7 +27,11 @@ export async function POST(req: NextRequest) {
     const pendingBets = await prisma.bet.findMany({
       where: whereClause,
       include: {
-        user: true,
+        user: {
+          include: {
+            custodialWallet: true,
+          },
+        },
       },
     });
 
@@ -55,10 +59,10 @@ export async function POST(req: NextRequest) {
         console.log(`💰 Processing payout for bet ${bet.id}`);
 
         const payoutAmount = BigInt(bet.payout);
-        const userWalletAddress = bet.user.server_wallet_address;
+        const userWalletAddress = bet.user.custodialWallet.address;
 
         if (!userWalletAddress) {
-          result.error = "User wallet address not found";
+          result.error = "User custodial wallet address not found";
           results.push(result);
           continue;
         }
@@ -105,7 +109,7 @@ export async function POST(req: NextRequest) {
         // Record payout transaction
         await prisma.walletTransaction.create({
           data: {
-            userId: bet.user.id,
+            custodialWalletId: bet.user.custodial_wallet_id,
             txHash: payoutTxHash,
             txType: "payout",
             amount: bet.payout,
@@ -173,7 +177,12 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             wallet_address: true,
-            server_wallet_address: true,
+            custodial_wallet_id: true,
+            custodialWallet: {
+              select: {
+                address: true,
+              },
+            },
           },
         },
       },
@@ -193,7 +202,7 @@ export async function GET(req: NextRequest) {
         status: bet.status,
         createdAt: bet.createdAt,
         userWalletAddress: bet.user.wallet_address,
-        custodialWalletAddress: bet.user.server_wallet_address,
+        custodialWalletAddress: bet.user.custodialWallet.address,
       })),
     });
   } catch (error) {

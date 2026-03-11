@@ -123,7 +123,10 @@ export async function POST(req: NextRequest) {
     });
     console.log(userCustodialWallet, address);
 
-    if (!userCustodialWallet?.custodial_wallet_id) {
+    if (
+      !userCustodialWallet?.custodial_wallet_id ||
+      !userCustodialWallet.custodialWallet.wallet
+    ) {
       return NextResponse.json(
         { error: "Wallet not found. Please create a wallet first." },
         { status: 404 },
@@ -228,7 +231,7 @@ export async function POST(req: NextRequest) {
       betId: tempBetId,
       userId: user.id,
       encryptedPrivateKey:
-        userCustodialWallet.custodialWallet.wallet?.encryptedPrivateKey!,
+        userCustodialWallet.custodialWallet.wallet?.encryptedPrivateKey,
       userWalletAddress: userCustodialWallet.custodialWallet.address,
       betAmount: betAmountWei.toString(),
     }).catch(async (error) => {
@@ -348,7 +351,7 @@ export async function POST(req: NextRequest) {
     // We'll update the signature in background
     signBetMessage(
       betMessage,
-      userCustodialWallet?.custodialWallet?.wallet?.encryptedPrivateKey!,
+      userCustodialWallet?.custodialWallet?.wallet?.encryptedPrivateKey,
     )
       .then(async (signature) => {
         await prisma.bet.update({
@@ -384,7 +387,10 @@ export async function POST(req: NextRequest) {
             data: { status: "failed" },
           });
         } catch (updateError) {
-          console.error("❌ Failed to update payout transaction status:", updateError);
+          console.error(
+            "❌ Failed to update payout transaction status:",
+            updateError,
+          );
         }
       });
     }

@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
       betId
     );
 
+    // Get user's custodial wallet ID
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { custodial_wallet_id: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     let betTxHash: string | null = null;
     let payoutTxHash: string | null = null;
 
@@ -77,7 +87,7 @@ export async function POST(req: NextRequest) {
         // Record bet transaction
         await prisma.walletTransaction.create({
           data: {
-            userId: userId,
+            custodialWalletId: user.custodial_wallet_id,
             txHash: betTxHash,
             txType: "bet_placed",
             amount: betAmount,
@@ -170,7 +180,7 @@ export async function POST(req: NextRequest) {
           // Record payout transaction
           await prisma.walletTransaction.create({
             data: {
-              userId: userId,
+              custodialWalletId: user.custodial_wallet_id,
               txHash: payoutTxHash,
               txType: "payout",
               amount: payout,

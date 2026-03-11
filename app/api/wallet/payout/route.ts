@@ -120,7 +120,7 @@ async function payoutHandler(
       // Record transaction
       await prisma.walletTransaction.create({
         data: {
-          userId: bet.userId,
+          custodialWalletId: bet.user.custodial_wallet_id,
           txHash: txHash,
           txType: "payout",
           amount: payoutAmount.toString(),

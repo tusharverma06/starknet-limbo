@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ModalWrapper } from "./ModalWrapper";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface ActivityDrawerProps {
   isOpen: boolean;
@@ -149,11 +150,6 @@ export function ActivityDrawer({
         color: "text-red-500",
       };
     }
-  };
-
-  // Helper function to handle verify redirect
-  const handleVerify = (betId: string) => {
-    router.push(`/verify?betId=${betId}`);
   };
 
   return (
@@ -408,8 +404,9 @@ export function ActivityDrawer({
 
                         {/* Verify */}
                         <div className="w-20 bg-white flex items-center justify-center p-3">
-                          <button
-                            onClick={() => handleVerify(bet.id)}
+                          <Link
+                            href={`/verify?betId=${bet.id}`}
+                            target="_blank"
                             className="text-blue-600 hover:text-blue-800 text-sm underline cursor-pointer"
                             style={{ fontFamily: "var(--font-lilita-one)" }}
                           >
@@ -419,7 +416,7 @@ export function ActivityDrawer({
                               width={16}
                               height={16}
                             />
-                          </button>
+                          </Link>
                         </div>
                       </>
                     ) : (
@@ -463,8 +460,9 @@ export function ActivityDrawer({
 
                         {/* Verify */}
                         <div className="w-20 bg-white flex items-center justify-center p-3">
-                          <button
-                            onClick={() => handleVerify(bet.id)}
+                          <Link
+                            href={`/verify?betId=${bet.id}`}
+                            target="_blank"
                             className="text-blue-600 hover:text-blue-800 text-sm underline cursor-pointer"
                             style={{ fontFamily: "var(--font-lilita-one)" }}
                           >
@@ -474,7 +472,7 @@ export function ActivityDrawer({
                               width={16}
                               height={16}
                             />
-                          </button>
+                          </Link>
                         </div>
                       </>
                     )}

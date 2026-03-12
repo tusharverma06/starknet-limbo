@@ -462,11 +462,11 @@ export function MiniappGameBoard() {
           setTimeout(() => {
             setShowBanner(false);
             setCurrentAnimation("idle");
+            setIsPlacingBet(false);
           }, 3000);
         }, 1000);
 
         setLastResult(result.result.win, BigInt(result.result.payout));
-        setIsPlacingBet(false);
 
         // Refetch balance immediately after bet
         await refetchBalance();

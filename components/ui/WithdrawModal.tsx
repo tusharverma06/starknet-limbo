@@ -365,7 +365,7 @@ export function WithdrawModal({
                   Your withdrawal has been successfully processed.
                 </p>
                 <a
-                  href={`https://sepolia.starkscan.co/tx/${txHash}`}
+                  href={`https://starkscan.co/tx/${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full h-[36px] bg-green-600 hover:bg-green-700 text-white border-2 border-black rounded-lg transition-colors"

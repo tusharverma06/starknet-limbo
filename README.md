@@ -1,14 +1,12 @@
 # 🎲 Starknet Limbo
 
-A provably fair betting game built on **Starknet** using Starkzap SDK. Connect your Starknet wallet, fund with ETH/STRK/USDC, and play instantly with gasless transactions!
+A provably fair betting game built on **Starknet** using Starkzap SDK. Connect your Starknet wallet, fund with ETH/STRK, and play instantly with gasless transactions!
 
 **🏆 Built for the Starkzap Developer Challenge**
 
 ## 🌟 Key Features
 
 - **Starknet Wallet Integration**: Connect with Argent X or Braavos
-- **Gasless Deposits**: Pay gas fees in USDC/USDT via AVNU Paymaster
-- **Multiple Tokens**: Fund with ETH, STRK, USDC, or USDT
 - **Instant Gameplay**: Fast betting with custodial wallets
 - **Provably Fair**: Cryptographically verifiable randomness
 - **Beautiful UI**: Smooth Rive animations and polished interface
@@ -29,7 +27,7 @@ A provably fair betting game built on **Starknet** using Starkzap SDK. Connect y
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/limbo-app
+git clone https://github.com/tusharverma06/limbo-app
 cd limbo-app
 
 # Install dependencies
@@ -63,7 +61,7 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 3. **Fund Your Wallet**
    - Click your balance → "Add Funds"
-   - Choose token (ETH, STRK, USDC, or USDT)
+   - Choose token (ETH)
    - Enter amount and confirm transfer
    - Funds arrive instantly via AVNU Paymaster
 
@@ -188,40 +186,11 @@ await wallet.transfer(mainnetTokens.ETH, [
 ]);
 ```
 
----
-
-## 📚 Documentation
-
-- **[HACKATHON_SUBMISSION.md](./HACKATHON_SUBMISSION.md)** - Detailed hackathon submission
-- **[TESTING_GUIDE.md](./TESTING_GUIDE.md)** - Testing instructions
-- **[STARKZAP_FIXES_SUMMARY.md](./STARKZAP_FIXES_SUMMARY.md)** - Implementation details
-
----
-
-## 🌐 Deployment
-
-### Deploy to Vercel
-
-1. Push to GitHub
-2. Import to Vercel
-3. Add environment variables
-4. Deploy!
-
-### Production Checklist
-
-- [ ] Update `NEXT_PUBLIC_APP_URL`
-- [ ] Set secure `WALLET_ENCRYPTION_KEY`
-- [ ] Configure PostgreSQL database
-- [ ] Test wallet connections on mainnet
-- [ ] Verify transactions on Voyager
-
----
 
 ## 🔒 Security
 
 - **Encrypted Custodial Wallets**: Private keys encrypted at rest
 - **SIWE Authentication**: Sign-In with Ethereum for wallet verification
-- **AVNU Paymaster**: Trusted gas abstraction service
 - **No Private Keys Client-Side**: All signing via browser wallet extensions
 - **Starknet L2**: Built on secure Layer 2 infrastructure
 
@@ -246,19 +215,6 @@ pnpm install
 pnpm build
 ```
 
----
-
-## 🤝 Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repo
-2. Create a feature branch
-3. Make your changes
-4. Run `pnpm type-check`
-5. Submit a PR
-
----
 
 ## 📄 License
 
@@ -273,15 +229,6 @@ MIT License - see [LICENSE](./LICENSE) file
 - **AVNU Paymaster**: https://docs.avnu.fi
 - **Argent X Wallet**: https://www.argent.xyz/argent-x/
 - **Voyager Explorer**: https://voyager.online
-
----
-
-## 💬 Support
-
-- **GitHub Issues**: Report bugs and request features
-- **Starknet Discord**: https://discord.com/invite/starknet-community
-
----
 
 **Built with ❤️ using Starkzap SDK on Starknet**
 

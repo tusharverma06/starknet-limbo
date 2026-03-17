@@ -37,9 +37,12 @@ export function TransactionsSheet({
       if (!userId) {
         return { transactions: [] };
       }
-      const response = await fetch(`/api/wallet/transactions?userId=${userId}`, {
-        credentials: 'include', // Required for cookies in cross-origin contexts
-      });
+      const response = await fetch(
+        `/api/wallet/transactions?userId=${userId}`,
+        {
+          credentials: "include", // Required for cookies in cross-origin contexts
+        },
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
       }
@@ -63,7 +66,9 @@ export function TransactionsSheet({
   // Cleanup stuck transactions only if we detect stale pending transactions
   useEffect(() => {
     if (isOpen && userId && hasStalePending) {
-      console.log("🧹 Detected stale pending transactions, triggering cleanup...");
+      console.log(
+        "🧹 Detected stale pending transactions, triggering cleanup...",
+      );
       fetch("/api/wallet/cleanup-transactions", {
         method: "POST",
         credentials: "include",
@@ -176,17 +181,17 @@ export function TransactionsSheet({
                         {tx.txType === "deposit"
                           ? "Deposit"
                           : tx.txType === "withdraw"
-                          ? "Withdraw"
-                          : tx.txType === "bet_placed"
-                          ? "Bet Placed"
-                          : tx.txType === "bet_won"
-                          ? "Bet Won"
-                          : tx.txType === "bet_lost"
-                          ? "Bet Lost"
-                          : tx.txType === "payout"
-                          ? "Payout"
-                          : tx.txType.charAt(0).toUpperCase() +
-                            tx.txType.slice(1)}
+                            ? "Withdraw"
+                            : tx.txType === "bet_placed"
+                              ? "Bet Placed"
+                              : tx.txType === "bet_won"
+                                ? "Bet Won"
+                                : tx.txType === "bet_lost"
+                                  ? "Bet Lost"
+                                  : tx.txType === "payout"
+                                    ? "Payout"
+                                    : tx.txType.charAt(0).toUpperCase() +
+                                      tx.txType.slice(1)}
                       </p>
                       <p className="text-[11px] text-gray-600">
                         {formatDistanceToNow(new Date(tx.createdAt), {
@@ -197,28 +202,39 @@ export function TransactionsSheet({
                     <div className="flex flex-col items-end gap-1">
                       <p
                         className={`text-[14px] font-semibold ${
-                          tx.txType === "deposit" || tx.txType === "payout" || tx.txType === "bet_won"
+                          tx.txType === "deposit" ||
+                          tx.txType === "payout" ||
+                          tx.txType === "bet_won"
                             ? "text-green-600"
-                            : tx.txType === "withdraw" || tx.txType === "bet_placed" || tx.txType === "bet_lost"
-                            ? "text-red-600"
-                            : "text-black"
+                            : tx.txType === "withdraw" ||
+                                tx.txType === "bet_placed" ||
+                                tx.txType === "bet_lost"
+                              ? "text-red-600"
+                              : "text-black"
                         }`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
-                        {tx.txType === "deposit" || tx.txType === "payout" || tx.txType === "bet_won" ? "+" : "-"}
+                        {tx.txType === "deposit" ||
+                        tx.txType === "payout" ||
+                        tx.txType === "bet_won"
+                          ? "+"
+                          : "-"}
                         ${parseFloat(tx.amount).toFixed(2)}
                       </p>
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full ${
-                          tx.status === "confirmed" || (tx.txHash && tx.txHash.startsWith("0x"))
+                          tx.status === "confirmed" ||
+                          (tx.txHash && tx.txHash.startsWith("0x"))
                             ? "bg-green-100 text-green-700"
                             : tx.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
                         }`}
                         style={{ fontFamily: "var(--font-lilita-one)" }}
                       >
-                        {tx.txHash && tx.txHash.startsWith("0x") ? "Success" : tx.status}
+                        {tx.txHash && tx.txHash.startsWith("0x")
+                          ? "Success"
+                          : tx.status}
                       </span>
                     </div>
                   </div>
@@ -227,7 +243,7 @@ export function TransactionsSheet({
                   {tx.txHash && tx.txHash.startsWith("0x") && (
                     <div className="mt-2 pt-2 border-t border-gray-200">
                       <a
-                        href={`https://basescan.org/tx/${tx.txHash}`}
+                        href={`https://starkscan.co/tx/${tx.txHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 text-[11px] text-blue-600 hover:underline"

@@ -16,7 +16,9 @@ import {
  * Convert bigint → Uint256 (Starknet)
  */
 function toUint256(value: bigint) {
-  const low = value & (BigInt(1) << (BigInt(128) - BigInt(1)));
+  const mask = (BigInt(1) << BigInt(128)) - BigInt(1);
+  const low = value & mask;
+
   const high = value >> BigInt(128);
   return { low: low.toString(), high: high.toString() };
 }
@@ -208,9 +210,12 @@ export async function POST(req: NextRequest) {
     const ETH_ADDRESS =
       "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
+    console.log("withdrawAmount", withdrawAmount.toString());
     const { low, high } = toUint256(withdrawAmount);
+    console.log("low/high", low, high);
 
     const calldata = [toAddress, low, high];
+    console.log("calldata", calldata);
 
     console.log("📤 Sending Starknet tx...");
 
@@ -220,6 +225,7 @@ export async function POST(req: NextRequest) {
       entrypoint: "transfer",
       calldata,
     });
+    console.log("tx", tx);
 
     const txHash = tx.transaction_hash;
 

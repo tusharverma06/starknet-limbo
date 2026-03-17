@@ -130,7 +130,8 @@ function VerifyPageContent() {
   };
 
   const StatusIcon = ({ status }: { status: boolean | null }) => {
-    if (status === null) return <span className="text-yellow-400 text-sm">-</span>;
+    if (status === null)
+      return <span className="text-yellow-400 text-sm">-</span>;
     return status ? (
       <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 shrink-0" />
     ) : (
@@ -282,7 +283,7 @@ function VerifyPageContent() {
                       ? JSON.stringify(
                           JSON.parse(verificationData.steps.step1.betMessage),
                           null,
-                          2
+                          2,
                         )
                       : "N/A"}
                   </pre>
@@ -347,32 +348,46 @@ function VerifyPageContent() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-white/50">Random Value Calculation:</span>
+                  <span className="text-white/50">
+                    Random Value Calculation:
+                  </span>
                   <div className="mt-2 space-y-2">
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded">
-                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">Formula:</p>
+                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">
+                        Formula:
+                      </p>
                       <code className="block font-mono text-[10px] sm:text-xs text-blue-300 break-words">
                         randomValue = SHA256(serverSeed + playerId + betId)
                       </code>
                     </div>
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded space-y-3">
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Server Seed:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Server Seed:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
                           {verificationData.steps.step3.serverSeed || "N/A"}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Player ID:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Player ID:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
-                          {verificationData.bet.id ?
-                            JSON.parse(verificationData.steps.step1.betMessage || '{}')?.playerId ||
-                            verificationData.steps.step0.custodialWalletAddress || "N/A"
+                          {verificationData.bet.id
+                            ? JSON.parse(
+                                verificationData.steps.step1.betMessage || "{}",
+                              )?.playerId ||
+                              verificationData.steps.step0
+                                .custodialWalletAddress ||
+                              "N/A"
                             : "N/A"}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Bet ID:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Bet ID:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
                           {verificationData.bet.id}
                         </code>
@@ -389,10 +404,14 @@ function VerifyPageContent() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-white/50">Random Float (0-1) Calculation:</span>
+                  <span className="text-white/50">
+                    Random Float (0-1) Calculation:
+                  </span>
                   <div className="mt-2 space-y-2">
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded">
-                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">Formula:</p>
+                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">
+                        Formula:
+                      </p>
                       <code className="block font-mono text-[10px] sm:text-xs text-blue-300 break-words">
                         randomFloat = BigInt(randomValue) / 2^256
                       </code>
@@ -402,19 +421,27 @@ function VerifyPageContent() {
                     </div>
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded space-y-3">
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Full random value (hex):</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Full random value (hex):
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
                           {verificationData.steps.step3.randomValue}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Random value as BigInt (decimal):</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Random value as BigInt (decimal):
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
-                          {BigInt("0x" + verificationData.steps.step3.randomValue).toLocaleString()}
+                          {BigInt(
+                            "0x" + verificationData.steps.step3.randomValue,
+                          ).toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Max value (2^256):</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Max value (2^256):
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
                           115,792,089,237,316,195,423,570,985,008,687,907,853,269,984,665,640,564,039,457,584,007,913,129,639,936
                         </code>
@@ -431,46 +458,74 @@ function VerifyPageContent() {
                   </div>
                 </div>
                 <div>
-                  <span className="text-white/50">Game Number Calculation:</span>
+                  <span className="text-white/50">
+                    Game Number Calculation:
+                  </span>
                   <div className="mt-2 space-y-2">
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded">
-                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">Formula:</p>
+                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">
+                        Formula:
+                      </p>
                       <code className="block font-mono text-[10px] sm:text-xs text-blue-300 break-words">
                         gameNumber = (BigInt(randomValue) % 1,000,000,000) + 1
                       </code>
                       <p className="text-[10px] sm:text-xs text-white/40 mt-2">
-                        Converts random value to a number between 1 and 1 billion
+                        Converts random value to a number between 1 and 1
+                        billion
                       </p>
                     </div>
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded space-y-3">
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Random value (BigInt):</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Random value (BigInt):
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
-                          {BigInt("0x" + verificationData.steps.step3.randomValue).toLocaleString()}
+                          {BigInt(
+                            "0x" + verificationData.steps.step3.randomValue,
+                          ).toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Modulo 1 billion:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Modulo 1 billion:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-green-300">
-                          {(BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)).toLocaleString()}
+                          {(
+                            BigInt(
+                              "0x" + verificationData.steps.step3.randomValue,
+                            ) % BigInt(1e9)
+                          ).toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Game number (add 1):</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Game number (add 1):
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs break-all text-yellow-300">
-                          {((BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)) + BigInt(1)).toLocaleString()}
+                          {(
+                            (BigInt(
+                              "0x" + verificationData.steps.step3.randomValue,
+                            ) %
+                              BigInt(1e9)) +
+                            BigInt(1)
+                          ).toLocaleString()}
                         </code>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <span className="text-white/50">Limbo Multiplier Calculation:</span>
+                  <span className="text-white/50">
+                    Limbo Multiplier Calculation:
+                  </span>
                   <div className="mt-2 space-y-2">
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded">
-                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">Formula:</p>
+                      <p className="text-[10px] sm:text-xs text-white/50 mb-2">
+                        Formula:
+                      </p>
                       <code className="block font-mono text-[10px] sm:text-xs text-blue-300 break-words">
-                        multiplier = (1 - houseEdge) * 1,000,000,000 / gameNumber
+                        multiplier = (1 - houseEdge) * 1,000,000,000 /
+                        gameNumber
                       </code>
                       <p className="text-[10px] sm:text-xs text-white/40 mt-2">
                         Lower game numbers = higher multipliers
@@ -478,21 +533,47 @@ function VerifyPageContent() {
                     </div>
                     <div className="bg-[#1a1a1a] p-2 sm:p-3 rounded space-y-3">
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">House edge:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          House edge:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs text-green-300 break-words">
-                          {(verificationData.steps.step3.houseEdge * 100).toFixed(0)}% (factor: {1 - verificationData.steps.step3.houseEdge})
+                          {(
+                            verificationData.steps.step3.houseEdge * 100
+                          ).toFixed(0)}
+                          % (factor:{" "}
+                          {1 - verificationData.steps.step3.houseEdge})
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Game number:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Game number:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs text-green-300 break-all">
-                          {((BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)) + BigInt(1)).toLocaleString()}
+                          {(
+                            (BigInt(
+                              "0x" + verificationData.steps.step3.randomValue,
+                            ) %
+                              BigInt(1e9)) +
+                            BigInt(1)
+                          ).toLocaleString()}
                         </code>
                       </div>
                       <div>
-                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">Calculation:</p>
+                        <p className="text-[10px] sm:text-xs text-white/50 mb-1">
+                          Calculation:
+                        </p>
                         <code className="block font-mono text-[10px] sm:text-xs text-green-300 break-words">
-                          {(1 - verificationData.steps.step3.houseEdge).toFixed(2)} × 1,000,000,000 / {((BigInt("0x" + verificationData.steps.step3.randomValue) % BigInt(1e9)) + BigInt(1)).toLocaleString()}
+                          {(1 - verificationData.steps.step3.houseEdge).toFixed(
+                            2,
+                          )}{" "}
+                          × 1,000,000,000 /{" "}
+                          {(
+                            (BigInt(
+                              "0x" + verificationData.steps.step3.randomValue,
+                            ) %
+                              BigInt(1e9)) +
+                            BigInt(1)
+                          ).toLocaleString()}
                         </code>
                       </div>
                     </div>
@@ -501,7 +582,10 @@ function VerifyPageContent() {
                         Calculated Limbo Multiplier:
                       </p>
                       <code className="block font-mono text-base sm:text-lg text-yellow-300 font-bold">
-                        {verificationData.steps.step3.simulatedMultiplier.toFixed(2)}x
+                        {verificationData.steps.step3.simulatedMultiplier.toFixed(
+                          2,
+                        )}
+                        x
                       </code>
                     </div>
                   </div>
@@ -565,7 +649,7 @@ function VerifyPageContent() {
                   <span className="text-white/50">Transaction Hash:</span>
                   {verificationData.steps.step5.txHash ? (
                     <a
-                      href={`https://basescan.org/tx/${verificationData.steps.step5.txHash}`}
+                      href={`https://starkscan.co/tx/${verificationData.steps.step5.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-[10px] sm:text-xs text-blue-400 hover:text-blue-300 break-all"
@@ -608,7 +692,7 @@ function VerifyPageContent() {
                       <span className="text-[10px] sm:text-xs text-white/40 mt-1 block">
                         {(
                           Number(
-                            verificationData.steps.step5.actualTxValue || "0"
+                            verificationData.steps.step5.actualTxValue || "0",
                           ) / 1e18
                         ).toFixed(8)}{" "}
                         ETH
@@ -641,7 +725,7 @@ function VerifyPageContent() {
                       {JSON.stringify(
                         verificationData.steps.step5.transactionData,
                         null,
-                        2
+                        2,
                       )}
                     </pre>
                   </details>
@@ -673,9 +757,9 @@ function VerifyPageContent() {
                       verificationData.steps.step6.settlementVerified
                         ? true
                         : verificationData.steps.step6.requiresTxHash &&
-                          !verificationData.steps.step6.hasTxHash
-                        ? null
-                        : false
+                            !verificationData.steps.step6.hasTxHash
+                          ? null
+                          : false
                     }
                   />
                   <div className="flex-1">
@@ -685,9 +769,9 @@ function VerifyPageContent() {
                         {verificationData.steps.step6.settlementVerified
                           ? "✅ VERIFIED"
                           : verificationData.steps.step6.requiresTxHash &&
-                            !verificationData.steps.step6.hasTxHash
-                          ? "⏳ PENDING"
-                          : "❌ FAILED"}
+                              !verificationData.steps.step6.hasTxHash
+                            ? "⏳ PENDING"
+                            : "❌ FAILED"}
                       </strong>
                     </span>
                     {verificationData.steps.step6.requiresTxHash && (
@@ -736,7 +820,7 @@ function VerifyPageContent() {
                       <span className="text-[10px] sm:text-xs text-white/40 mt-1 block">
                         {(
                           Number(
-                            verificationData.steps.step5.actualTxValue || "0"
+                            verificationData.steps.step5.actualTxValue || "0",
                           ) / 1e18
                         ).toFixed(8)}{" "}
                         ETH
@@ -781,26 +865,26 @@ function VerifyPageContent() {
                 verificationData.verified
                   ? "bg-green-500/10 border-green-500/30 text-green-400"
                   : verificationData.steps.step6.requiresTxHash &&
-                    !verificationData.steps.step6.hasTxHash
-                  ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
-                  : "bg-red-500/10 border-red-500/30 text-red-400"
+                      !verificationData.steps.step6.hasTxHash
+                    ? "bg-yellow-500/10 border-yellow-500/30 text-yellow-400"
+                    : "bg-red-500/10 border-red-500/30 text-red-400"
               } border rounded-lg p-4 sm:p-6 text-center`}
             >
               <h2 className="text-xl sm:text-2xl font-bold">
                 {verificationData.verified
                   ? "✓ Verified"
                   : verificationData.steps.step6.requiresTxHash &&
-                    !verificationData.steps.step6.hasTxHash
-                  ? "⏳ Pending Settlement"
-                  : "❌ Verification Failed"}
+                      !verificationData.steps.step6.hasTxHash
+                    ? "⏳ Pending Settlement"
+                    : "❌ Verification Failed"}
               </h2>
               <p className="text-white/70 mt-2 text-sm sm:text-base">
                 {verificationData.verified
                   ? "Verification process completed. All cryptographic proofs have been checked and the payout transaction has been verified."
                   : verificationData.steps.step6.requiresTxHash &&
-                    !verificationData.steps.step6.hasTxHash
-                  ? "This bet is resolved and fair, but the payout transaction hasn't been executed yet. Check back soon."
-                  : "Some verification checks failed. Please contact support for assistance."}
+                      !verificationData.steps.step6.hasTxHash
+                    ? "This bet is resolved and fair, but the payout transaction hasn't been executed yet. Check back soon."
+                    : "Some verification checks failed. Please contact support for assistance."}
               </p>
             </div>
           </div>

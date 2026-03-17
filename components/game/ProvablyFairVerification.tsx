@@ -98,7 +98,7 @@ export function ProvablyFairVerification({
 }: ProvablyFairVerificationProps = {}) {
   const [requestId, setRequestId] = useState(initialRequestId);
   const [verification, setVerification] = useState<VerificationResponse | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -359,7 +359,7 @@ export function ProvablyFairVerification({
                     <p className="font-semibold text-green-600">
                       {verification.bet.payout
                         ? `${(Number(verification.bet.payout) / 1e18).toFixed(
-                            6
+                            6,
                           )} ETH`
                         : "0 ETH"}
                     </p>
@@ -475,7 +475,7 @@ export function ProvablyFairVerification({
                                           onClick={() =>
                                             copyToClipboard(
                                               String(sigValue),
-                                              `sig-${sigKey}`
+                                              `sig-${sigKey}`,
                                             )
                                           }
                                           className="p-1 hover:bg-gray-100 rounded flex-shrink-0"
@@ -489,7 +489,7 @@ export function ProvablyFairVerification({
                                         </button>
                                       </div>
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -522,7 +522,7 @@ export function ProvablyFairVerification({
                                           : "N/A"}
                                       </span>
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -568,7 +568,7 @@ export function ProvablyFairVerification({
                                       formattedValue = `${valueStr} wei`;
                                     } else {
                                       formattedValue = `${eth.toFixed(
-                                        6
+                                        6,
                                       )} ETH (${valueStr} wei)`;
                                     }
                                     valueClass = "font-mono text-purple-600";
@@ -627,7 +627,7 @@ export function ProvablyFairVerification({
                                             onClick={() =>
                                               copyToClipboard(
                                                 hash,
-                                                `hash-${key}`
+                                                `hash-${key}`,
                                               )
                                             }
                                             className="p-1 hover:bg-gray-100 rounded"
@@ -640,11 +640,11 @@ export function ProvablyFairVerification({
                                             )}
                                           </button>
                                           <a
-                                            href={`https://basescan.org/tx/${hash}`}
+                                            href={`https://starkscan.co/tx/${hash}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="p-1 hover:bg-gray-100 rounded"
-                                            title="View on BaseScan"
+                                            title="View on StarkScan"
                                           >
                                             <ExternalLink className="w-3 h-3 text-blue-600" />
                                           </a>

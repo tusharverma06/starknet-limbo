@@ -9,9 +9,14 @@ import { starknetWalletDb } from "@/lib/db/starknetWallets";
  *
  * Flow:
  * 1. Check if wallet already exists in database
- * 2. If yes: Return existing custodial wallet
- * 3. If no: Create new user + custodial wallet
- * 4. Optionally save SIWE signature if provided
+ * 2. If yes: Return existing custodial wallet (update SIWE if provided)
+ * 3. If no: REQUIRE SIWE signature, then create new user + custodial wallet
+ * 4. Store SIWE signature for authentication
+ *
+ * Security:
+ * - New wallets MUST provide SIWE signature (proof of ownership)
+ * - Existing wallets can optionally update SIWE signature
+ * - Returns 401 if new wallet attempts creation without SIWE
  */
 export async function POST(req: NextRequest) {
   try {
@@ -43,6 +48,27 @@ export async function POST(req: NextRequest) {
 
     if (user) {
       console.log("✅ Existing user found:", user.id);
+
+      // Check if user has valid SIWE signature
+      const hasSiwe = !!(
+        user.siwe_signature &&
+        user.siwe_message &&
+        user.siwe_expires_at &&
+        user.siwe_expires_at > new Date()
+      );
+
+      // If no SIWE signature provided and user doesn't have valid SIWE, require it
+      if (!hasSiwe && (!siwe_message || !siwe_signature)) {
+        console.log("⚠️  Existing user requires SIWE authentication");
+        return NextResponse.json(
+          {
+            error: "Authentication required",
+            message: "Please sign the message to access your wallet",
+            requires_siwe: true,
+          },
+          { status: 401 }
+        );
+      }
 
       // Attach session to existing user if provided
       if (sessionId && user.sessionId !== sessionId) {
@@ -79,6 +105,7 @@ export async function POST(req: NextRequest) {
         },
         custodial_wallet: user.custodialWallet.address,
         is_new: false,
+        has_siwe: !!(user.siwe_signature && user.siwe_message),
       });
     }
 
@@ -103,6 +130,19 @@ export async function POST(req: NextRequest) {
 
     // If no existing session user, create a new custodial wallet
     if (!custodialWalletIdToUse) {
+      // SECURITY: Require SIWE signature for new wallet creation
+      if (!siwe_message || !siwe_signature) {
+        console.log("⚠️  New wallet requires SIWE authentication");
+        return NextResponse.json(
+          {
+            error: "Authentication required",
+            message: "Please sign the message to create your wallet",
+            requires_siwe: true,
+          },
+          { status: 401 }
+        );
+      }
+
       console.log("✨ Creating new user and custodial wallet...");
 
       // Detect if wallet is Starknet (>42 chars) or EVM (42 chars)
@@ -192,6 +232,7 @@ export async function POST(req: NextRequest) {
       },
       custodial_wallet: user.custodialWallet.address,
       is_new: true,
+      has_siwe: !!(user.siwe_signature && user.siwe_message),
     });
   } catch (error) {
     console.error("❌ Error linking wallet:", error);

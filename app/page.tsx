@@ -6,7 +6,7 @@ import { MiniappGameBoard } from "@/components/game/MiniappGameBoard";
 export default function GamePage() {
   return (
     <DeploymentGate>
-      <MiniappGameBoard />;
+      <MiniappGameBoard />
     </DeploymentGate>
   );
 }

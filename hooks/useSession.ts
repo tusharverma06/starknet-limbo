@@ -22,8 +22,7 @@ export function useSession() {
       const localCompleted = localStorage.getItem(siweKey) === "true";
       if (localCompleted) {
         console.log("✅ SIWE completed (localStorage) - loading wallet info");
-        setHasCompletedSiwe(true);
-        // Load custodial wallet info
+        // Load custodial wallet info first, then set hasCompletedSiwe
         setIsLinking(true);
         fetch("/api/session/link-wallet", {
           method: "POST",
@@ -37,8 +36,15 @@ export function useSession() {
           .then((data) => {
             setCustodialWallet(data.custodial_wallet);
             console.log("✅ Custodial wallet loaded:", data.custodial_wallet);
+            // Only set hasCompletedSiwe after user is confirmed in database
+            setHasCompletedSiwe(true);
           })
-          .catch((err) => console.error("Failed to load wallet info:", err))
+          .catch((err) => {
+            console.error("Failed to load wallet info:", err);
+            // Clear localStorage if verification fails
+            localStorage.removeItem(siweKey);
+            setHasCompletedSiwe(false);
+          })
           .finally(() => setIsLinking(false));
       } else {
         // Check database for SIWE signature

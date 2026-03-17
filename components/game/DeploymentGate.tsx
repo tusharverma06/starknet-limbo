@@ -31,7 +31,7 @@ export function useDeployment() {
 }
 
 export function DeploymentGate({ children }: { children: React.ReactNode }) {
-  const { starknetWallet } = useStarknet();
+  const { starknetWallet, address } = useStarknet();
   const { hasCompletedSiwe } = useSession();
   const [deploymentStatus, setDeploymentStatus] =
     useState<DeploymentStatus | null>(null);
@@ -40,35 +40,68 @@ export function DeploymentGate({ children }: { children: React.ReactNode }) {
 
   // Fetch deployment status when authenticated
   useEffect(() => {
-    if (hasCompletedSiwe) {
+    if (hasCompletedSiwe && address) {
       fetchDeploymentStatus();
     } else {
       setIsLoading(false);
     }
-  }, [hasCompletedSiwe]);
+  }, [hasCompletedSiwe, address]);
 
   const fetchDeploymentStatus = async () => {
+    if (!address) {
+      console.log("⚠️ No address available for deployment status check");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const response = await fetch("/api/wallet/deployment-status");
+      console.log("🔍 Fetching deployment status for address:", address);
+      const url = `/api/wallet/deployment-status?address=${encodeURIComponent(address)}`;
+      console.log("📡 Fetching:", url);
+
+      const response = await fetch(url);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch deployment status");
+        const errorData = await response.json();
+        console.error("❌ Deployment status error:", {
+          status: response.status,
+          error: errorData,
+          address: address,
+        });
+        throw new Error(errorData.error || "Failed to fetch deployment status");
       }
 
       const data = await response.json();
+      console.log("✅ Deployment status:", data);
       setDeploymentStatus(data);
     } catch (error) {
-      console.error("Error fetching deployment status:", error);
+      console.error("❌ Error fetching deployment status:", error);
+      // Keep deploymentStatus as null, which will prevent needsDeployment from being true
+      setDeploymentStatus(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeploy = async () => {
-    if (!starknetWallet || !deploymentStatus) {
+    if (!starknetWallet) {
       toast.error("Please connect your wallet first");
       return;
+    }
+
+    if (!address) {
+      toast.error("Wallet address not found");
+      return;
+    }
+
+    // If we don't have deployment status yet, fetch it first
+    if (!deploymentStatus) {
+      await fetchDeploymentStatus();
+      if (!deploymentStatus) {
+        toast.error("Failed to check wallet status. Please try again.");
+        return;
+      }
     }
 
     setIsDeploying(true);
@@ -111,6 +144,12 @@ export function DeploymentGate({ children }: { children: React.ReactNode }) {
       // Tell backend to deploy the custodial wallet now
       const deployResponse = await fetch("/api/wallet/deploy", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: address,
+        }),
       });
 
       if (!deployResponse.ok) {

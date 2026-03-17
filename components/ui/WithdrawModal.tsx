@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
 import { getUsdValueFromEth } from "@/lib/utils/price";
-import { useWaitForTransactionReceipt } from "wagmi";
 import { ModalWrapper } from "./ModalWrapper";
 import Image from "next/image";
 
@@ -32,12 +31,8 @@ export function WithdrawModal({
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [error, setError] = useState("");
   const [usdBalance, setUsdBalance] = useState<number | null>(null);
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
-
-  // Wait for transaction confirmation
-  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
+  const [txHash, setTxHash] = useState<string | undefined>(undefined);
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
 
   // Convert current balance to USD
   useEffect(() => {
@@ -67,18 +62,12 @@ export function WithdrawModal({
     }
   }, [ethAmount]);
 
-  // Handle transaction confirmation
+  // Call onSuccess when withdrawal completes
   useEffect(() => {
-    if (isTxConfirmed && txHash) {
-      // Call onSuccess callback to refresh balance
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Stop loading state but don't close modal - let user close it manually
-      setIsWithdrawing(false);
+    if (withdrawSuccess && onSuccess) {
+      onSuccess();
     }
-  }, [isTxConfirmed, txHash, onSuccess]);
+  }, [withdrawSuccess, onSuccess]);
 
   if (!isOpen) return null;
 
@@ -127,8 +116,9 @@ export function WithdrawModal({
       return;
     }
 
-    if (toAddress.length !== 42 || !toAddress.startsWith("0x")) {
-      setError("Please enter a valid Ethereum address");
+    // Accept only Starknet addresses (66 chars)
+    if (!toAddress.startsWith("0x") || toAddress.length !== 66) {
+      setError("Please enter a valid Starknet address");
       return;
     }
 
@@ -139,8 +129,10 @@ export function WithdrawModal({
       // Call withdraw API (requires JWT authentication)
       const result = await onWithdraw(usdAmount.toFixed(2), toAddress);
 
-      // Set the transaction hash to trigger waiting for confirmation
-      setTxHash(result.txHash as `0x${string}`);
+      // Set the transaction hash and mark as successful
+      setTxHash(result.txHash);
+      setWithdrawSuccess(true);
+      setIsWithdrawing(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Withdrawal failed");
       setIsWithdrawing(false);
@@ -161,6 +153,7 @@ export function WithdrawModal({
     setUsdEquivalent("0.00");
     setToAddress("");
     setTxHash(undefined);
+    setWithdrawSuccess(false);
     setIsWithdrawing(false);
     setError("");
     onClose();
@@ -179,7 +172,7 @@ export function WithdrawModal({
     <ModalWrapper
       isOpen={isOpen}
       onClose={handleClose}
-      preventClose={isWithdrawing && !isTxConfirmed}
+      preventClose={isWithdrawing}
     >
       <div className="border-2 border-black rounded-xl overflow-hidden">
         {/* Header */}
@@ -191,11 +184,11 @@ export function WithdrawModal({
               textShadow: "0px 1.6px 0px #000000",
             }}
           >
-            {isTxConfirmed ? "Withdrawal Successful!" : "Withdraw Funds"}
+            {withdrawSuccess ? "Withdrawal Successful!" : "Withdraw Funds"}
           </h2>
           <button
             onClick={handleClose}
-            disabled={isWithdrawing && !isTxConfirmed}
+            disabled={isWithdrawing}
             className="flex items-center justify-center disabled:opacity-50"
           >
             <svg
@@ -313,7 +306,7 @@ export function WithdrawModal({
               className="text-[16px] text-black leading-[1.2]"
               style={{ fontFamily: "var(--font-lilita-one)" }}
             >
-              Recipient Address (any valid address)
+              Starknet Recipient Address
             </p>
             <div className="border-2 border-black rounded-xl h-[44px] px-3 py-[10px] flex items-center">
               <input
@@ -327,7 +320,7 @@ export function WithdrawModal({
               />
             </div>
             <p className="text-xs text-gray-600">
-              Enter any valid Ethereum address to receive the funds.
+              Enter a valid Starknet address to receive the funds.
             </p>
           </div>
 
@@ -343,29 +336,8 @@ export function WithdrawModal({
             </div>
           )}
 
-          {/* Transaction Status Message */}
-          {txHash && !isTxConfirmed && (
-            <div className="p-3 bg-blue-50 border-2 border-black rounded-lg">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <span
-                    className="text-sm text-blue-900 font-semibold"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    Waiting for confirmation...
-                  </span>
-                </div>
-                <p className="text-xs text-blue-700">
-                  Your withdrawal is being processed on the blockchain. This may
-                  take a few moments.
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Success Message with Explorer Link */}
-          {txHash && isTxConfirmed && (
+          {withdrawSuccess && txHash && (
             <div className="p-3 bg-green-50 border-2 border-green-500 rounded-lg">
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -393,7 +365,7 @@ export function WithdrawModal({
                   Your withdrawal has been successfully processed.
                 </p>
                 <a
-                  href={`https://sepolia.basescan.org/tx/${txHash}`}
+                  href={`https://sepolia.starkscan.co/tx/${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full h-[36px] bg-green-600 hover:bg-green-700 text-white border-2 border-black rounded-lg transition-colors"
@@ -402,7 +374,7 @@ export function WithdrawModal({
                     className="text-sm"
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    View on Explorer
+                    View on Starkscan
                   </span>
                   <svg
                     className="w-4 h-4"
@@ -423,7 +395,7 @@ export function WithdrawModal({
           )}
 
           {/* Withdraw Button */}
-          {!isTxConfirmed && (
+          {!withdrawSuccess && (
             <button
               onClick={handleWithdraw}
               disabled={
@@ -456,7 +428,7 @@ export function WithdrawModal({
           )}
 
           {/* Close Button - Show when transaction is confirmed */}
-          {isTxConfirmed && (
+          {withdrawSuccess && (
             <button
               onClick={handleClose}
               className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all"

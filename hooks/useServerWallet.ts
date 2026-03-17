@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
 import { formatEther } from "viem";
-import { useAccount } from "wagmi";
 
 interface WalletInfo {
   address: string;

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useStarknet } from "@/components/providers/StarknetProvider";
 
 interface Task {
   id: string;
@@ -69,7 +69,7 @@ const completeTask = async (address: string, taskId: string) => {
  * Hook to manage tasks
  */
 export function useTasks() {
-  const { address } = useAccount();
+  const { address } = useStarknet();
   const queryClient = useQueryClient();
 
   // Fetch tasks query

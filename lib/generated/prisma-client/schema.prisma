@@ -16,7 +16,7 @@ generator client {
 // One custodial wallet can be linked to multiple external wallets
 model CustodialWallet {
   id      String @id @default(cuid())
-  address String @unique @db.VarChar(42) // Custodial wallet address
+  address String @unique @db.VarChar(66) // Custodial wallet address (supports EVM & Starknet)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -34,7 +34,7 @@ model CustodialWallet {
 // Multiple external wallets can share the SAME custodial wallet
 model User {
   id                  String  @id @default(cuid())
-  wallet_address      String  @unique @db.VarChar(42) // External wallet address (MetaMask, etc.)
+  wallet_address      String  @unique @db.VarChar(66) // External wallet address (EVM or Starknet)
   custodial_wallet_id String  @map("custodial_wallet_id") // Links to custodial wallet
   sessionId           String? @map("session_id") // Browser session identifier to link multiple wallets to same custodial wallet
 
@@ -69,8 +69,8 @@ model Wallet {
   // Links to CustodialWallet.id
   custodialWalletId String @id @map("custodial_wallet_id") @db.VarChar(255)
 
-  // Ethereum wallet address (should match CustodialWallet.address)
-  address String @unique @db.VarChar(42)
+  // Wallet address (supports EVM & Starknet, should match CustodialWallet.address)
+  address String @unique @db.VarChar(66)
 
   // Encrypted private key (AES-256-GCM encrypted)
   encryptedPrivateKey String @map("encrypted_private_key") @db.Text
@@ -137,7 +137,7 @@ model WalletTransaction {
 model Bet {
   id               String  @id @default(cuid())
   userId           String  @map("user_id") @db.VarChar(255)
-  playerId         String  @map("player_id") @db.VarChar(42) // Wallet address (custodial wallet)
+  playerId         String  @map("player_id") @db.VarChar(66) // Wallet address (custodial wallet, supports EVM & Starknet)
   serverSeedHash   String  @map("server_seed_hash") @db.VarChar(64) // SHA256 commitment
   serverSeed       String? @map("server_seed") @db.VarChar(64) // Revealed after resolution
   clientSeed       String? @map("client_seed") @db.VarChar(64) // Optional client seed

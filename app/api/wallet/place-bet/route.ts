@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseEther, formatEther, JsonRpcProvider } from "ethers";
-import { walletDb } from "@/lib/db/wallets";
+import { parseEther, formatEther } from "ethers";
 import { getEthValueFromUsd, getEthUsdPrice } from "@/lib/utils/price";
 import { MIN_BET_USD, MAX_BET_USD, MAX_MULTIPLIER } from "@/lib/constants";
 import { prisma } from "@/lib/db/prisma";
 import { generateBetResult } from "@/lib/utils/provablyFair";
 import { createBetMessage, signBetMessage } from "@/lib/utils/messageSigning";
 import { requireAuth } from "@/lib/auth/requireAuth";
-import { processBetDeduction } from "@/lib/blockchain/processBetDeduction";
-import { processPayoutTransfer } from "@/lib/blockchain/processPayoutTransfer";
+import { processStarknetBetDeduction } from "@/lib/blockchain/starknet/processBetDeduction";
+import { processStarknetPayoutTransfer } from "@/lib/blockchain/starknet/processPayoutTransfer";
+import { getStarknetProvider } from "@/lib/starknet/provider";
 // import { validateBet, getBankrollLimits } from "@/lib/utils/bankrollManagement";
 
 // Import cached price for reuse
@@ -186,14 +186,24 @@ export async function POST(req: NextRequest) {
     //
     // console.log("✅ Bet validated against bankroll limits");
 
-    // Check blockchain balance (source of truth)
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_RPC_URL ||
-      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
-    const provider = new JsonRpcProvider(rpcUrl);
-    const blockchainBalance = await provider.getBalance(
-      userCustodialWallet.custodialWallet.address,
-    );
+    // Check Starknet blockchain balance (source of truth)
+    const custodialAddress = userCustodialWallet.custodialWallet.address;
+
+    console.log("📊 Checking Starknet balance for bet...");
+
+    const provider = getStarknetProvider();
+    const ethContractAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+
+    const balance = await provider.callContract({
+      contractAddress: ethContractAddress,
+      entrypoint: "balanceOf",
+      calldata: [custodialAddress],
+    });
+
+    const balanceLow = BigInt(balance[0]);
+    const balanceHigh = BigInt(balance[1] || 0);
+    const blockchainBalance = balanceLow + (balanceHigh << BigInt(128));
+
     const availableBalance = blockchainBalance;
 
     console.log("💰 Blockchain balance:", blockchainBalance.toString());
@@ -224,10 +234,11 @@ export async function POST(req: NextRequest) {
       .toString(36)
       .substring(2, 15)}`;
 
-    // Process blockchain deduction in background (DON'T WAIT)
-    // This sends user funds → house wallet on-chain
-    console.log("🔥 Processing blockchain deduction (non-blocking)...");
-    processBetDeduction({
+    // Process Starknet blockchain deduction in background (DON'T WAIT)
+    // This sends user funds → house wallet on Starknet
+    console.log("🔥 Processing Starknet blockchain deduction (non-blocking)...");
+
+    processStarknetBetDeduction({
       betId: tempBetId,
       userId: user.id,
       encryptedPrivateKey:
@@ -352,6 +363,7 @@ export async function POST(req: NextRequest) {
     signBetMessage(
       betMessage,
       userCustodialWallet?.custodialWallet?.wallet?.encryptedPrivateKey,
+      userCustodialWallet?.custodialWallet?.address, // Pass wallet address to detect Starknet
     )
       .then(async (signature) => {
         await prisma.bet.update({
@@ -366,9 +378,9 @@ export async function POST(req: NextRequest) {
       "⚡ Returning instant result to user (blockchain processing in background)",
     );
 
-    // Step 3: Process payout if win (fire and forget)
+    // Step 3: Process Starknet payout if win (fire and forget)
     if (result.outcome === "win") {
-      processPayoutTransfer({
+      processStarknetPayoutTransfer({
         betId: bet.id,
         userId: user.id,
         userWalletAddress: userCustodialWallet.custodialWallet.address,

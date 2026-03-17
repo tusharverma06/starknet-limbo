@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { JsonRpcProvider, formatEther } from "ethers";
+import { formatEther } from "ethers";
 import { getUsdValueFromEth } from "@/lib/utils/price";
 import { prisma } from "@/lib/db/prisma";
+import { getStarknetBalance } from "@/lib/starknet/provider";
 
 /**
  * GET /api/wallet/balance
- * Get the current balance of the custodial wallet
+ * Get the current balance of the Starknet custodial wallet
  * Fetches directly from blockchain (no locked balance tracking)
  */
 export async function GET(req: NextRequest) {
@@ -37,21 +38,25 @@ export async function GET(req: NextRequest) {
 
     const custodialAddress = user.custodialWallet.address;
 
-    // Get balance from blockchain
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_RPC_URL ||
-      `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+    // Get balance from Starknet with retry logic
+    console.log("📊 Fetching Starknet balance for:", custodialAddress);
 
-    if (!rpcUrl || rpcUrl.includes("undefined")) {
-      console.error("No valid RPC URL configured");
+    let blockchainBalance: bigint;
+
+    try {
+      blockchainBalance = await getStarknetBalance(custodialAddress);
+      console.log("✅ Starknet balance:", blockchainBalance.toString());
+    } catch (error) {
+      console.error("Failed to get Starknet balance after retries:", error);
       return NextResponse.json(
-        { error: "RPC URL not configured" },
+        {
+          error: "Failed to get Starknet balance",
+          message: "RPC endpoint temporarily unavailable. Please try again or set up Alchemy API key.",
+          hint: "Add NEXT_PUBLIC_ALCHEMY_STARKNET_KEY to your .env for better reliability"
+        },
         { status: 500 },
       );
     }
-
-    const provider = new JsonRpcProvider(rpcUrl);
-    const blockchainBalance = await provider.getBalance(custodialAddress);
 
     // Convert to ETH and USD
     const balanceInEth = parseFloat(formatEther(blockchainBalance));
@@ -59,6 +64,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       address: custodialAddress,
+      network: "starknet",
       // Blockchain balance (total available)
       balance: blockchainBalance.toString(),
       balanceInEth,

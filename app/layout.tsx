@@ -14,10 +14,10 @@ const lilitaOne = Lilita_One({
 });
 
 export const metadata: Metadata = {
-  title: "Based Limbo - Provably Fair",
+  title: "Starknet Limbo - Provably Fair",
   description: "Try your luck in a provably fair onchain betting game.",
   openGraph: {
-    title: "Based Limbo - Provably Fair",
+    title: "Starknet Limbo - Provably Fair",
     description: "Try your luck in a provably fair onchain betting game.",
     images: [`${process.env.NEXT_PUBLIC_APP_URL}/og.png`],
   },

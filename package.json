@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
@@ -19,9 +19,15 @@
     "wallet:setup": "bash scripts/setup-wallet-env.sh",
     "wallet:test": "tsx scripts/test-encryption.ts",
     "security:setup": "tsx scripts/setup-house-wallet.ts",
-    "security:test": "tsx scripts/test-security-setup.ts"
+    "security:test": "tsx scripts/test-security-setup.ts",
+    "encrypt-starknet-key": "tsx scripts/encrypt-starknet-key.ts",
+    "decrypt-custodial-key": "tsx scripts/decrypt-custodial-key.ts",
+    "deploy-custodial-wallet": "tsx scripts/deploy-custodial-wallet.ts",
+    "test-paymaster": "tsx scripts/test-paymaster.ts",
+    "test-starkzap-deploy": "tsx scripts/test-starkzap-deployment.ts"
   },
   "dependencies": {
+    "@cartridge/controller": "^0.13.9",
     "@ponder/client": "^0.13.14",
     "@ponder/react": "^0.13.14",
     "@prisma/client": "^6.17.1",
@@ -38,6 +44,7 @@
     "dotenv": "^17.2.3",
     "ethers": "^6.15.0",
     "framer-motion": "^11.13.5",
+    "get-starknet-core": "^3.3.5",
     "graphql": "^16.11.0",
     "graphql-request": "^7.3.0",
     "jose": "^6.1.1",
@@ -51,6 +58,8 @@
     "react-dom": "19.1.0",
     "siwe": "^2.3.2",
     "sonner": "^2.0.7",
+    "starknet": "^9.4.2",
+    "starkzap": "^1.0.0",
     "tailwind-merge": "^2.6.0",
     "usehooks-ts": "^3.1.1",
     "viem": "^2.21.54",

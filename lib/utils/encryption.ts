@@ -16,9 +16,9 @@ const AUTH_TAG_LENGTH = 16;
  * In production, this should be stored securely (e.g., AWS Secrets Manager, environment variable)
  */
 function getEncryptionKey(): Buffer {
-  const secret = process.env.WALLET_ENCRYPTION_SECRET;
+  const secret = process.env.WALLET_ENCRYPTION_SECRET || process.env.ENCRYPTION_KEY;
   if (!secret) {
-    throw new Error("WALLET_ENCRYPTION_SECRET environment variable is not set");
+    throw new Error("WALLET_ENCRYPTION_SECRET or ENCRYPTION_KEY environment variable is not set");
   }
 
   // Derive a consistent key from the secret

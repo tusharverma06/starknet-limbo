@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { useAccount, useSignMessage } from "wagmi";
+import { useStarknet } from "@/components/providers/StarknetProvider";
 import { getOrCreateSessionId } from "@/lib/utils/session";
 
 /**
  * Hook to manage wallet-based authentication
- * - Links connected wallet to custodial wallet automatically
- * - Handles SIWE authentication
- * - No more session IDs - wallet address is the primary identifier
+ * - Links connected Starknet wallet to custodial wallet automatically
+ * - Handles SIWE-like authentication for Starknet
+ * - Wallet address is the primary identifier
  */
 export function useSession() {
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  const { address, isConnected, starknetWallet } = useStarknet();
   const [isLinking, setIsLinking] = useState(false);
   const [custodialWallet, setCustodialWallet] = useState<string | null>(null);
   const [hasCompletedSiwe, setHasCompletedSiwe] = useState(false);
@@ -66,21 +65,21 @@ export function useSession() {
     }
   }, [address]);
 
-  // Link connected wallet to custodial wallet (with SIWE)
+  // Link connected wallet to custodial wallet (with Starknet signature)
   const linkWalletToSession = useCallback(async () => {
     if (!address) return;
 
     // Check if SIWE already completed
     const siweKey = `siwe_completed_${address.toLowerCase()}`;
     if (hasCompletedSiwe || localStorage.getItem(siweKey) === "true") {
-      console.log("⏭️ Skipping SIWE - already completed");
+      console.log("⏭️ Skipping signature - already completed");
       return;
     }
 
     setIsLinking(true);
     try {
       const sessionId = getOrCreateSessionId();
-      // STEP 1: Create/get custodial wallet first (without SIWE)
+      // STEP 1: Create/get custodial wallet first (without signature)
       console.log("🔗 Step 1: Creating/getting custodial wallet...");
       const initialResponse = await fetch("/api/session/link-wallet", {
         method: "POST",
@@ -103,37 +102,68 @@ export function useSession() {
         custodialWalletAddress,
       );
 
-      // STEP 2: Create SIWE message with custodial wallet address
-      console.log("🔏 Step 2: Creating SIWE message...");
+      // STEP 2: Create signature message for Starknet
+      console.log("🔏 Step 2: Creating signature message...");
       const domain = window.location.host;
       const origin = window.location.origin;
-      const statement = `I authorize my custodial wallet (${custodialWalletAddress}) to place bets on my behalf on ${domain}.`;
-      const issuedAt = new Date().toISOString();
-      const expirationTime = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      ).toISOString(); // 30 days
 
-      const siweMessage = `${domain} wants you to sign in with your Ethereum account:
+      // Shorten addresses to fit Starknet felt constraints (31 chars max)
+      // Format: "0x123...abc" (fits in 14 chars including 0x)
+      const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+      const shortCustodial = `${custodialWalletAddress.slice(0, 6)}...${custodialWalletAddress.slice(-4)}`;
+      const nonce = Math.random().toString(36).substring(2, 9); // 7 chars
+      const timestamp = Date.now().toString(); // Unix timestamp
+
+      // Full message for storage (contains complete context)
+      const siweMessage = `${domain} wants you to sign in with your Starknet account:
 ${address}
 
-${statement}
+I authorize custodial wallet ${custodialWalletAddress} to place bets on my behalf.
 
 URI: ${origin}
-Version: 1
-Chain ID: 1
-Nonce: ${Math.random().toString(36).substring(7)}
-Issued At: ${issuedAt}
-Expiration Time: ${expirationTime}
-Resources:
-- Custodial Wallet: ${custodialWalletAddress}`;
+Nonce: ${nonce}
+Timestamp: ${timestamp}`;
 
-      // STEP 3: Sign the SIWE message
+      // STEP 3: Sign the message with Starknet wallet
       console.log("✍️ Step 3: Requesting signature...");
-      const signature = await signMessageAsync({ message: siweMessage });
+
+      if (!starknetWallet?.account) {
+        throw new Error("Starknet wallet not available");
+      }
+
+      // Typed data with shortened addresses and proper types
+      const signature = await starknetWallet.account.signMessage({
+        domain: {
+          name: domain, // Use string type
+          version: "1",
+        },
+        message: {
+          action: "Authorize betting",
+          wallet: shortAddress, // Shortened wallet
+          custodial: shortCustodial, // Shortened custodial
+          nonce: nonce, // Short nonce
+          timestamp: timestamp, // Timestamp as string
+        },
+        primaryType: "Message",
+        types: {
+          StarkNetDomain: [
+            { name: "name", type: "string" },
+            { name: "version", type: "felt" },
+          ],
+          Message: [
+            { name: "action", type: "string" },
+            { name: "wallet", type: "felt" },
+            { name: "custodial", type: "felt" },
+            { name: "nonce", type: "felt" },
+            { name: "timestamp", type: "felt" },
+          ],
+        },
+      });
+
       console.log("✅ Message signed");
 
-      // STEP 4: Update with SIWE data
-      console.log("💾 Step 4: Saving SIWE signature...");
+      // STEP 4: Update with signature data
+      console.log("💾 Step 4: Saving signature...");
       const finalResponse = await fetch("/api/session/link-wallet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,23 +171,23 @@ Resources:
           wallet_address: address,
           session_id: sessionId,
           siwe_message: siweMessage,
-          siwe_signature: signature,
+          siwe_signature: JSON.stringify(signature),
         }),
       });
 
       if (!finalResponse.ok) {
-        throw new Error("Failed to save SIWE signature");
+        throw new Error("Failed to save signature");
       }
 
       const finalData = await finalResponse.json();
       setCustodialWallet(finalData.custodial_wallet);
 
-      // Mark SIWE as completed
+      // Mark signature as completed
       const siweKey = `siwe_completed_${address.toLowerCase()}`;
       localStorage.setItem(siweKey, "true");
       setHasCompletedSiwe(true);
 
-      console.log("✅ Wallet linked with SIWE:", {
+      console.log("✅ Wallet linked with signature:", {
         wallet: address,
         custodialWallet: finalData.custodial_wallet,
       });
@@ -166,7 +196,7 @@ Resources:
     } finally {
       setIsLinking(false);
     }
-  }, [address, signMessageAsync, hasCompletedSiwe]);
+  }, [address, hasCompletedSiwe, starknetWallet]);
 
   return {
     custodialWallet,

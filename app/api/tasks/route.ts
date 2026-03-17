@@ -43,8 +43,17 @@ export async function GET(req: NextRequest) {
 
     if (!user) {
       // Create new user with custodial wallet
-      const { walletDb } = await import("@/lib/db/wallets");
-      const custodialWallet = await walletDb.createCustodialWallet();
+      // Detect if wallet is Starknet (>42 chars) or EVM (42 chars)
+      const isStarknetAddress = address.toLowerCase().length > 42;
+
+      let custodialWallet;
+      if (isStarknetAddress) {
+        const { starknetWalletDb } = await import("@/lib/db/starknetWallets");
+        custodialWallet = await starknetWalletDb.createCustodialWallet("mainnet");
+      } else {
+        const { walletDb } = await import("@/lib/db/wallets");
+        custodialWallet = await walletDb.createCustodialWallet();
+      }
 
       user = await prisma.user.create({
         data: {

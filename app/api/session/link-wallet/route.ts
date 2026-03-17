@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { walletDb } from "@/lib/db/wallets";
+import { starknetWalletDb } from "@/lib/db/starknetWallets";
 
 /**
  * POST /api/session/link-wallet
@@ -104,7 +105,18 @@ export async function POST(req: NextRequest) {
     if (!custodialWalletIdToUse) {
       console.log("✨ Creating new user and custodial wallet...");
 
-      const custodialWalletData = await walletDb.createCustodialWallet();
+      // Detect if wallet is Starknet (>42 chars) or EVM (42 chars)
+      const isStarknetAddress = normalizedAddress.length > 42;
+
+      let custodialWalletData;
+      if (isStarknetAddress) {
+        console.log("🔷 Creating Starknet custodial wallet...");
+        custodialWalletData = await starknetWalletDb.createCustodialWallet("mainnet");
+      } else {
+        console.log("🔶 Creating EVM custodial wallet...");
+        custodialWalletData = await walletDb.createCustodialWallet();
+      }
+
       console.log("✅ Custodial wallet created:", custodialWalletData.address);
       custodialWalletIdToUse = custodialWalletData.custodialWalletId;
     }

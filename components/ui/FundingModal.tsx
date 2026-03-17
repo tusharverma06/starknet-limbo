@@ -2,18 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
-import {
-  useAccount,
-  useSendTransaction,
-  useBalance,
-  useSwitchChain,
-  useWaitForTransactionReceipt,
-} from "wagmi";
-import { parseEther, formatEther } from "viem";
-import { CHAIN } from "@/lib/constants";
 import { getUsdValueFromEth } from "@/lib/utils/price";
 import { ModalWrapper } from "./ModalWrapper";
 import Image from "next/image";
+import { useStarknet } from "@/components/providers/StarknetProvider";
+import { useStarknetWallet } from "@/hooks/useStarknetWallet";
+import { Amount, mainnetTokens } from "starkzap";
 
 interface FundingModalProps {
   isOpen: boolean;
@@ -36,33 +30,43 @@ export function FundingModal({
   const [usdEquivalent, setUsdEquivalent] = useState<string>("0.00");
   const [isFunding, setIsFunding] = useState(false);
   const [error, setError] = useState("");
-  const [usdBalance, setUsdBalance] = useState<number | null>(null);
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>(undefined);
-  const [txAmount, setTxAmount] = useState<string>("");
+  const [txSuccess, setTxSuccess] = useState(false);
 
-  const { address: userAddress, isConnected, chainId } = useAccount();
-  const { sendTransactionAsync } = useSendTransaction();
-  const { switchChain } = useSwitchChain();
-  const { data: userBalance } = useBalance({
-    address: userAddress,
-  });
+  const { isConnected: isStarknetConnected, connect: connectStarknet, hasWallet, address: starknetAddress } = useStarknet();
+  const { wallet: starknetWallet, transferToken, isLoading: isStarknetLoading, getBalance } = useStarknetWallet();
+  const [starknetBalance, setStarknetBalance] = useState<string | null>(null);
+  const [starknetBalanceUsd, setStarknetBalanceUsd] = useState<number | null>(null);
 
-  // Wait for transaction confirmation
-  const { isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({
-    hash: txHash,
-  });
-
-  // Convert user balance to USD
+  // Fetch Starknet balance when wallet is connected or modal opens
   useEffect(() => {
-    if (userBalance) {
-      const ethBalance = parseFloat(formatEther(userBalance.value));
-      getUsdValueFromEth(ethBalance)
-        .then(setUsdBalance)
-        .catch(() => setUsdBalance(null));
-    } else {
-      setUsdBalance(null);
-    }
-  }, [userBalance]);
+    const fetchStarknetBalance = async () => {
+      if (starknetWallet && isStarknetConnected && isOpen) {
+        const balance = await getBalance(mainnetTokens.ETH);
+        if (balance) {
+          // Convert Amount to string (in ETH)
+          const ethValue = balance.toBase().toString();
+          const ethFormatted = (Number(ethValue) / 1e18).toFixed(4);
+          setStarknetBalance(ethFormatted);
+
+          // Get USD value
+          try {
+            const usdVal = await getUsdValueFromEth(parseFloat(ethFormatted));
+            setStarknetBalanceUsd(usdVal);
+          } catch {
+            setStarknetBalanceUsd(null);
+          }
+        } else {
+          setStarknetBalance(null);
+          setStarknetBalanceUsd(null);
+        }
+      } else if (!isStarknetConnected || !isOpen) {
+        setStarknetBalance(null);
+        setStarknetBalanceUsd(null);
+      }
+    };
+
+    fetchStarknetBalance();
+  }, [starknetWallet, isStarknetConnected, getBalance, isOpen]);
 
   // Update USD equivalent when ETH amount changes
   useEffect(() => {
@@ -80,73 +84,21 @@ export function FundingModal({
     }
   }, [ethAmount]);
 
-  // Handle transaction confirmation
-  useEffect(() => {
-    if (isTxConfirmed && txHash && userAddress && txAmount) {
-      // Log the deposit transaction
-      const logDeposit = async () => {
-        try {
-          const response = await fetch("/api/wallet/log-deposit", {
-            method: "POST",
-            credentials: 'include', // Required for cookies in cross-origin contexts
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              wallet_address: userAddress,
-              txHash,
-              amount: txAmount,
-            }),
-          });
-
-          if (!response.ok) {
-            console.error("Failed to log deposit");
-          }
-        } catch (err) {
-          console.error("Error logging deposit:", err);
-        }
-      };
-
-      logDeposit();
-
-      // Call onSuccess callback to refresh balance
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Stop loading state but don't close modal - let user close it manually
-      setIsFunding(false);
-    }
-  }, [isTxConfirmed, txHash, userAddress, txAmount, onSuccess]);
-
   if (!isOpen) return null;
 
-  const handleSwitchToBase = async () => {
-    try {
-      await switchChain({ chainId: CHAIN.id });
-    } catch {
-      setError(`Failed to switch to ${CHAIN.name} network`);
-    }
-  };
-
   const handleFund = async () => {
-    // Comprehensive validation before allowing transaction
-    if (!userAddress) {
-      setError("Please connect your wallet");
+    if (!starknetWallet) {
+      setError("Wallet not connected");
       return;
     }
 
-    // Check if we're on the correct network
-    if (chainId !== CHAIN.id) {
-      setError(`Please switch to ${CHAIN.name} network to fund your wallet`);
-      return;
-    }
-
-    // Validate ETH amount input
     if (!ethAmount || ethAmount.trim() === "") {
       setError("Please enter an amount");
       return;
     }
 
     const ethAmountNum = parseFloat(ethAmount);
+
     if (isNaN(ethAmountNum)) {
       setError("Please enter a valid number");
       return;
@@ -166,21 +118,21 @@ export function FundingModal({
       return;
     }
 
-    // Check minimum amount (at least $0.01 worth)
+    // Check minimum amount
     if (usdAmount < 0.01) {
       setError("Minimum funding amount is $0.01");
       return;
     }
 
-    // Check user balance
-    if (usdBalance && usdAmount > usdBalance) {
-      setError("Insufficient balance in your connected wallet");
+    // Check balance
+    if (starknetBalance && ethAmountNum > parseFloat(starknetBalance)) {
+      setError("Insufficient balance in your Starknet wallet");
       return;
     }
 
-    // Check if amount is too large (sanity check)
-    if (usdAmount > 10000) {
-      setError("Amount exceeds maximum limit of $10,000");
+    // Check USD balance
+    if (starknetBalanceUsd && usdAmount > starknetBalanceUsd) {
+      setError("Insufficient balance");
       return;
     }
 
@@ -188,17 +140,42 @@ export function FundingModal({
     setIsFunding(true);
 
     try {
-      // Send transaction directly to server wallet with ETH amount
-      const hash = await sendTransactionAsync({
-        to: walletAddress as `0x${string}`,
-        value: parseEther(ethAmount),
-      });
+      const tx = await transferToken(
+        mainnetTokens.ETH,
+        walletAddress,
+        Amount.parse(ethAmount, mainnetTokens.ETH)
+      );
 
-      // Set the transaction hash and amount to trigger waiting for confirmation
-      setTxHash(hash);
-      setTxAmount(ethAmount);
+      if (tx) {
+        setTxSuccess(true);
+
+        // Log the deposit transaction
+        if (starknetAddress) {
+          try {
+            await fetch("/api/wallet/log-deposit", {
+              method: "POST",
+              credentials: 'include',
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                wallet_address: starknetAddress,
+                txHash: tx.hash,
+                amount: ethAmount,
+              }),
+            });
+          } catch (err) {
+            console.error("Error logging deposit:", err);
+          }
+        }
+
+        // Call onSuccess callback to refresh balance
+        if (onSuccess) {
+          onSuccess();
+        }
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Funding failed");
+      setError(err instanceof Error ? err.message : "Transfer failed");
+      setTxSuccess(false);
+    } finally {
       setIsFunding(false);
     }
   };
@@ -207,27 +184,26 @@ export function FundingModal({
     // Reset all state when closing
     setEthAmount("");
     setUsdEquivalent("0.00");
-    setTxHash(undefined);
-    setTxAmount("");
     setIsFunding(false);
     setError("");
+    setTxSuccess(false);
     onClose();
   };
 
   // Check if user has insufficient balance
   const usdEquivalentNum = parseFloat(usdEquivalent);
   const hasInsufficientBalance = Boolean(
-    usdBalance &&
+    starknetBalanceUsd &&
       !isNaN(usdEquivalentNum) &&
       usdEquivalentNum > 0 &&
-      usdEquivalentNum > usdBalance
+      usdEquivalentNum > starknetBalanceUsd
   );
 
   return (
     <ModalWrapper
       isOpen={isOpen}
       onClose={handleClose}
-      preventClose={isFunding && !isTxConfirmed}
+      preventClose={isFunding}
     >
       <div className="border-2 border-black rounded-xl overflow-hidden">
         {/* Header */}
@@ -239,11 +215,11 @@ export function FundingModal({
               textShadow: "0px 1.6px 0px #000000",
             }}
           >
-            {isTxConfirmed ? "Funding Successful!" : "Fund Wallet"}
+            {txSuccess ? "Funding Successful!" : "Fund Wallet"}
           </h2>
           <button
             onClick={handleClose}
-            disabled={isFunding && !isTxConfirmed}
+            disabled={isFunding}
             className="flex items-center justify-center disabled:opacity-50"
           >
             <svg
@@ -266,246 +242,236 @@ export function FundingModal({
 
         {/* Body */}
         <div className="bg-white p-4 flex flex-col gap-4">
-          {/* Wallet Address */}
-          <div className="bg-[rgba(0,0,0,0.06)] rounded-lg px-[6px] py-[8px] h-[40px] flex items-center justify-between">
-            <p
-              className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[0.9]"
-              style={{ fontFamily: "var(--font-lilita-one)" }}
-            >
-              Wallet:
-            </p>
-            <p
-              className="text-[16px] text-black leading-[0.9]"
-              style={{ fontFamily: "var(--font-lilita-one)" }}
-            >
-              {currentBalance
-                ? `${parseFloat(currentBalance).toFixed(4)} ETH`
-                : "0.0000 ETH"}
-            </p>
-          </div>
-
-          {/* Network Status */}
-          {isConnected && chainId !== CHAIN.id && (
-            <div className="p-3 bg-red-100 border-2 border-black rounded-lg">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-black" />
-                  <span
-                    className="text-sm text-black"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    Switch to {CHAIN.name} to fund
-                  </span>
-                </div>
-                <button
-                  onClick={handleSwitchToBase}
-                  className="text-xs px-3 py-1 bg-black text-white rounded-lg border-2 border-black hover:bg-gray-800 transition-colors"
-                  style={{ fontFamily: "var(--font-lilita-one)" }}
-                >
-                  Switch
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Fund Amount */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between">
+          {/* No Wallet Detected - Show Download Button */}
+          {!hasWallet ? (
+            <div className="flex flex-col items-center gap-4 py-8">
               <p
-                className="text-[16px] text-black leading-[1.2]"
+                className="text-lg text-black"
                 style={{ fontFamily: "var(--font-lilita-one)" }}
               >
-                Fund Amount
+                Install Starknet Wallet
               </p>
-              <p
-                className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[1.2]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
+              <a
+                href="https://www.argent.xyz/argent-x/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative w-full max-w-xs h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all flex items-center justify-center"
               >
-                {usdBalance ? `$${usdBalance.toFixed(2)}` : "$0.00"} Balance
-              </p>
-            </div>
-            <div
-              className={`border-2 ${
-                hasInsufficientBalance ? "border-red-500" : "border-black"
-              } rounded-xl h-[44px] px-3 py-[10px] flex items-center justify-between transition-colors`}
-            >
-              <div className="flex items-center gap-2 flex-1">
-                <Image src="/eth-black.svg" alt="ETH" width={20} height={20} />
-                <input
-                  type="number"
-                  placeholder="0.0234"
-                  value={ethAmount}
-                  onChange={(e) => setEthAmount(e.target.value)}
-                  disabled={isFunding}
-                  className="text-[16px] text-black leading-[0.9] bg-transparent focus:outline-none w-full disabled:opacity-50"
-                  style={{ fontFamily: "var(--font-lilita-one)" }}
-                  step="any"
-                />
-              </div>
-              <div className="flex items-center gap-2">
                 <p
-                  className={`text-[16px] leading-[0.9] ${
-                    hasInsufficientBalance
-                      ? "text-red-500"
-                      : "text-[rgba(0,0,0,0.32)]"
-                  }`}
+                  className="text-base text-white uppercase leading-normal"
+                  style={{
+                    textShadow: "0px 1.6px 0px #000000",
+                    fontFamily: "var(--font-lilita-one)",
+                  }}
+                >
+                  Download Argent X
+                </p>
+              </a>
+            </div>
+          ) : !isStarknetConnected ? (
+            /* Wallet Detected but Not Connected */
+            <div className="flex flex-col gap-4 py-4">
+              <button
+                onClick={connectStarknet}
+                className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all"
+                style={{ fontFamily: "var(--font-lilita-one)" }}
+              >
+                <p
+                  className="text-base text-white uppercase leading-normal"
+                  style={{
+                    textShadow: "0px 1.6px 0px #000000",
+                    fontFamily: "var(--font-lilita-one)",
+                  }}
+                >
+                  Connect Starknet
+                </p>
+              </button>
+            </div>
+          ) : (
+            /* Wallet Connected - Show Transfer Form */
+            <>
+              {/* Starknet Wallet Balance */}
+              <div className="bg-[rgba(0,0,0,0.06)] rounded-lg px-[6px] py-[8px] h-[40px] flex items-center justify-between">
+                <p
+                  className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[0.9]"
                   style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  ~${usdEquivalent}
+                  Wallet:
                 </p>
-              </div>
-            </div>
-
-            {/* Insufficient Balance Warning */}
-            {hasInsufficientBalance && (
-              <div className="flex items-center gap-2 text-red-500">
-                <AlertTriangle className="w-3 h-3" />
-                <span className="text-xs">
-                  Insufficient balance in your connected wallet
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="p-2 bg-red-100 border-2 border-black rounded-lg">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-3 h-3 text-black" />
-                <span className="text-xs text-black">{error}</span>
-              </div>
-            </div>
-          )}
-
-          {/* Transaction Status Message */}
-          {txHash && !isTxConfirmed && (
-            <div className="p-3 bg-blue-50 border-2 border-black rounded-lg">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <span
-                    className="text-sm text-blue-900 font-semibold"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    Waiting for confirmation...
-                  </span>
-                </div>
-                <p className="text-xs text-blue-700">
-                  Your transaction is being processed on the blockchain. This
-                  may take a few moments.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Success Message with Explorer Link */}
-          {txHash && isTxConfirmed && (
-            <div className="p-3 bg-green-50 border-2 border-green-500 rounded-lg">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 text-green-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span
-                    className="text-sm text-green-900 font-semibold"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    Transaction Confirmed!
-                  </span>
-                </div>
-                <p className="text-xs text-green-700">
-                  Your funds have been successfully deposited to your wallet.
-                </p>
-                <a
-                  href={`https://sepolia.basescan.org/tx/${txHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full h-[36px] bg-green-600 hover:bg-green-700 text-white border-2 border-black rounded-lg transition-colors"
+                <p
+                  className="text-[16px] text-black leading-[0.9]"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
                 >
-                  <span
-                    className="text-sm"
+                  {starknetBalance ? `${starknetBalance} ETH` : "0.0000 ETH"}
+                </p>
+              </div>
+
+              {/* Custodial Wallet Address */}
+              <div className="bg-[rgba(0,0,0,0.06)] rounded-lg px-[6px] py-[8px] h-[40px] flex items-center justify-between border-2 border-black">
+                <p
+                  className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[0.9]"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  To:
+                </p>
+                <p
+                  className="text-[14px] text-black leading-[0.9] font-mono"
+                  style={{ fontFamily: "var(--font-lilita-one)" }}
+                >
+                  {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                </p>
+              </div>
+
+              {/* Amount Input */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p
+                    className="text-[16px] text-black leading-[1.2]"
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    View on Explorer
-                  </span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                    Fund Amount
+                  </p>
+                  <p
+                    className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[1.2]"
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    {starknetBalanceUsd ? `$${starknetBalanceUsd.toFixed(2)}` : "$0.00"} Balance
+                  </p>
+                </div>
+                <div
+                  className={`border-2 ${
+                    hasInsufficientBalance ? "border-red-500" : "border-black"
+                  } rounded-xl h-[44px] px-3 py-[10px] flex items-center justify-between transition-colors`}
+                >
+                  <div className="flex items-center gap-2 flex-1">
+                    <Image src="/eth-black.svg" alt="ETH" width={20} height={20} />
+                    <input
+                      type="number"
+                      placeholder="0.0234"
+                      value={ethAmount}
+                      onChange={(e) => setEthAmount(e.target.value)}
+                      disabled={isStarknetLoading || isFunding}
+                      className="text-[16px] text-black leading-[0.9] bg-transparent focus:outline-none w-full disabled:opacity-50"
+                      style={{ fontFamily: "var(--font-lilita-one)" }}
+                      step="any"
                     />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          )}
+                  </div>
+                  <p
+                    className={`text-[16px] leading-[0.9] ${
+                      hasInsufficientBalance
+                        ? "text-red-500"
+                        : "text-[rgba(0,0,0,0.32)]"
+                    }`}
+                    style={{ fontFamily: "var(--font-lilita-one)" }}
+                  >
+                    ~${usdEquivalent}
+                  </p>
+                </div>
 
-          {/* Fund Button - Hide when transaction is confirmed */}
-          {!isTxConfirmed && (
-            <button
-              onClick={handleFund}
-              disabled={
-                isFunding ||
-                !isConnected ||
-                chainId !== CHAIN.id ||
-                !ethAmount ||
-                parseFloat(ethAmount) <= 0 ||
-                isNaN(parseFloat(ethAmount)) ||
-                hasInsufficientBalance
-              }
-              className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
-            >
-              <p
-                className="text-base text-white uppercase leading-normal"
-                style={{
-                  textShadow: "0px 1.6px 0px #000000",
-                  fontFamily: "var(--font-lilita-one)",
-                }}
-              >
-                {isFunding ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    {txHash ? "Confirming..." : "Funding..."}
-                  </span>
-                ) : (
-                  "Fund Wallet"
+                {/* Insufficient Balance Warning */}
+                {hasInsufficientBalance && (
+                  <div className="flex items-center gap-2 text-red-500">
+                    <AlertTriangle className="w-3 h-3" />
+                    <span className="text-xs">
+                      Insufficient balance in your Starknet wallet
+                    </span>
+                  </div>
                 )}
-              </p>
-            </button>
-          )}
+              </div>
 
-          {/* Close Button - Show when transaction is confirmed */}
-          {isTxConfirmed && (
-            <button
-              onClick={handleClose}
-              className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all"
-            >
-              <p
-                className="text-base text-white uppercase leading-normal"
-                style={{
-                  textShadow: "0px 1.6px 0px #000000",
-                  fontFamily: "var(--font-lilita-one)",
-                }}
-              >
-                Close
-              </p>
-            </button>
+              {/* Error Message */}
+              {error && (
+                <div className="p-2 bg-red-100 border-2 border-black rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-3 h-3 text-black" />
+                    <span className="text-xs text-black">{error}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Success Message */}
+              {txSuccess && (
+                <div className="p-3 bg-green-50 border-2 border-green-500 rounded-lg">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-green-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      <span
+                        className="text-sm text-green-900 font-semibold"
+                        style={{ fontFamily: "var(--font-lilita-one)" }}
+                      >
+                        Transaction Successful!
+                      </span>
+                    </div>
+                    <p className="text-xs text-green-700">
+                      Your funds have been successfully deposited to your custodial wallet.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Fund Button - Hide when transaction is successful */}
+              {!txSuccess && (
+                <button
+                  onClick={handleFund}
+                  disabled={
+                    isStarknetLoading ||
+                    isFunding ||
+                    !ethAmount ||
+                    parseFloat(ethAmount) <= 0 ||
+                    isNaN(parseFloat(ethAmount)) ||
+                    hasInsufficientBalance
+                  }
+                  className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] disabled:opacity-50 disabled:cursor-not-allowed active:shadow-none active:translate-y-[2px] transition-all"
+                >
+                  <p
+                    className="text-base text-white uppercase leading-normal"
+                    style={{
+                      textShadow: "0px 1.6px 0px #000000",
+                      fontFamily: "var(--font-lilita-one)",
+                    }}
+                  >
+                    {isFunding ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Sending...
+                      </span>
+                    ) : (
+                      "Fund Wallet"
+                    )}
+                  </p>
+                </button>
+              )}
+
+              {/* Close Button - Show when transaction is successful */}
+              {txSuccess && (
+                <button
+                  onClick={handleClose}
+                  className="relative w-full h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all"
+                >
+                  <p
+                    className="text-base text-white uppercase leading-normal"
+                    style={{
+                      textShadow: "0px 1.6px 0px #000000",
+                      fontFamily: "var(--font-lilita-one)",
+                    }}
+                  >
+                    Close
+                  </p>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

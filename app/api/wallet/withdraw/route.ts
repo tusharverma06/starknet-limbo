@@ -1,33 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { JsonRpcProvider, Wallet, parseEther } from "ethers";
-import { walletDb } from "@/lib/db/wallets";
-import { decryptPrivateKey } from "@/lib/utils/encryption";
-import { getEthValueFromUsd } from "@/lib/utils/price";
-import { CHAIN } from "@/lib/constants";
-import { estimateGas } from "@/lib/utils/gas";
+import { ec, Account, Signer } from "starknet";
+
 import { prisma } from "@/lib/db/prisma";
 import { requireAuth } from "@/lib/auth/requireAuth";
+import { decryptPrivateKey } from "@/lib/utils/encryption";
+import { getEthValueFromUsd } from "@/lib/utils/price";
+import { getStarknetProvider } from "@/lib/starknet/provider";
+import { getEthBalance } from "@/lib/blockchain/starknet/getEthBalance";
+import {
+  isAccountDeployed,
+  deployStarknetAccount,
+} from "@/lib/starknet/deployWallet";
+
+/**
+ * Convert bigint → Uint256 (Starknet)
+ */
+function toUint256(value: bigint) {
+  const low = value & (BigInt(1) << (BigInt(128) - BigInt(1)));
+  const high = value >> BigInt(128);
+  return { low: low.toString(), high: high.toString() };
+}
 
 /**
  * POST /api/wallet/withdraw
- * Withdraw funds from custodial wallet to external address
- * Requires JWT authentication (session cookie)
+ * Starknet custodial withdrawal (user wallet signs tx)
  */
 export async function POST(req: NextRequest) {
   try {
-    // Require JWT authentication
+    // ✅ Auth
     const authResult = await requireAuth(req);
     if ("error" in authResult) {
       return authResult.error;
     }
 
     const { user, body: parsedBody } = authResult.data;
-
-    // Use body from auth if available, otherwise parse it
     const body = parsedBody || (await req.json());
+
     const { toAddress, usdAmount } = body;
 
-    // Validate inputs
+    // ✅ Validate input
     if (!toAddress || !usdAmount) {
       return NextResponse.json(
         { error: "toAddress and usdAmount are required" },
@@ -35,24 +46,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate recipient address format
     if (
       typeof toAddress !== "string" ||
-      toAddress.length !== 42 ||
+      toAddress.length !== 66 ||
       !toAddress.startsWith("0x")
     ) {
       return NextResponse.json(
-        { error: "Invalid Ethereum address format" },
+        {
+          error:
+            "Invalid Starknet address format. Address must be 66 characters including 0x prefix.",
+        },
         { status: 400 },
       );
     }
 
-    console.log(
-      "✅ JWT authentication valid, processing withdrawal for user:",
-      user.id,
-    );
+    console.log("✅ Auth OK. User:", user.id);
 
-    // Validate amount
+    // ✅ Validate USD amount
     const usdAmountNum = parseFloat(usdAmount);
     if (isNaN(usdAmountNum) || usdAmountNum <= 0) {
       return NextResponse.json(
@@ -61,7 +71,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check minimum amount
     if (usdAmountNum < 0.01) {
       return NextResponse.json(
         { error: "Minimum withdrawal amount is $0.01" },
@@ -69,7 +78,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert USD to ETH
+    // ✅ Convert USD → ETH
     const ethAmount = await getEthValueFromUsd(usdAmountNum);
     if (ethAmount <= 0) {
       return NextResponse.json(
@@ -78,15 +87,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(
-      `💸 Processing withdrawal: $${usdAmountNum} (~${ethAmount} ETH) to ${toAddress}`,
-    );
+    const ethAmountRounded = parseFloat(ethAmount.toFixed(18));
 
-    // Get user with custodial wallet
+    // ✅ Convert to wei (BigInt)
+    const withdrawAmount = BigInt(Math.floor(ethAmountRounded * 1e18));
+
+    console.log(`💸 Withdraw: $${usdAmountNum} (~${ethAmountRounded} ETH)`);
+
+    // ✅ Fetch user wallet
     const userWithWallet = await prisma.user.findUnique({
-      where: {
-        id: user.id,
-      },
+      where: { id: user.id },
       select: {
         custodial_wallet_id: true,
         custodialWallet: {
@@ -103,47 +113,90 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }
 
-    // Decrypt private key
+    const walletAddress = userWithWallet.custodialWallet.address;
+
+    // ✅ Decrypt private key
     const privateKey = decryptPrivateKey(
       userWithWallet.custodialWallet.wallet.encryptedPrivateKey,
     );
 
-    // Create provider and wallet using Alchemy RPC
-    const rpcUrl =
-      process.env.NEXT_PUBLIC_RPC_URL || CHAIN.rpcUrls.default.http[0];
-    const provider = new JsonRpcProvider(rpcUrl);
-    const wallet = new Wallet(privateKey, provider);
+    // ✅ Setup Starknet account
+    const provider = getStarknetProvider();
 
-    // Check balance first
-    const balance = await provider.getBalance(wallet.address);
-    console.log("💰 Current balance:", balance.toString(), "wei");
+    const signer = new Signer(privateKey);
 
-    // Round to 18 decimals to avoid parseEther precision errors
-    const ethAmountRounded = parseFloat(ethAmount.toFixed(18));
-    const withdrawAmount = parseEther(ethAmountRounded.toString());
+    const account = new Account({
+      provider,
+      address: walletAddress,
+      signer,
+    });
 
-    console.log("📤 Withdraw amount:", withdrawAmount.toString(), "wei");
+    // ✅ Check if wallet is deployed (lazy deployment)
+    console.log("🔍 Checking if wallet is deployed...");
+    const isDeployed = await isAccountDeployed(walletAddress);
 
-    // Check if balance is zero
+    if (!isDeployed) {
+      console.log("⚠️  Wallet not deployed yet - deploying now...");
+      console.log("   Note: Deployment fees will be deducted from balance");
+
+      try {
+        const { txHash: deployTxHash } = await deployStarknetAccount(
+          privateKey,
+          walletAddress,
+          false, // usePaymaster = false (user pays from their balance)
+        );
+
+        console.log("✅ Wallet deployed:", deployTxHash);
+
+        // Record deployment transaction
+        await prisma.walletTransaction.create({
+          data: {
+            custodialWalletId: userWithWallet.custodialWallet.id,
+            txHash: deployTxHash,
+            txType: "deploy",
+            amount: "0", // Deployment fee is paid internally
+            status: "confirmed",
+            confirmedAt: new Date(),
+          },
+        });
+      } catch (deployError) {
+        console.error("❌ Deployment failed:", deployError);
+
+        return NextResponse.json(
+          {
+            error: "Wallet deployment failed",
+            message:
+              "Your wallet needs to be deployed before withdrawing. Please contact support.",
+          },
+          { status: 500 },
+        );
+      }
+    } else {
+      console.log("✅ Wallet already deployed");
+    }
+
+    // ✅ Fetch on-chain balance
+    const balance = await getEthBalance(walletAddress);
+
+    console.log("💰 Balance:", balance.toString(), "wei");
+
     if (balance === BigInt(0)) {
       return NextResponse.json(
         {
           error: "Insufficient balance",
-          message: "Your wallet balance is 0. Please fund your wallet first.",
+          message: "Wallet balance is 0.",
         },
         { status: 400 },
       );
     }
 
-    // Check if withdrawal amount exceeds balance (before considering gas)
     if (withdrawAmount > balance) {
       const balanceInEth = (Number(balance) / 1e18).toFixed(6);
+
       return NextResponse.json(
         {
           error: "Insufficient balance",
-          message: `Withdrawal amount ($${usdAmountNum.toFixed(
-            2,
-          )}) exceeds your balance (~${balanceInEth} ETH). Please reduce the amount.`,
+          message: `Withdrawal exceeds balance (~${balanceInEth} ETH).`,
           available: balance.toString(),
           requested: withdrawAmount.toString(),
         },
@@ -151,136 +204,76 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Estimate gas using utility with fallback
-    let gasEstimation;
-    let gasCost: bigint;
+    // ✅ Prepare Starknet transfer
+    const ETH_ADDRESS =
+      "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
-    try {
-      gasEstimation = await estimateGas(
-        provider,
-        wallet.address,
-        toAddress,
-        ethAmountRounded.toString(),
-      );
+    const { low, high } = toUint256(withdrawAmount);
 
-      console.log("⛽ Gas estimate:", gasEstimation.gasLimit);
-      console.log("⛽ Gas price:", gasEstimation.gasPrice, "gwei");
-      console.log("⛽ Total gas cost:", gasEstimation.totalCost, "ETH");
+    const calldata = [toAddress, low, high];
 
-      gasCost = parseEther(gasEstimation.totalCost);
-    } catch (error) {
-      console.error("Gas estimation error:", error);
-      // Use fallback gas estimation: 21000 gas limit * current gas price
-      try {
-        const feeData = await provider.getFeeData();
-        if (!feeData.gasPrice) {
-          throw new Error("Could not get gas price");
-        }
-        gasCost = BigInt(21000) * feeData.gasPrice;
-        console.log(
-          "⛽ Using fallback gas estimate:",
-          gasCost.toString(),
-          "wei",
-        );
-      } catch (fallbackError) {
-        console.error("Fallback gas estimation failed:", fallbackError);
-        return NextResponse.json(
-          {
-            error: "Gas estimation failed",
-            message:
-              "Could not estimate transaction cost. The network may be experiencing issues. Please try again later.",
-          },
-          { status: 500 },
-        );
-      }
-    }
+    console.log("📤 Sending Starknet tx...");
 
-    // Check if we have enough for withdrawal + gas
-    const totalRequired = withdrawAmount + gasCost;
-    if (balance < totalRequired) {
-      const balanceInEth = (Number(balance) / 1e18).toFixed(6);
-      const requiredInEth = (Number(totalRequired) / 1e18).toFixed(6);
-      const gasCostInEth = (Number(gasCost) / 1e18).toFixed(6);
-
-      return NextResponse.json(
-        {
-          error: "Insufficient balance for gas",
-          message: `Your balance (~${balanceInEth} ETH) is not enough to cover the withdrawal and gas fees (~${gasCostInEth} ETH gas). Total needed: ~${requiredInEth} ETH. Please reduce the withdrawal amount or add more funds.`,
-          available: balance.toString(),
-          withdrawAmount: withdrawAmount.toString(),
-          gasCost: gasCost.toString(),
-          totalRequired: totalRequired.toString(),
-        },
-        { status: 400 },
-      );
-    }
-
-    // Send transaction
-    const tx = await wallet.sendTransaction({
-      to: toAddress,
-      value: withdrawAmount,
+    // ✅ Execute transfer
+    const tx = await account.execute({
+      contractAddress: ETH_ADDRESS,
+      entrypoint: "transfer",
+      calldata,
     });
 
-    console.log("📤 Withdrawal transaction sent:", tx.hash);
+    const txHash = tx.transaction_hash;
 
-    // Record pending transaction
+    console.log("📤 Tx sent:", txHash);
+
+    // ✅ Record pending tx
     await prisma.walletTransaction.create({
       data: {
         custodialWalletId: userWithWallet.custodialWallet.id,
-        txHash: tx.hash,
+        txHash,
         txType: "withdraw",
         amount: withdrawAmount.toString(),
         status: "pending",
       },
     });
-    console.log("📝 Withdrawal transaction recorded");
 
-    // Wait for confirmation with timeout
-    let receipt;
+    // ✅ Wait for confirmation
     try {
-      receipt = await tx.wait();
+      await provider.waitForTransaction(txHash);
 
-      // Update transaction status to confirmed
       await prisma.walletTransaction.updateMany({
-        where: { txHash: tx.hash },
+        where: { txHash },
         data: {
           status: "confirmed",
-          blockNumber: BigInt(receipt?.blockNumber || 0),
-          gasUsed: receipt?.gasUsed?.toString() || "0",
           confirmedAt: new Date(),
         },
       });
-      console.log("✅ Withdrawal confirmed in database");
-    } catch (confirmError) {
-      console.error("❌ Withdrawal confirmation failed:", confirmError);
 
-      // Mark transaction as failed
+      console.log("✅ Tx confirmed");
+    } catch (err) {
+      console.error("❌ Tx failed:", err);
+
       await prisma.walletTransaction.updateMany({
-        where: { txHash: tx.hash },
-        data: {
-          status: "failed",
-        },
+        where: { txHash },
+        data: { status: "failed" },
       });
 
-      throw new Error("Transaction failed to confirm on blockchain");
+      throw new Error("Transaction failed on Starknet");
     }
 
-    // Update balance
-    const newBalance = await provider.getBalance(wallet.address);
-
-    console.log("✅ Withdrawal confirmed:", receipt?.hash);
+    // ✅ Fetch updated balance
+    const newBalance = await getEthBalance(walletAddress);
 
     return NextResponse.json({
       success: true,
-      txHash: receipt?.hash,
+      txHash,
       usdAmount: usdAmountNum,
       ethAmount: ethAmountRounded,
       to: toAddress,
-      blockNumber: receipt?.blockNumber,
       newBalance: newBalance.toString(),
     });
   } catch (error) {
     console.error("Withdrawal error:", error);
+
     return NextResponse.json(
       {
         error: "Withdrawal failed",

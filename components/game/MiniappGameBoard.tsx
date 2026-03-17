@@ -77,9 +77,6 @@ export function MiniappGameBoard() {
   const [betError, setBetError] = useState<string | null>(null);
   const [amountError, setAmountError] = useState("");
   const [multiplierError, setMultiplierError] = useState("");
-  const [multiplierInput, setMultiplierInput] = useState(
-    targetMultiplier.toFixed(2),
-  );
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [showFundingModal, setShowFundingModal] = useState(false);
   const [showTransactionsSheet, setShowTransactionsSheet] = useState(false);
@@ -327,11 +324,6 @@ export function MiniappGameBoard() {
 
   // Removed legacy commitment hash and polling - now using instant off-chain results
 
-  // Sync multiplierInput when targetMultiplier changes from external sources (buttons, etc.)
-  useEffect(() => {
-    setMultiplierInput(targetMultiplier.toFixed(2));
-  }, [targetMultiplier]);
-
   // Calculate potential payout in USD
   useEffect(() => {
     const calculatePotentialPayoutUsd = async () => {
@@ -403,7 +395,7 @@ export function MiniappGameBoard() {
 
     // Parse bet amount
     const betAmountNum = parseFloat(betAmount || "0");
-    const multiplierNum = parseFloat(multiplierInput || "0");
+    const multiplierNum = targetMultiplier;
 
     // If balance is less than $0.10, open funding modal
     if (balanceUsd < 0.1) {
@@ -456,22 +448,16 @@ export function MiniappGameBoard() {
       return;
     }
 
-    // Validate multiplier before placing bet
-    const multiplierValue = parseFloat(multiplierInput);
-    if (
-      isNaN(multiplierValue) ||
-      multiplierValue < 1.01 ||
-      multiplierValue > MAX_MULTIPLIER
-    ) {
+    // Validate multiplier before placing bet (power bar ensures it's always in valid range)
+    if (targetMultiplier < 1.01 || targetMultiplier > MAX_MULTIPLIER) {
       setMultiplierError(
         `Multiplier must be between 1.01 and ${MAX_MULTIPLIER}`,
       );
       return;
     }
 
-    // Clear multiplier error and update the actual multiplier value
+    // Clear multiplier error
     setMultiplierError("");
-    setTargetMultiplier(multiplierValue);
 
     setIsPlacingBet(true);
     setBetError(null);
@@ -479,7 +465,7 @@ export function MiniappGameBoard() {
     const betAmountNum = parseFloat(betAmount);
 
     try {
-      const result = await placeBetWithServerWallet(betAmount, multiplierValue);
+      const result = await placeBetWithServerWallet(betAmount, targetMultiplier);
 
       // Handle instant result from off-chain provably fair system
       if (result.result) {
@@ -1266,136 +1252,7 @@ export function MiniappGameBoard() {
                 )}
             </div>
 
-            {/* Multiplier Input */}
-            <div className="space-y-2">
-              <p
-                className="text-base text-black tracking-[-1px] leading-[0.9]"
-                style={{ fontFamily: "var(--font-lilita-one)" }}
-              >
-                Multiplier
-              </p>
-              <div
-                className={`border-2 ${
-                  parseFloat(multiplierInput || "0") > MAX_MULTIPLIER
-                    ? "border-[#e9452d]"
-                    : "border-black"
-                } rounded-xl h-[44px] flex items-center justify-between px-3 py-2`}
-              >
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder={`1.01 - ${MAX_MULTIPLIER}`}
-                  className={`text-base leading-[0.9] bg-transparent focus:outline-none focus:ring-0 flex-1 ${
-                    parseFloat(multiplierInput || "0") > MAX_MULTIPLIER
-                      ? "text-[#e9452d]"
-                      : "text-black"
-                  }`}
-                  style={{ fontFamily: "var(--font-lilita-one)" }}
-                  value={multiplierInput}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow empty, numbers, and decimal point
-                    if (value === "" || /^\d*\.?\d*$/.test(value)) {
-                      setMultiplierInput(value);
-                      setMultiplierError(""); // Clear error while typing
-                    }
-                  }}
-                  onBlur={() => {
-                    // On blur, validate and format the input
-                    const val = parseFloat(multiplierInput);
-                    if (!isNaN(val)) {
-                      const clamped = Math.max(
-                        1.01,
-                        Math.min(MAX_MULTIPLIER, val),
-                      );
-                      setTargetMultiplier(clamped);
-                      setMultiplierInput(clamped.toFixed(2));
-                      setMultiplierError("");
-                    } else if (multiplierInput !== "") {
-                      setMultiplierError("Invalid multiplier");
-                    }
-                  }}
-                  disabled={isDisabled}
-                />
-                <span
-                  className={`text-base leading-[0.9] font-bold ml-1 ${
-                    parseFloat(multiplierInput || "0") > MAX_MULTIPLIER
-                      ? "text-[#e9452d]"
-                      : "text-black"
-                  }`}
-                >
-                  x
-                </span>
-              </div>
-              {/* Max multiplier exceeded error message */}
-              {parseFloat(multiplierInput || "0") > MAX_MULTIPLIER && (
-                <div className="flex items-center gap-[6px]">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle
-                      cx="8"
-                      cy="8"
-                      r="6"
-                      stroke="#e9452d"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
-                    <path
-                      d="M8 5V9M8 11V11.5"
-                      stroke="#e9452d"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <p
-                    className="text-[#e9452d] text-[16px] leading-[0.9]"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    Maximum multiplier is {MAX_MULTIPLIER}x
-                  </p>
-                </div>
-              )}
-              {multiplierError && !parseFloat(multiplierInput || "0") && (
-                <div className="flex items-center gap-[6px]">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <circle
-                      cx="8"
-                      cy="8"
-                      r="6"
-                      stroke="#e9452d"
-                      strokeWidth="1.5"
-                      fill="none"
-                    />
-                    <path
-                      d="M8 5V9M8 11V11.5"
-                      stroke="#e9452d"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <p
-                    className="text-[#e9452d] text-[16px] leading-[0.9]"
-                    style={{ fontFamily: "var(--font-lilita-one)" }}
-                  >
-                    {multiplierError}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* COMMENTED OUT: Original Figma Power Bar (Segmented, Clickable) */}
-            {/*
+            {/* Power Bar Multiplier Selector */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <p
@@ -1408,7 +1265,7 @@ export function MiniappGameBoard() {
                   <button
                     onClick={() =>
                       setTargetMultiplier(
-                        Math.max(1.01, targetMultiplier - 0.5)
+                        Math.max(1.01, targetMultiplier - 0.1)
                       )
                     }
                     disabled={isDisabled || targetMultiplier <= 1.01}
@@ -1426,9 +1283,9 @@ export function MiniappGameBoard() {
                   </div>
                   <button
                     onClick={() =>
-                      setTargetMultiplier(Math.min(100, targetMultiplier + 0.5))
+                      setTargetMultiplier(Math.min(MAX_MULTIPLIER, targetMultiplier + 0.1))
                     }
-                    disabled={isDisabled || targetMultiplier >= 100}
+                    disabled={isDisabled || targetMultiplier >= MAX_MULTIPLIER}
                     className="w-6 h-6 flex items-center justify-center border-2 border-black rounded bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <span className="text-sm font-bold">+</span>
@@ -1443,18 +1300,20 @@ export function MiniappGameBoard() {
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = e.clientX - rect.left;
                   const percentage = Math.max(0, Math.min(1, x / rect.width));
-                  const newMultiplier = 1 + percentage * 99;
+                  const range = MAX_MULTIPLIER - 1.01;
+                  const newMultiplier = 1.01 + percentage * range;
                   setTargetMultiplier(
                     Math.max(
                       1.01,
-                      Math.min(100, Number(newMultiplier.toFixed(2)))
+                      Math.min(MAX_MULTIPLIER, Number(newMultiplier.toFixed(2)))
                     )
                   );
                 }}
               >
                 {Array.from({ length: 26 }).map((_, index) => {
+                  const range = MAX_MULTIPLIER - 1.01;
                   const segmentValue = ((index + 1) / 26) * 100;
-                  const currentValue = ((targetMultiplier - 1) / 99) * 100;
+                  const currentValue = ((targetMultiplier - 1.01) / range) * 100;
                   const isActive = segmentValue <= currentValue;
 
                   return (
@@ -1469,12 +1328,11 @@ export function MiniappGameBoard() {
                 <div
                   className="absolute w-[8px] h-[14px] -top-[2px] border-2 border-black bg-[#424242] rounded-[1px] pointer-events-none"
                   style={{
-                    left: `calc(${((targetMultiplier - 1) / 99) * 100}% - 4px)`,
+                    left: `calc(${((targetMultiplier - 1.01) / (MAX_MULTIPLIER - 1.01)) * 100}% - 4px)`,
                   }}
                 />
               </div>
             </div>
-            */}
 
             {/* Place Bet Button */}
             <button
@@ -1525,7 +1383,7 @@ export function MiniappGameBoard() {
                   "Fund Wallet to Play"
                 ) : parseFloat(betAmount || "0") > MAX_BET_USD ? (
                   "Bet Exceeds Maximum"
-                ) : parseFloat(multiplierInput || "0") > MAX_MULTIPLIER ? (
+                ) : targetMultiplier > MAX_MULTIPLIER ? (
                   "Multiplier Too High"
                 ) : parseFloat(betAmount || "0") > balanceUsd ? (
                   "Add More Funds"

@@ -12,6 +12,7 @@ import {
   extractTxBalanceDelta,
 } from "@/lib/utils/verification";
 import { sha256 } from "@/lib/utils/provablyFair";
+import { HOUSE_EDGE } from "@/lib/constants";
 
 /**
  * POST /api/verify-full
@@ -149,8 +150,7 @@ export async function POST(req: NextRequest) {
     // Convert randomness to float
     const randomFloat = randomnessToUniformFloat(bet.randomValue);
 
-    // Get simulated multiplier using edge = 0.02
-    const HOUSE_EDGE = 0.02;
+    // Get simulated multiplier using the configured house edge
     const simulatedMultiplier = getSimulatedMultiplier({
       gameNumber: bet.gameNumber,
       edge: HOUSE_EDGE,

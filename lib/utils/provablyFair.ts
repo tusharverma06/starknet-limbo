@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "crypto";
+import { HOUSE_EDGE } from "@/lib/constants";
 
 /**
  * Generate a secure random server seed
@@ -66,12 +67,12 @@ export function deriveGameNumber(randomValue: string): bigint {
 /**
  * Calculate limbo multiplier from game number
  * @param gameNumber - Game number (1 to 1,000,000,000)
- * @param houseEdge - House edge as decimal (e.g., 0.02 for 2%)
+ * @param houseEdge - House edge as decimal (e.g., 0.02 for 2%) - defaults to HOUSE_EDGE constant
  * @returns Multiplier as BigInt (scaled by 100, e.g., 150 = 1.50x)
  */
 export function calculateLimboMultiplier(
   gameNumber: bigint,
-  houseEdge: number = 0.02
+  houseEdge: number = HOUSE_EDGE
 ): bigint {
   // Formula: (1 - houseEdge) / (gameNumber / 1e9)
   // Simplified: (1 - houseEdge) * 1e9 / gameNumber

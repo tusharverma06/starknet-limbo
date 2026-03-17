@@ -1,11 +1,12 @@
+import { HOUSE_EDGE } from "@/lib/constants";
+
 /**
  * Get Limbo game statistics based on target multiplier
  * Matches the exact contract formula
  */
-export function getLimboStats(targetMultiplier: number, edgeBps: number = 200) {
-  const edge = edgeBps / 10000; // 200 BPS = 0.02
+export function getLimboStats(targetMultiplier: number, edge: number = HOUSE_EDGE) {
   const winChance = (1 - edge) / targetMultiplier;
-  const expectedValue = 1 - edge; // always constant (98%)
+  const expectedValue = 1 - edge; // e.g., 90% for 10% edge
 
   return {
     winChancePercent: (winChance * 100).toFixed(2) + "%",
@@ -72,12 +73,13 @@ export function toDisplayMultiplier(contractMultiplier: number): number {
 
 /**
  * Multiplier presets for quick selection
+ * Win chances calculated with current HOUSE_EDGE
  */
 export const MULTIPLIER_PRESETS = [
-  { label: '2x', value: 2.0, winChance: 49 },
-  { label: '5x', value: 5.0, winChance: 19.6 },
-  { label: '10x', value: 10.0, winChance: 9.8 },
-  { label: '50x', value: 50.0, winChance: 1.96 },
-  { label: '100x', value: 100.0, winChance: 0.98 },
-  { label: '1000x', value: 1000.0, winChance: 0.098 },
+  { label: '2x', value: 2.0, winChance: 45 },
+  { label: '5x', value: 5.0, winChance: 18 },
+  { label: '10x', value: 10.0, winChance: 9 },
+  { label: '50x', value: 50.0, winChance: 1.8 },
+  { label: '100x', value: 100.0, winChance: 0.9 },
+  { label: '1000x', value: 1000.0, winChance: 0.09 },
 ];

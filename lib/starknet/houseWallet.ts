@@ -1,4 +1,4 @@
-import { Account, RpcProvider, uint256, cairo } from "starknet";
+import { Account, RpcProvider, uint256 } from "starknet";
 import { decryptPrivateKey } from "@/lib/utils/encryption";
 import { getStarknetProvider } from "./provider";
 
@@ -110,15 +110,17 @@ export async function getStarknetHouseWalletBalance(): Promise<bigint> {
 }
 
 /**
- * Send ETH from Starknet house wallet to a recipient
+ * Send tokens from Starknet house wallet to a recipient
  *
  * @param to Recipient address (Starknet address)
  * @param amount Amount in wei
+ * @param tokenContractAddress Token contract address (defaults to ETH)
  * @returns Transaction hash
  */
-export async function sendFromStarknetHouseWallet(
+export async function sendTokenFromStarknetHouseWallet(
   to: string,
-  amount: bigint
+  amount: bigint,
+  tokenContractAddress?: string
 ): Promise<string> {
   return await withStarknetHouseWallet(async (account) => {
     // Validate inputs
@@ -130,17 +132,18 @@ export async function sendFromStarknetHouseWallet(
       throw new Error("Amount must be greater than 0");
     }
 
-    // ETH contract address on Starknet mainnet
-    const ethContractAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+    // Default to ETH contract address on Starknet mainnet
+    const contractAddress = tokenContractAddress || "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
     console.log("📤 Sending from Starknet house wallet:", {
       to,
       amount: amount.toString(),
+      token: contractAddress,
     });
 
     // Prepare transfer call
     const transferCall = {
-      contractAddress: ethContractAddress,
+      contractAddress,
       entrypoint: "transfer",
       calldata: [to, uint256.bnToUint256(amount)],
     };
@@ -148,10 +151,42 @@ export async function sendFromStarknetHouseWallet(
     // Execute transaction
     const tx = await account.execute(transferCall);
 
-    console.log("✅ Starknet payout transaction sent:", tx.transaction_hash);
+    console.log("✅ Starknet transfer transaction sent:", tx.transaction_hash);
 
     return tx.transaction_hash;
   });
+}
+
+/**
+ * Send ETH from Starknet house wallet to a recipient
+ *
+ * @param to Recipient address (Starknet address)
+ * @param amount Amount in wei
+ * @returns Transaction hash
+ */
+export async function sendFromStarknetHouseWallet(
+  to: string,
+  amount: bigint
+): Promise<string> {
+  // ETH contract address on Starknet mainnet
+  const ethContractAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+  return sendTokenFromStarknetHouseWallet(to, amount, ethContractAddress);
+}
+
+/**
+ * Send STRK from Starknet house wallet to a recipient
+ *
+ * @param to Recipient address (Starknet address)
+ * @param amount Amount in wei
+ * @returns Transaction hash
+ */
+export async function sendStrkFromStarknetHouseWallet(
+  to: string,
+  amount: bigint
+): Promise<string> {
+  // STRK contract address on Starknet mainnet
+  const strkContractAddress = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
+  return sendTokenFromStarknetHouseWallet(to, amount, strkContractAddress);
 }
 
 /**

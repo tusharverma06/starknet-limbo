@@ -17,3 +17,7 @@ export const GAME_STATES = {
 // Off-chain provably fair settings
 export const HOUSE_EDGE = 0.10; // 10% house edge
 export const INSTANT_RESULT_TIME = 300; // ~300ms average response time
+
+// Custodial wallet deployment sponsorship
+export const SPONSORED_DEPLOYMENT_STRK = "3000000000000000000"; // 3 STRK in wei (~$0.12 at $0.04/STRK)
+// Breakdown: ~0.002 STRK for deployment, ~2.998 STRK remaining for future withdrawals

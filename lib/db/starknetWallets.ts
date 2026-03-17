@@ -93,6 +93,9 @@ class StarknetWalletDatabase {
     network: "mainnet" | "sepolia" = "mainnet",
   ): Promise<StarknetWalletData & { custodialWalletId: string }> {
     try {
+      // Note: network parameter reserved for future multi-network support
+      void network;
+
       // Generate new random private key using Starknet.js
       console.log("🔐 Generating new Starknet custodial wallet...");
       const privateKeyBytes = ec.starkCurve.utils.randomPrivateKey();
@@ -147,8 +150,58 @@ class StarknetWalletDatabase {
         },
       });
       console.log("✅ Wallet keys stored");
-      console.log("ℹ️  Wallet will be deployed automatically on first withdrawal");
+
+      // Sponsor deployment with house wallet
       console.log("");
+      console.log("💰 Sponsoring wallet deployment from house wallet...");
+
+      try {
+        // Import deployment functions
+        const { sendStrkFromStarknetHouseWallet } = await import("@/lib/starknet/houseWallet");
+        const { deployStarknetAccount } = await import("@/lib/starknet/deployWallet");
+        const { getStarknetProvider } = await import("@/lib/starknet/provider");
+        const { SPONSORED_DEPLOYMENT_STRK } = await import("@/lib/constants");
+
+        // Use configured sponsorship amount (3 STRK = deployment + future gas)
+        const deploymentFunding = BigInt(SPONSORED_DEPLOYMENT_STRK);
+
+        console.log(`   Sending ${Number(deploymentFunding) / 1e18} STRK to ${accountAddress}...`);
+
+        // Send STRK from house wallet to new custodial wallet
+        const fundingTxHash = await sendStrkFromStarknetHouseWallet(
+          accountAddress,
+          deploymentFunding
+        );
+
+        console.log("✅ STRK sent, TX:", fundingTxHash);
+        console.log("⏳ Waiting for funding confirmation...");
+
+        // Wait for funding transaction to confirm
+        const provider = getStarknetProvider();
+        await provider.waitForTransaction(fundingTxHash);
+
+        console.log("✅ Funding confirmed");
+        console.log("🚀 Deploying wallet...");
+
+        // Deploy the wallet using its own STRK balance
+        const { txHash: deployTxHash } = await deployStarknetAccount(
+          privateKey,
+          accountAddress,
+          false // No paymaster, use wallet's STRK
+        );
+
+        console.log("✅ Wallet deployed successfully!");
+        console.log("   Funding TX:", fundingTxHash);
+        console.log("   Deploy TX:", deployTxHash);
+        console.log("   Address:", accountAddress);
+        console.log("");
+
+      } catch (deployError) {
+        console.error("❌ Wallet deployment failed:", deployError);
+        console.log("⚠️  Wallet created but not deployed - will deploy on first withdrawal");
+        console.log("");
+        // Don't throw - wallet can still be used, just not deployed yet
+      }
 
       return {
         userId: custodialWallet.id, // For backward compatibility

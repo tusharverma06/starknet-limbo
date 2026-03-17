@@ -137,8 +137,36 @@ export async function deployStarknetAccount(
         address: calculatedAddress,
       };
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("❌ Deployment failed:", error);
+
+    // Enhanced error handling
+    const errorObj = error as { code?: number; message?: string; data?: { walletRpcError?: { code?: number } } };
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // MetaMask Snap specific errors
+    if (errorObj.data?.walletRpcError?.code === 163 || errorObj.code === 163) {
+      throw new Error(
+        "Account deployment failed (Error 163). This may occur when using MetaMask Starknet Snap with incompatible account types. Our custodial wallets use OpenZeppelin standard. Please try withdrawing instead - deployment will happen automatically with proper parameters."
+      );
+    }
+
+    // Account already deployed
+    if (errorMessage.includes("already deployed") || errorMessage.includes("ALREADY_DEPLOYED")) {
+      throw new Error("Account is already deployed");
+    }
+
+    // Insufficient balance
+    if (errorMessage.includes("Insufficient") || errorMessage.includes("insufficient")) {
+      throw new Error("Insufficient STRK balance to cover deployment fees. Please add more STRK to your wallet.");
+    }
+
+    // Contract not found (not enough funds)
+    if (errorMessage.includes("Contract not found")) {
+      throw new Error("Unable to deploy: Account may need STRK for deployment fees.");
+    }
+
+    // Re-throw with original error
     throw error;
   }
 }

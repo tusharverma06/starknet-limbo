@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ec, Account, Signer } from "starknet";
+import { Account, Signer } from "starknet";
 
 import { prisma } from "@/lib/db/prisma";
 import { requireAuth } from "@/lib/auth/requireAuth";
@@ -161,14 +161,42 @@ export async function POST(req: NextRequest) {
             confirmedAt: new Date(),
           },
         });
-      } catch (deployError) {
+      } catch (deployError: unknown) {
         console.error("❌ Deployment failed:", deployError);
 
+        // Handle specific error types
+        const errorMessage = deployError instanceof Error ? deployError.message : String(deployError);
+        const errorObj = deployError as { code?: number; message?: string; data?: { walletRpcError?: { code?: number } } };
+
+        // MetaMask Snap error code 163
+        if (errorObj.data?.walletRpcError?.code === 163 || errorObj.code === 163) {
+          return NextResponse.json(
+            {
+              error: "Deployment failed",
+              message: "Wallet deployment encountered an error. This may be due to network issues or insufficient funds. Please ensure you have enough ETH and STRK for deployment fees and try again.",
+              details: "Error code 163: Account deployment failed",
+            },
+            { status: 500 }
+          );
+        }
+
+        // Insufficient funds
+        if (errorMessage.includes("Insufficient") || errorMessage.includes("insufficient")) {
+          return NextResponse.json(
+            {
+              error: "Insufficient funds for deployment",
+              message: "Not enough STRK to cover deployment fees. Please add more funds to your wallet.",
+            },
+            { status: 400 }
+          );
+        }
+
+        // Generic deployment error
         return NextResponse.json(
           {
             error: "Wallet deployment failed",
-            message:
-              "Your wallet needs to be deployed before withdrawing. Please contact support.",
+            message: "Your wallet needs to be deployed before withdrawing. Deployment failed - please ensure you have sufficient STRK for fees and try again.",
+            details: errorMessage,
           },
           { status: 500 },
         );

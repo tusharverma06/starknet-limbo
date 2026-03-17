@@ -96,11 +96,62 @@ export async function POST(req: NextRequest) {
     console.log("🚀 Deploying custodial wallet...");
     console.log("   This will take 30-60 seconds...");
 
-    const { txHash, address } = await deployStarknetAccount(
-      privateKey,
-      walletAddress,
-      false // No paymaster, use wallet's STRK balance
-    );
+    let txHash: string;
+    let address: string;
+
+    try {
+      const result = await deployStarknetAccount(
+        privateKey,
+        walletAddress,
+        false // No paymaster, use wallet's STRK balance
+      );
+      txHash = result.txHash;
+      address = result.address;
+    } catch (deployError: unknown) {
+      console.error("❌ Deployment error:", deployError);
+
+      // Handle specific Starknet/MetaMask errors
+      const errorMessage = deployError instanceof Error ? deployError.message : String(deployError);
+      const errorObj = deployError as { code?: number; message?: string; data?: { walletRpcError?: { code?: number } } };
+
+      // MetaMask Snap error code 163 - deployment failed
+      if (errorObj.data?.walletRpcError?.code === 163 || errorObj.code === 163) {
+        return NextResponse.json(
+          {
+            error: "Account deployment failed",
+            message: "This appears to be a MetaMask Starknet Snap error. Your custodial wallet uses OpenZeppelin account standard which may not be compatible with MetaMask Snap deployment. Please use the withdrawal feature instead - it will auto-deploy when needed.",
+            address: walletAddress,
+            details: "Error code 163: Incompatible account type or deployment parameters",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Account already deployed
+      if (errorMessage.includes("already deployed") || errorMessage.includes("ALREADY_DEPLOYED")) {
+        return NextResponse.json({
+          success: true,
+          message: "Wallet already deployed",
+          address: walletAddress,
+          alreadyDeployed: true,
+        });
+      }
+
+      // Insufficient funds
+      if (errorMessage.includes("Insufficient") || errorMessage.includes("insufficient")) {
+        return NextResponse.json(
+          {
+            error: "Insufficient funds",
+            message: "Not enough STRK to cover deployment fees. Please add more STRK and try again.",
+            address: walletAddress,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Re-throw for generic error handler
+      throw deployError;
+    }
 
     console.log("✅ Wallet deployed successfully!");
     console.log("   TX Hash:", txHash);

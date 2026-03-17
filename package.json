@@ -23,6 +23,7 @@
     "encrypt-starknet-key": "tsx scripts/encrypt-starknet-key.ts",
     "decrypt-custodial-key": "tsx scripts/decrypt-custodial-key.ts",
     "deploy-custodial-wallet": "tsx scripts/deploy-custodial-wallet.ts",
+    "bulk-deploy-wallets": "tsx scripts/bulk-deploy-wallets.ts",
     "test-paymaster": "tsx scripts/test-paymaster.ts",
     "test-starkzap-deploy": "tsx scripts/test-starkzap-deployment.ts"
   },

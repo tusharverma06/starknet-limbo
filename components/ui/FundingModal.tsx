@@ -32,10 +32,22 @@ export function FundingModal({
   const [error, setError] = useState("");
   const [txSuccess, setTxSuccess] = useState(false);
 
-  const { isConnected: isStarknetConnected, connect: connectStarknet, hasWallet, address: starknetAddress } = useStarknet();
-  const { wallet: starknetWallet, transferToken, isLoading: isStarknetLoading, getBalance } = useStarknetWallet();
+  const {
+    isConnected: isStarknetConnected,
+    connect: connectStarknet,
+    hasWallet,
+    address: starknetAddress,
+  } = useStarknet();
+  const {
+    wallet: starknetWallet,
+    transferToken,
+    isLoading: isStarknetLoading,
+    getBalance,
+  } = useStarknetWallet();
   const [starknetBalance, setStarknetBalance] = useState<string | null>(null);
-  const [starknetBalanceUsd, setStarknetBalanceUsd] = useState<number | null>(null);
+  const [starknetBalanceUsd, setStarknetBalanceUsd] = useState<number | null>(
+    null,
+  );
 
   // Fetch Starknet balance when wallet is connected or modal opens
   useEffect(() => {
@@ -143,7 +155,7 @@ export function FundingModal({
       const tx = await transferToken(
         mainnetTokens.ETH,
         walletAddress,
-        Amount.parse(ethAmount, mainnetTokens.ETH)
+        Amount.parse(ethAmount, mainnetTokens.ETH),
       );
 
       if (tx) {
@@ -154,7 +166,7 @@ export function FundingModal({
           try {
             await fetch("/api/wallet/log-deposit", {
               method: "POST",
-              credentials: 'include',
+              credentials: "include",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 wallet_address: starknetAddress,
@@ -194,9 +206,9 @@ export function FundingModal({
   const usdEquivalentNum = parseFloat(usdEquivalent);
   const hasInsufficientBalance = Boolean(
     starknetBalanceUsd &&
-      !isNaN(usdEquivalentNum) &&
-      usdEquivalentNum > 0 &&
-      usdEquivalentNum > starknetBalanceUsd
+    !isNaN(usdEquivalentNum) &&
+    usdEquivalentNum > 0 &&
+    usdEquivalentNum > starknetBalanceUsd,
   );
 
   return (
@@ -249,10 +261,10 @@ export function FundingModal({
                 className="text-lg text-black"
                 style={{ fontFamily: "var(--font-lilita-one)" }}
               >
-                Install Starknet Wallet
+                Install Braavos Wallet
               </p>
               <a
-                href="https://www.argent.xyz/argent-x/"
+                href="https://braavos.app/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative w-full max-w-xs h-[43px] bg-gradient-to-b from-[#1499ff] to-[#094eed] border-2 border-black rounded-lg shadow-[0px_3px_0px_0px_#000000] active:shadow-none active:translate-y-[2px] transition-all flex items-center justify-center"
@@ -264,7 +276,7 @@ export function FundingModal({
                     fontFamily: "var(--font-lilita-one)",
                   }}
                 >
-                  Download Argent X
+                  Download Braavos
                 </p>
               </a>
             </div>
@@ -335,7 +347,10 @@ export function FundingModal({
                     className="text-[16px] text-[rgba(0,0,0,0.32)] leading-[1.2]"
                     style={{ fontFamily: "var(--font-lilita-one)" }}
                   >
-                    {starknetBalanceUsd ? `$${starknetBalanceUsd.toFixed(2)}` : "$0.00"} Balance
+                    {starknetBalanceUsd
+                      ? `$${starknetBalanceUsd.toFixed(2)}`
+                      : "$0.00"}{" "}
+                    Balance
                   </p>
                 </div>
                 <div
@@ -344,7 +359,12 @@ export function FundingModal({
                   } rounded-xl h-[44px] px-3 py-[10px] flex items-center justify-between transition-colors`}
                 >
                   <div className="flex items-center gap-2 flex-1">
-                    <Image src="/eth-black.svg" alt="ETH" width={20} height={20} />
+                    <Image
+                      src="/eth-black.svg"
+                      alt="ETH"
+                      width={20}
+                      height={20}
+                    />
                     <input
                       type="number"
                       placeholder="0.0234"
@@ -415,7 +435,8 @@ export function FundingModal({
                       </span>
                     </div>
                     <p className="text-xs text-green-700">
-                      Your funds have been successfully deposited to your custodial wallet.
+                      Your funds have been successfully deposited to your
+                      custodial wallet.
                     </p>
                   </div>
                 </div>

@@ -222,6 +222,7 @@ export async function POST(req: NextRequest) {
           const receipt = await provider.getTransactionReceipt(bet.txHash);
           console.log("📥 Starknet transaction receipt received", receipt);
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if (receipt && (receipt as any).events) {
             console.log("EVENT FOUND");
             // Convert BigInt values to strings for JSON serialization
@@ -236,7 +237,9 @@ export async function POST(req: NextRequest) {
               "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
             // Look for Transfer event (from house to user)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const transferEvent = (receipt as any).events?.find(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (event: any) => {
                 return event.from_address === ethContractAddress;
               },

@@ -133,23 +133,55 @@ export async function POST(req: NextRequest) {
       siweData.siwe_expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     }
 
-    user = await prisma.user.create({
-      data: {
-        wallet_address: normalizedAddress,
-        custodial_wallet_id: custodialWalletIdToUse,
-        sessionId: sessionId ?? undefined,
-        ...siweData,
-      },
-      include: {
-        custodialWallet: true,
-      },
-    });
+    try {
+      user = await prisma.user.create({
+        data: {
+          wallet_address: normalizedAddress,
+          custodial_wallet_id: custodialWalletIdToUse,
+          sessionId: sessionId ?? undefined,
+          ...siweData,
+        },
+        include: {
+          custodialWallet: true,
+        },
+      });
 
-    console.log("✅ User created:", {
-      user_id: user.id,
-      wallet: normalizedAddress,
-      custodial: user.custodialWallet.address,
-    });
+      console.log("✅ User created:", {
+        user_id: user.id,
+        wallet: normalizedAddress,
+        custodial: user.custodialWallet.address,
+      });
+    } catch (createError) {
+      // Handle race condition: wallet address already exists (P2002)
+      if (
+        createError &&
+        typeof createError === "object" &&
+        "code" in createError &&
+        createError.code === "P2002"
+      ) {
+        console.log("⚠️  User already exists (concurrent request), fetching existing user...");
+
+        // Fetch the existing user
+        const existingUser = await prisma.user.findUnique({
+          where: { wallet_address: normalizedAddress },
+          include: { custodialWallet: true },
+        });
+
+        if (!existingUser) {
+          throw new Error("User creation race condition - user not found after conflict");
+        }
+
+        user = existingUser;
+        console.log("✅ Existing user found:", {
+          user_id: user.id,
+          wallet: normalizedAddress,
+          custodial: user.custodialWallet?.address,
+        });
+      } else {
+        // Re-throw if not a unique constraint error
+        throw createError;
+      }
+    }
 
     return NextResponse.json({
       success: true,

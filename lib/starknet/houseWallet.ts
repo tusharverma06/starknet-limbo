@@ -148,12 +148,40 @@ export async function sendTokenFromStarknetHouseWallet(
       calldata: [to, uint256.bnToUint256(amount)],
     };
 
-    // Execute transaction
-    const tx = await account.execute(transferCall);
+    // Execute transaction with retry on nonce errors
+    let lastError: Error | null = null;
+    const maxRetries = 3;
 
-    console.log("✅ Starknet transfer transaction sent:", tx.transaction_hash);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const tx = await account.execute(transferCall);
 
-    return tx.transaction_hash;
+        console.log("✅ Starknet transfer transaction sent:", tx.transaction_hash);
+        return tx.transaction_hash;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Check if it's a nonce error
+        const errorMessage = lastError.message.toLowerCase();
+        const isNonceError =
+          errorMessage.includes("duplicatenonce") ||
+          errorMessage.includes("invalid transaction nonce") ||
+          errorMessage.includes("nonce");
+
+        if (isNonceError && attempt < maxRetries) {
+          console.warn(`⚠️  Nonce error on attempt ${attempt}/${maxRetries}, retrying...`);
+          // Wait a bit before retry to let nonce sync
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+          continue;
+        }
+
+        // If not nonce error or last attempt, throw
+        break;
+      }
+    }
+
+    // If we got here, all retries failed
+    throw lastError || new Error("Transaction failed after retries");
   });
 }
 

@@ -62,8 +62,9 @@ export async function deployStarknetAccount(
           nodeUrl: network === "sepolia"
             ? "https://sepolia.paymaster.avnu.fi"
             : "https://starknet.paymaster.avnu.fi",
-          apiKey: process.env.AVNU_PAYMASTER_API_KEY,
-        },
+            headers: { 'x-paymaster-api-key': process.env.AVNU_API_KEY },
+          },
+
       });
 
       console.log("🔌 StarkZap initialized with AVNU Paymaster");
@@ -73,7 +74,6 @@ export async function deployStarknetAccount(
         strategy: OnboardStrategy.Signer,
         account: {
           signer: new StarkSigner(privateKey),
-          accountPreset: "openzeppelin",
         },
         deploy: "never", // We'll deploy manually with sponsored mode
       });

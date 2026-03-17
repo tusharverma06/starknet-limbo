@@ -6,23 +6,13 @@ A provably fair betting game built on **Starknet** using Starkzap SDK. Connect y
 
 ## 🌟 Key Features
 
-### Starknet Integration
-- **Multiple Wallet Options**
-  - Browser wallets (Argent X, Braavos) with AVNU Paymaster
-  - Cartridge Controller for social login + gasless transactions
-- **Seamless Deposits**
-  - Fund your betting wallet directly from Starknet
-  - Support for ETH, STRK, USDC, USDT
-  - Real-time balance updates
-- **Gasless Transactions**
-  - AVNU Paymaster: Pay gas in stablecoins instead of STRK
-  - Cartridge: Automatic gasless transactions for gaming
-
-### Gaming Features
+- **Starknet Wallet Integration**: Connect with Argent X or Braavos
+- **Gasless Deposits**: Pay gas fees in USDC/USDT via AVNU Paymaster
+- **Multiple Tokens**: Fund with ETH, STRK, USDC, or USDT
+- **Instant Gameplay**: Fast betting with custodial wallets
 - **Provably Fair**: Cryptographically verifiable randomness
-- **Instant Results**: Fast gameplay with custodial wallets
-- **Beautiful UI**: Polished interface with smooth Rive animations
-- **Mobile-First**: Optimized for mobile and desktop
+- **Beautiful UI**: Smooth Rive animations and polished interface
+- **Mobile Optimized**: Works seamlessly on all devices
 
 ---
 
@@ -62,34 +52,31 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 ## 🎮 How to Play
 
-1. **Connect Starknet Wallet**
+1. **Connect Wallet**
    - Click "Connect Wallet"
-   - Select Argent X or Braavos from the wallet selector
-   - Approve the connection request
+   - Approve connection in Argent X or Braavos
 
 2. **Sign In**
-   - Click "Sign In" to authenticate
-   - Sign the message in your wallet
-   - Your custodial gaming wallet will be created automatically
+   - Click "Sign In"
+   - Sign the authentication message
+   - Your custodial wallet is created automatically
 
 3. **Fund Your Wallet**
-   - Click your balance dropdown
-   - Select "Add Funds"
-   - Choose your token (ETH, STRK, USDC, or USDT)
-   - Enter amount and confirm the transfer
-   - Funds are transferred to your custodial wallet via Starkzap
+   - Click your balance → "Add Funds"
+   - Choose token (ETH, STRK, USDC, or USDT)
+   - Enter amount and confirm transfer
+   - Funds arrive instantly via AVNU Paymaster
 
 4. **Place Bets**
-   - Set your bet amount in USD
-   - Choose your target multiplier (1.01x - 1000x)
+   - Set bet amount in USD
+   - Choose target multiplier (1.01x - 1000x)
    - Click "Bet your amount"
-   - Watch the Rive animation and get instant results!
+   - Watch the animation and see results instantly!
 
-5. **Withdraw Anytime**
-   - Click your balance dropdown
-   - Select "Withdraw Funds"
-   - Enter amount and destination address
-   - Funds are sent back to your Starknet wallet
+5. **Withdraw**
+   - Click balance → "Withdraw Funds"
+   - Enter amount
+   - Funds sent back to your Starknet wallet
 
 ---
 
@@ -101,15 +88,14 @@ limbo-app/
 │   ├── providers/
 │   │   └── StarknetProvider.tsx       # Wallet connection + AVNU Paymaster
 │   ├── ui/
-│   │   ├── StarknetConnectButton.tsx  # Connection UI
-│   │   ├── CartridgeConnectButton.tsx # Gasless gaming wallet
-│   │   └── FundingModal.tsx           # Deposit interface
+│   │   ├── FundingModal.tsx           # Deposit interface
+│   │   └── WithdrawModal.tsx          # Withdrawal interface
 │   └── game/
 │       └── MiniappGameBoard.tsx       # Main game interface
 ├── hooks/
 │   ├── useStarknetWallet.ts           # Token transfers & balances
-│   ├── useCartridgeWallet.ts          # Cartridge Controller
-│   └── useServerWallet.ts             # Custodial wallet logic
+│   ├── useServerWallet.ts             # Custodial wallet operations
+│   └── useSession.ts                  # Wallet authentication (SIWE)
 ├── lib/
 │   └── starknet/
 │       └── betting.ts                 # Token addresses & utilities
@@ -122,23 +108,22 @@ limbo-app/
 ## 🔧 Tech Stack
 
 ### Starknet
-- **Starkzap SDK** - Wallet abstraction & transactions
-- **get-starknet-core** - Wallet detection
-- **starknet.js** - Starknet library
-- **AVNU Paymaster** - Gasless transactions
-- **Cartridge Controller** - Social login for gaming
+- **Starkzap SDK** - Wallet integration & token transfers
+- **get-starknet-core** - Wallet detection (Argent X, Braavos)
+- **starknet.js** - Starknet blockchain interactions
+- **AVNU Paymaster** - Gasless transactions (pay gas in stablecoins)
 
 ### Frontend
 - **Next.js 15** - React framework
 - **TypeScript** - Type safety
 - **Tailwind CSS** - Styling
 - **Framer Motion** - Animations
-- **Tanstack Query** - Data fetching
+- **Rive** - Game animations
 
 ### Backend
 - **Prisma** - Database ORM
 - **PostgreSQL** - Database
-- **Ethers.js** - Custodial wallet management
+- **Custodial Wallets** - Encrypted wallet management
 
 ---
 
@@ -172,42 +157,32 @@ pnpm db:studio    # Open Prisma Studio
 
 ---
 
-## 🎯 Starkzap Integration Highlights
+## 🎯 Starkzap Integration
 
-### 1. Browser Wallet Support
+### 1. Initialize SDK with AVNU Paymaster
 
 ```typescript
-// Connect Argent X or Braavos with AVNU Paymaster
 const sdk = new StarkZap({
   network: "mainnet",
   paymaster: {
     nodeUrl: "https://starknet.paymaster.avnu.fi",
   },
 });
-
-const wallet = await sdk.connectWallet({
-  account: browserWallet.account,
-});
 ```
 
-### 2. Cartridge Controller (Optional)
+### 2. Connect Browser Wallet
 
 ```typescript
-// Social login + gasless transactions
-const onboard = await sdk.onboard({
-  strategy: OnboardStrategy.Cartridge,
-  cartridge: {
-    policies: [
-      { target: mainnetTokens.ETH.address, method: "transfer" },
-    ],
-  },
-});
+import { getStarknet } from "get-starknet-core";
+
+const starknetManager = getStarknet();
+const availableWallets = await starknetManager.getAvailableWallets();
+const connectedWallet = await starknetManager.enable(availableWallets[0]);
 ```
 
-### 3. Token Transfers
+### 3. Transfer Tokens to Custodial Wallet
 
 ```typescript
-// Transfer ETH to custodial wallet
 await wallet.transfer(mainnetTokens.ETH, [
   { to: custodialAddress, amount: Amount.parse("0.1", mainnetTokens.ETH) }
 ]);
@@ -244,10 +219,11 @@ await wallet.transfer(mainnetTokens.ETH, [
 
 ## 🔒 Security
 
-- **Custodial Wallets**: Encrypted private keys
-- **AVNU Paymaster**: Trusted gas abstraction
-- **Starknet Native**: Built on secure L2
-- **No Private Keys Client-Side**: All signing via wallet extensions
+- **Encrypted Custodial Wallets**: Private keys encrypted at rest
+- **SIWE Authentication**: Sign-In with Ethereum for wallet verification
+- **AVNU Paymaster**: Trusted gas abstraction service
+- **No Private Keys Client-Side**: All signing via browser wallet extensions
+- **Starknet L2**: Built on secure Layer 2 infrastructure
 
 ---
 
@@ -295,7 +271,7 @@ MIT License - see [LICENSE](./LICENSE) file
 - **Starkzap SDK**: https://docs.starknet.io/build/starkzap/
 - **Starknet Docs**: https://docs.starknet.io
 - **AVNU Paymaster**: https://docs.avnu.fi
-- **Cartridge**: https://cartridge.gg
+- **Argent X Wallet**: https://www.argent.xyz/argent-x/
 - **Voyager Explorer**: https://voyager.online
 
 ---

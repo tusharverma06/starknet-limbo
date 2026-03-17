@@ -1,13 +1,10 @@
 import { prisma } from "@/lib/db/prisma";
+import { sendToStarknetHouseWallet } from "@/lib/starknet/houseWallet";
+import { getStarknetProvider } from "@/lib/starknet/provider";
 
 /**
- * Process bet deduction on Starknet - for custodial wallets, no on-chain tx needed
- * This is called asynchronously after bet is placed
- *
- * NOTE: For Starknet custodial wallets, we skip on-chain bet deductions because:
- * 1. Starknet wallets are smart contracts that need deployment (expensive)
- * 2. We control custodial wallets, so database balance tracking is sufficient
- * 3. Only payouts need to be on-chain (from house wallet to user)
+ * Process bet deduction on Starknet - sends ETH from user's custodial wallet to house wallet
+ * This is called synchronously during bet placement to ensure funds are transferred on-chain
  */
 export async function processStarknetBetDeduction(params: {
   betId: string;
@@ -16,18 +13,36 @@ export async function processStarknetBetDeduction(params: {
   userWalletAddress: string;
   betAmount: string;
 }): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  const { betId, userWalletAddress, betAmount } = params;
+  const { betId, encryptedPrivateKey, userWalletAddress, betAmount } = params;
 
   try {
-    // userWalletAddress is actually the custodial wallet address
+    console.log(`📤 Processing Starknet bet deduction for bet: ${betId}`);
+    console.log(`   Amount: ${betAmount} wei`);
+    console.log(`   From: ${userWalletAddress}`);
+
+    const betAmountBigInt = BigInt(betAmount);
+
+    // Send bet amount from user's custodial wallet to house wallet on-chain
+    const txHash = await sendToStarknetHouseWallet(
+      encryptedPrivateKey,
+      userWalletAddress,
+      betAmountBigInt
+    );
+
+    console.log(`✅ Bet transaction sent: ${txHash}`);
+
+    // Wait for transaction confirmation
+    const provider = getStarknetProvider();
+    console.log(`⏳ Waiting for transaction confirmation...`);
+
+    await provider.waitForTransaction(txHash);
+
+    console.log(`✅ Transaction confirmed: ${txHash}`);
+
+    // Get custodial wallet to update transaction record
     const custodialWallet = await prisma.custodialWallet.findUnique({
       where: {
         address: userWalletAddress.toLowerCase(),
-      },
-      include: {
-        users: {
-          take: 1, // Just need one user for the custodial_wallet_id
-        },
       },
     });
 
@@ -35,18 +50,7 @@ export async function processStarknetBetDeduction(params: {
       throw new Error("Custodial wallet not found");
     }
 
-    console.log(`📤 Processing Starknet bet deduction for bet: ${betId}`);
-    console.log(`   Amount: ${betAmount} wei`);
-    console.log(`   ℹ️  Skipping on-chain transaction for custodial wallet (balance tracked in DB)`);
-
-    // For custodial wallets on Starknet, we skip the on-chain transaction
-    // The balance is already deducted in the database
-    // We just mark the bet as deducted
-
-    // No transaction to confirm for custodial wallets
-    // Just update the bet status
-
-    // Update existing pending bet transaction to confirmed (no txHash for custodial bets)
+    // Update existing pending bet transaction with tx hash and mark as confirmed
     const existingBetTx = await prisma.walletTransaction.findFirst({
       where: {
         custodialWalletId: custodialWallet.id,
@@ -61,35 +65,22 @@ export async function processStarknetBetDeduction(params: {
       await prisma.walletTransaction.update({
         where: { id: existingBetTx.id },
         data: {
+          txHash,
           status: "confirmed",
           confirmedAt: new Date(),
-          // No txHash for custodial wallet bets (off-chain balance tracking)
         },
       });
-      console.log(`✅ Bet transaction marked as confirmed in database`);
+      console.log(`✅ Bet transaction record updated`);
     }
 
-    // Update bet status to show deduction complete
-    await prisma.bet.update({
-      where: { id: betId },
-      data: {
-        status: "deducted",
-      },
-    });
+    console.log(`✅ Bet deduction completed successfully`);
 
-    console.log(`✅ Bet status updated to deducted`);
-
-    return { success: true };
+    return { success: true, txHash };
   } catch (error) {
     console.error(`❌ Starknet bet deduction failed:`, error);
 
-    // Mark bet as failed
-    await prisma.bet.update({
-      where: { id: betId },
-      data: {
-        status: "failed",
-      },
-    });
+    // Don't update bet status here - let the calling function handle it
+    // This avoids race conditions and keeps the logic centralized
 
     return {
       success: false,

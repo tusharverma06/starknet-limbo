@@ -198,75 +198,189 @@ export async function POST(req: NextRequest) {
     let txDirectionError = null;
 
     // Import house wallet address getter
-    const { getHouseWalletAddress } =
-      await import("@/lib/security/houseWallet");
-    const houseWalletAddress = getHouseWalletAddress().toLowerCase();
+    const { getStarknetHouseWalletAddress } =
+      await import("@/lib/starknet/houseWallet");
+    const houseWalletAddress = getStarknetHouseWalletAddress().toLowerCase();
     const userCustodialWallet = custodialWalletAddress?.toLowerCase();
+
+    // Detect if this is a Starknet wallet
+    const isStarknetWallet =
+      custodialWalletAddress && custodialWalletAddress.length > 42;
 
     if (bet.txHash) {
       try {
-        // Fetch payout transaction from RPC provider
-        const rpcUrl =
-          process.env.NEXT_PUBLIC_RPC_URL ||
-          `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+        if (isStarknetWallet) {
+          // Fetch Starknet transaction
+          console.log(
+            "🔍 Fetching Starknet transaction details for:",
+            bet.txHash,
+          );
+          const { getStarknetProvider } =
+            await import("@/lib/starknet/provider");
+          const provider = getStarknetProvider();
 
-        if (rpcUrl && !rpcUrl.includes("undefined")) {
-          console.log("🔍 Fetching transaction details for:", bet.txHash);
-          const response = await fetch(rpcUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: 1,
-              method: "eth_getTransactionByHash",
-              params: [bet.txHash],
-            }),
-          });
+          const receipt = await provider.getTransactionReceipt(bet.txHash);
+          console.log("📥 Starknet transaction receipt received", receipt);
 
-          const data = await response.json();
-          console.log("📥 Transaction data received:", data);
-          transactionData = data.result;
-
-          if (transactionData) {
-            // Extract transaction value (balance delta)
-            txBalanceDelta = extractTxBalanceDelta(
-              transactionData.value || "0",
-            );
-            console.log(
-              "💰 Extracted balance delta:",
-              txBalanceDelta.toString(),
+          if (receipt && (receipt as any).events) {
+            console.log("EVENT FOUND");
+            // Convert BigInt values to strings for JSON serialization
+            transactionData = JSON.parse(
+              JSON.stringify(receipt, (key, value) =>
+                typeof value === "bigint" ? value.toString() : value,
+              ),
             );
 
-            // VERIFY PAYOUT TRANSACTION DIRECTION
-            // This ensures txHash is actually a payout (house → user) not a bet payment (user → house)
-            const txFrom = transactionData.from?.toLowerCase();
-            const txTo = transactionData.to?.toLowerCase();
+            // Find Transfer event from the ETH contract
+            const ethContractAddress =
+              "0x49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
-            console.log("🔍 Verifying payout transaction direction:", {
-              txFrom,
-              txTo,
-              expectedFrom: houseWalletAddress,
-              expectedTo: userCustodialWallet,
-            });
+            // Look for Transfer event (from house to user)
+            const transferEvent = (receipt as any).events?.find(
+              (event: any) => {
+                return event.from_address === ethContractAddress;
+              },
+            );
+            console.log(transferEvent);
 
-            if (txFrom === houseWalletAddress && txTo === userCustodialWallet) {
-              txDirectionValid = true;
-              console.log("✅ Payout transaction verified (house → user)");
-            } else {
-              txDirectionValid = false;
-              txDirectionError = `Invalid payout direction. Expected FROM: ${houseWalletAddress} TO: ${userCustodialWallet}, but got FROM: ${txFrom} TO: ${txTo}`;
-              console.error(
-                "❌ Invalid payout transaction direction:",
-                txDirectionError,
+            if (transferEvent && transferEvent.data) {
+              // Starknet Transfer event data structure:
+              // data[0] = from address
+              // data[1] = to address
+              // data[2] = amount (low)
+              // data[3] = amount (high)
+              const amountLow = BigInt(transferEvent.data[2] || 0);
+              const amountHigh = BigInt(transferEvent.data[3] || 0);
+              console.log("FAAAHHH", amountHigh, amountLow);
+
+              txBalanceDelta = amountLow + (amountHigh << BigInt(128));
+              console.log("FAAAHHH", txBalanceDelta);
+
+              console.log(
+                "💰 Extracted Starknet transfer amount:",
+                txBalanceDelta.toString(),
               );
+
+              // Verify transaction direction (house → user)
+              // Normalize Starknet addresses for comparison (pad to 66 chars including 0x)
+              const normalizeStarknetAddress = (addr: string) => {
+                if (!addr) return addr;
+                const hex = addr.startsWith("0x") ? addr.slice(2) : addr;
+                return "0x" + hex.padStart(64, "0").toLowerCase();
+              };
+
+              const fromAddress = normalizeStarknetAddress(
+                transferEvent.data[0],
+              );
+              const toAddress = normalizeStarknetAddress(transferEvent.data[1]);
+              const expectedFrom = normalizeStarknetAddress(houseWalletAddress);
+              const expectedTo = normalizeStarknetAddress(
+                userCustodialWallet || "",
+              );
+
+              console.log("🔍 Verifying Starknet transaction direction:", {
+                fromAddress,
+                toAddress,
+                expectedFrom,
+                expectedTo,
+              });
+
+              if (fromAddress === expectedFrom && toAddress === expectedTo) {
+                txDirectionValid = true;
+                console.log(
+                  "✅ Starknet payout transaction verified (house → user)",
+                );
+              } else {
+                txDirectionValid = false;
+                txDirectionError = `Invalid payout direction. Expected FROM: ${expectedFrom} TO: ${expectedTo}, but got FROM: ${fromAddress} TO: ${toAddress}`;
+                console.error(
+                  "❌ Invalid Starknet payout direction:",
+                  txDirectionError,
+                );
+              }
+            } else {
+              console.warn(
+                "⚠️ No Transfer event found in Starknet transaction",
+              );
+              txDirectionError = "Transfer event not found in transaction";
             }
           } else {
-            console.warn("⚠️ No transaction data found for hash:", bet.txHash);
-            txDirectionError = "Transaction not found on blockchain";
+            console.warn(
+              "⚠️ No transaction receipt found for hash:",
+              bet.txHash,
+            );
+            txDirectionError = "Transaction not found on Starknet";
           }
         } else {
-          console.error("❌ RPC URL not configured properly");
-          txDirectionError = "RPC URL not configured";
+          // Fetch EVM transaction
+          const rpcUrl =
+            process.env.NEXT_PUBLIC_RPC_URL ||
+            `https://base-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`;
+
+          if (rpcUrl && !rpcUrl.includes("undefined")) {
+            console.log("🔍 Fetching EVM transaction details for:", bet.txHash);
+            const response = await fetch(rpcUrl, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "eth_getTransactionByHash",
+                params: [bet.txHash],
+              }),
+            });
+
+            const data = await response.json();
+            console.log("📥 EVM transaction data received:", data);
+            transactionData = data.result;
+
+            if (transactionData) {
+              // Extract transaction value (balance delta)
+              txBalanceDelta = extractTxBalanceDelta(
+                transactionData.value || "0",
+              );
+              console.log(
+                "💰 Extracted balance delta:",
+                txBalanceDelta.toString(),
+              );
+
+              // VERIFY PAYOUT TRANSACTION DIRECTION
+              // This ensures txHash is actually a payout (house → user) not a bet payment (user → house)
+              const txFrom = transactionData.from?.toLowerCase();
+              const txTo = transactionData.to?.toLowerCase();
+
+              console.log("🔍 Verifying payout transaction direction:", {
+                txFrom,
+                txTo,
+                expectedFrom: houseWalletAddress,
+                expectedTo: userCustodialWallet,
+              });
+
+              if (
+                txFrom === houseWalletAddress &&
+                txTo === userCustodialWallet
+              ) {
+                txDirectionValid = true;
+                console.log("✅ Payout transaction verified (house → user)");
+              } else {
+                txDirectionValid = false;
+                txDirectionError = `Invalid payout direction. Expected FROM: ${houseWalletAddress} TO: ${userCustodialWallet}, but got FROM: ${txFrom} TO: ${txTo}`;
+                console.error(
+                  "❌ Invalid payout transaction direction:",
+                  txDirectionError,
+                );
+              }
+            } else {
+              console.warn(
+                "⚠️ No transaction data found for hash:",
+                bet.txHash,
+              );
+              txDirectionError = "Transaction not found on blockchain";
+            }
+          } else {
+            console.error("❌ RPC URL not configured properly");
+            txDirectionError = "RPC URL not configured";
+          }
         }
       } catch (error) {
         console.error("❌ Error fetching transaction:", error);
@@ -287,6 +401,15 @@ export async function POST(req: NextRequest) {
       outcome: bet.outcome as "win" | "lose",
       wager: BigInt(bet.wager),
       payout: BigInt(bet.payout),
+    });
+
+    console.log("📊 Step 5 Summary:", {
+      txHash: bet.txHash,
+      expectedPayout: bet.payout,
+      actualTxValue: txBalanceDelta.toString(),
+      settlementDelta: settlementDelta.toString(),
+      txDirectionValid,
+      txDirectionError,
     });
 
     const step5 = {

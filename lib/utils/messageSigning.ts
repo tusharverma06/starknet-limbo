@@ -1,8 +1,24 @@
 import { Wallet, verifyMessage } from "ethers";
 import { decryptPrivateKey } from "./encryption";
-import { Account, TypedData, constants, type Signature } from "starknet";
+import {
+  Account,
+  Signer,
+  TypedData,
+  constants,
+  ec,
+  type Signature,
+} from "starknet";
 import { getStarknetProvider } from "@/lib/starknet/provider";
+import { hash } from "starknet";
+import { shortString } from "starknet";
 
+const FIELD_PRIME = BigInt(
+  "0x800000000000011000000000000000000000000000000000000000000000001",
+);
+
+function toFelt(value: bigint): bigint {
+  return value % FIELD_PRIME;
+}
 /**
  * Create a structured bet message for signing
  */
@@ -29,7 +45,7 @@ export function createBetMessage(params: {
 export async function signBetMessage(
   message: string,
   encryptedPrivateKey: string,
-  walletAddress?: string
+  walletAddress?: string,
 ): Promise<string> {
   try {
     // Decrypt the private key
@@ -41,51 +57,32 @@ export async function signBetMessage(
     if (isStarknetAddress) {
       // Starknet signature using Account.signMessage() with TypedData
       const provider = getStarknetProvider();
+      const signer = new Signer(privateKey);
+
       const account = new Account({
-        provider: provider,
+        provider,
         address: walletAddress!,
-        signer: privateKey,
+        signer,
       });
 
       // Parse the bet message to get structured data
       const betData = JSON.parse(message);
+      const seedHashFelt = toFelt(BigInt(`0x${betData.serverSeedHash}`));
+      const messageHash = hash.computeHashOnElements([
+        toFelt(BigInt(betData.wager)),
+        toFelt(BigInt(betData.targetMultiplier)),
+        toFelt(BigInt(betData.timestamp)),
+        seedHashFelt,
+      ]);
 
-      // Create TypedData structure for Starknet
-      const typedData: TypedData = {
-        domain: {
-          name: "LimboGame",
-          version: "1",
-          chainId: constants.StarknetChainId.SN_MAIN,
-        },
-        message: {
-          betId: betData.betId,
-          wager: betData.wager,
-          targetMultiplier: betData.targetMultiplier,
-          serverSeedHash: betData.serverSeedHash,
-          timestamp: betData.timestamp.toString(),
-        },
-        primaryType: "Bet",
-        types: {
-          Bet: [
-            { name: "betId", type: "felt" },
-            { name: "wager", type: "felt" },
-            { name: "targetMultiplier", type: "felt" },
-            { name: "serverSeedHash", type: "felt" },
-            { name: "timestamp", type: "felt" },
-          ],
-          StarknetDomain: [
-            { name: "name", type: "shortstring" },
-            { name: "version", type: "shortstring" },
-            { name: "chainId", type: "shortstring" },
-          ],
-        },
-      };
+      const pk = privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`;
 
-      // Sign the typed data with Starknet account
-      const signature = await account.signMessage(typedData);
+      const signature = ec.starkCurve.sign(messageHash, pk);
 
-      // Return signature as JSON string (Starknet signatures are arrays)
-      return JSON.stringify(signature);
+      return JSON.stringify({
+        r: signature.r.toString(),
+        s: signature.s.toString(),
+      });
     } else {
       // EVM signature using ethers.js
       const wallet = new Wallet(privateKey);
@@ -105,7 +102,7 @@ export async function signBetMessage(
 export function verifyBetSignature(
   message: string,
   signature: string,
-  expectedAddress: string
+  expectedAddress: string,
 ): boolean {
   try {
     // Detect if this is a Starknet address (>42 chars)
@@ -114,22 +111,28 @@ export function verifyBetSignature(
     if (isStarknetAddress) {
       // Starknet signature verification
       // Parse signature from JSON string
-      let signatureArray;
+      let signatureData;
       try {
-        signatureArray = JSON.parse(signature);
-      } catch {
-        console.error("Invalid Starknet signature format (not JSON)");
+        signatureData = JSON.parse(signature);
+      } catch (error) {
+        console.error("Invalid Starknet signature format (not JSON):", error);
         return false;
       }
 
-      // Starknet signatures should be arrays with 2 elements
-      if (!Array.isArray(signatureArray) || signatureArray.length < 2) {
-        console.error("Invalid Starknet signature structure");
+      // Starknet signatures should be {r: "...", s: "..."} objects
+      if (!signatureData || typeof signatureData !== 'object') {
+        console.error("Invalid Starknet signature structure - not an object");
+        return false;
+      }
+
+      // Check if signature has r and s fields
+      if (!signatureData.r || !signatureData.s) {
+        console.error("Invalid Starknet signature - missing r or s field");
         return false;
       }
 
       // For Starknet, we verify that:
-      // 1. The signature is properly formatted (array of 2+ elements)
+      // 1. The signature is properly formatted ({r, s} object)
       // 2. Full cryptographic verification would require reconstructing the typed data
       //    and using starknet.js verifyMessageHash, but for provably fair purposes,
       //    the existence of a properly formatted signature is sufficient since:
@@ -137,6 +140,7 @@ export function verifyBetSignature(
       //    - The bet outcome is verifiable through other means (serverSeedHash, etc.)
       //    - This signature is for audit trail, not authentication
 
+      console.log("✅ Starknet signature format valid");
       // Basic format validation passes for Starknet
       return true;
     } else {

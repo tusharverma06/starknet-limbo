@@ -7,7 +7,7 @@ import { getStarknetBalance } from "@/lib/starknet/provider";
 /**
  * GET /api/wallet/balance
  * Get the current balance of the Starknet custodial wallet
- * Fetches directly from blockchain (no locked balance tracking)
+ * Fetches directly from blockchain
  */
 export async function GET(req: NextRequest) {
   try {
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     const custodialAddress = user.custodialWallet.address;
 
-    // Get balance from Starknet with retry logic
+    // Get balance from Starknet blockchain with retry logic
     console.log("📊 Fetching Starknet balance for:", custodialAddress);
 
     let blockchainBalance: bigint;
@@ -51,8 +51,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           error: "Failed to get Starknet balance",
-          message: "RPC endpoint temporarily unavailable. Please try again or set up Alchemy API key.",
-          hint: "Add NEXT_PUBLIC_ALCHEMY_STARKNET_KEY to your .env for better reliability"
+          message: "RPC endpoint temporarily unavailable. Please try again.",
         },
         { status: 500 },
       );
@@ -81,7 +80,10 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("Get balance error:", error);
     return NextResponse.json(
-      { error: "Failed to get balance" },
+      {
+        error: "Failed to get balance",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 },
     );
   }

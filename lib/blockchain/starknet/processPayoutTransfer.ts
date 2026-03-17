@@ -69,7 +69,7 @@ export async function processStarknetPayoutTransfer(params: {
         if (receipt && 'execution_status' in receipt && receipt.execution_status === "SUCCEEDED") {
           break;
         }
-      } catch (error) {
+      } catch {
         // Transaction not found yet, continue polling
       }
 

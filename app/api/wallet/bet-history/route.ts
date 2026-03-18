@@ -12,9 +12,11 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50");
 
     // Build where clause
-    const where: { playerId?: string } = playerId
+    // For "All Bets" (no playerId), filter out $0 demo bets
+    // For "My Bets" (with playerId), include all bets including demo bets
+    const where: { playerId?: string; wagerUsd?: { not: string } } = playerId
       ? { playerId: playerId.toLowerCase() }
-      : {};
+      : { wagerUsd: { not: "0" } }; // Exclude $0 bets from "All Bets"
 
     // Fetch bets
     const bets = await prisma.bet.findMany({

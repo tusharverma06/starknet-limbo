@@ -47,23 +47,27 @@ async function decryptCustodialWalletKey() {
     console.log(custodialWallet.address);
     console.log("");
     console.log("Private Key:");
-    console.log(privateKey);
+    console.log("***REDACTED FOR SECURITY*** (returned in function - DO NOT LOG)");
     console.log("");
     console.log("═══════════════════════════════════════════════════════");
     console.log("");
-    console.log("⚠️  SECURITY WARNING:");
-    console.log("   - Keep this private key secure");
-    console.log("   - Never share it with anyone");
-    console.log("   - Never commit it to version control");
-    console.log("   - Use it only for wallet deployment");
+    console.log("🚨 CRITICAL SECURITY WARNING:");
+    console.log("   - Private key has been decrypted (NOT displayed for security)");
+    console.log("   - NEVER log private keys to console");
+    console.log("   - NEVER share private keys");
+    console.log("   - NEVER commit private keys to version control");
+    console.log("   - Use programmatically, not manually");
     console.log("");
     console.log("🔗 Next Steps:");
-    console.log("   1. Use this private key to deploy the wallet contract on Starknet");
+    console.log("   1. Use this function programmatically to deploy wallets");
     console.log("   2. The wallet contract must be deployed before withdrawals work");
     console.log("   3. After deployment, withdrawals will work from this address");
     console.log("");
 
     await prisma.$disconnect();
+
+    // Return the private key securely (don't log it)
+    return privateKey;
   } catch (error) {
     console.error("❌ Error:", error);
     await prisma.$disconnect();

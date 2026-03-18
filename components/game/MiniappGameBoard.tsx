@@ -132,8 +132,8 @@ export function MiniappGameBoard() {
   // Detect if app is in mobile webview
   useEffect(() => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    if (isMobile ) {
+
+    if (isMobile) {
       setShowMobileBanner(true);
     }
   }, []);
@@ -398,10 +398,10 @@ export function MiniappGameBoard() {
     const multiplierNum = targetMultiplier;
 
     // If balance is less than $0.10, open funding modal
-    if (balanceUsd < 0.1) {
-      setShowFundingModal(true);
-      return;
-    }
+    // if (balanceUsd < 0.1) {
+    //   setShowFundingModal(true);
+    //   return;
+    // }
 
     // Check if bet exceeds maximum
     if (betAmountNum > MAX_BET_USD) {
@@ -425,7 +425,7 @@ export function MiniappGameBoard() {
     }
 
     // Check for zero or invalid bet amount
-    if (betAmountNum <= 0) {
+    if (betAmountNum < 0) {
       return;
     }
 
@@ -465,7 +465,10 @@ export function MiniappGameBoard() {
     const betAmountNum = parseFloat(betAmount);
 
     try {
-      const result = await placeBetWithServerWallet(betAmount, targetMultiplier);
+      const result = await placeBetWithServerWallet(
+        betAmount,
+        targetMultiplier,
+      );
 
       // Handle instant result from off-chain provably fair system
       if (result.result) {
@@ -758,7 +761,10 @@ export function MiniappGameBoard() {
                                 if (wallet?.address) {
                                   navigator.clipboard.writeText(wallet.address);
                                   setCopiedAddress(true);
-                                  setTimeout(() => setCopiedAddress(false), 2000);
+                                  setTimeout(
+                                    () => setCopiedAddress(false),
+                                    2000,
+                                  );
                                 }
                               }}
                               className="flex items-center justify-center hover:opacity-70 transition-opacity"
@@ -1265,7 +1271,7 @@ export function MiniappGameBoard() {
                   <button
                     onClick={() =>
                       setTargetMultiplier(
-                        Math.max(1.01, targetMultiplier - 0.1)
+                        Math.max(1.01, targetMultiplier - 0.1),
                       )
                     }
                     disabled={isDisabled || targetMultiplier <= 1.01}
@@ -1283,7 +1289,9 @@ export function MiniappGameBoard() {
                   </div>
                   <button
                     onClick={() =>
-                      setTargetMultiplier(Math.min(MAX_MULTIPLIER, targetMultiplier + 0.1))
+                      setTargetMultiplier(
+                        Math.min(MAX_MULTIPLIER, targetMultiplier + 0.1),
+                      )
                     }
                     disabled={isDisabled || targetMultiplier >= MAX_MULTIPLIER}
                     className="w-6 h-6 flex items-center justify-center border-2 border-black rounded bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -1305,15 +1313,19 @@ export function MiniappGameBoard() {
                   setTargetMultiplier(
                     Math.max(
                       1.01,
-                      Math.min(MAX_MULTIPLIER, Number(newMultiplier.toFixed(2)))
-                    )
+                      Math.min(
+                        MAX_MULTIPLIER,
+                        Number(newMultiplier.toFixed(2)),
+                      ),
+                    ),
                   );
                 }}
               >
                 {Array.from({ length: 26 }).map((_, index) => {
                   const range = MAX_MULTIPLIER - 1.01;
                   const segmentValue = ((index + 1) / 26) * 100;
-                  const currentValue = ((targetMultiplier - 1.01) / range) * 100;
+                  const currentValue =
+                    ((targetMultiplier - 1.01) / range) * 100;
                   const isActive = segmentValue <= currentValue;
 
                   return (
@@ -1379,9 +1391,9 @@ export function MiniappGameBoard() {
                     <Loader2 className="w-5 h-5 animate-spin" />
                     {getButtonText()}
                   </span>
-                ) : balanceUsd < 0.1 ? (
-                  "Fund Wallet to Play"
-                ) : parseFloat(betAmount || "0") > MAX_BET_USD ? (
+                ) : // ) : balanceUsd < 0.1 ? (
+                //   "Fund Wallet to Play"
+                parseFloat(betAmount || "0") > MAX_BET_USD ? (
                   "Bet Exceeds Maximum"
                 ) : targetMultiplier > MAX_MULTIPLIER ? (
                   "Multiplier Too High"
@@ -1391,9 +1403,9 @@ export function MiniappGameBoard() {
                   "Fix Amount"
                 ) : multiplierError ? (
                   "Fix Multiplier"
-                ) : parseFloat(betAmount || "0") <= 0 ? (
-                  "Enter Amount"
                 ) : (
+                  // ) : parseFloat(betAmount || "0") <= 0 ? (
+                  //   "Enter Amount"
                   "Bet your amount"
                 )}
               </p>

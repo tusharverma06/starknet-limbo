@@ -25,7 +25,10 @@
     "deploy-custodial-wallet": "tsx scripts/deploy-custodial-wallet.ts",
     "bulk-deploy-wallets": "tsx scripts/bulk-deploy-wallets.ts",
     "test-paymaster": "tsx scripts/test-paymaster.ts",
-    "test-starkzap-deploy": "tsx scripts/test-starkzap-deployment.ts"
+    "test-starkzap-deploy": "tsx scripts/test-starkzap-deployment.ts",
+    "emergency:check-balance": "tsx scripts/emergency-check-balance.ts",
+    "emergency:transfer-strk": "tsx scripts/emergency-transfer-strk.ts",
+    "security:setup-starknet": "tsx scripts/setup-starknet-house-wallet.ts"
   },
   "dependencies": {
     "@cartridge/controller": "^0.13.9",

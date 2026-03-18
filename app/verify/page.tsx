@@ -57,6 +57,7 @@ interface VerificationData {
       txDirectionError: string | null;
       houseWalletAddress: string;
       userCustodialWallet: string | null;
+      isDemoBet: boolean;
     };
     step6: {
       balanceDeltasMatch: boolean | null;
@@ -64,6 +65,7 @@ interface VerificationData {
       settlementVerified: boolean;
       requiresTxHash: boolean;
       hasTxHash: boolean;
+      isDemoBet: boolean;
     };
   };
   bet: {
@@ -644,26 +646,33 @@ function VerifyPageContent() {
                 {`>>> Checking on-chain transaction verification`}
               </h3>
 
-              <div className="space-y-3 text-xs sm:text-sm">
-                <div>
-                  <span className="text-white/50">Transaction Hash:</span>
-                  {verificationData.steps.step5.txHash ? (
-                    <a
-                      href={`https://starkscan.co/tx/${verificationData.steps.step5.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-[10px] sm:text-xs text-blue-400 hover:text-blue-300 break-all"
-                    >
-                      {verificationData.steps.step5.txHash}
-                    </a>
-                  ) : (
-                    <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-[10px] sm:text-xs text-yellow-400">
-                      {verificationData.bet.outcome === "win"
-                        ? "⏳ Pending - Payout not yet executed"
-                        : "No transaction (loss - no payout)"}
-                    </code>
-                  )}
+              {verificationData.steps.step5.isDemoBet ? (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3 text-xs sm:text-sm text-blue-200">
+                  <strong>🎮 Demo Bet:</strong> This is a $0 demo bet. No blockchain
+                  transactions were executed. The provably fair algorithm (Steps 1-4)
+                  still applies - you can verify the randomness and outcome are fair.
                 </div>
+              ) : (
+                <div className="space-y-3 text-xs sm:text-sm">
+                  <div>
+                    <span className="text-white/50">Transaction Hash:</span>
+                    {verificationData.steps.step5.txHash ? (
+                      <a
+                        href={`https://starkscan.co/tx/${verificationData.steps.step5.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-[10px] sm:text-xs text-blue-400 hover:text-blue-300 break-all"
+                      >
+                        {verificationData.steps.step5.txHash}
+                      </a>
+                    ) : (
+                      <code className="block mt-1 bg-[#1a1a1a] p-2 rounded font-mono text-[10px] sm:text-xs text-yellow-400">
+                        {verificationData.bet.outcome === "win"
+                          ? "⏳ Pending - Payout not yet executed"
+                          : "No transaction (loss - no payout)"}
+                      </code>
+                    )}
+                  </div>
 
                 {verificationData.steps.step5.txHash && (
                   <>
@@ -716,21 +725,22 @@ function VerifyPageContent() {
                     ETH (payout - wager for wins, -wager for losses)
                   </span>
                 </div>
-                {verificationData.steps.step5.transactionData && (
-                  <details className="mt-3">
-                    <summary className="text-white/50 cursor-pointer hover:text-white/70 text-xs sm:text-sm">
-                      View Raw Transaction Data
-                    </summary>
-                    <pre className="mt-2 bg-[#1a1a1a] p-2 sm:p-3 rounded font-mono text-[10px] sm:text-xs overflow-x-auto max-h-96">
-                      {JSON.stringify(
-                        verificationData.steps.step5.transactionData,
-                        null,
-                        2,
-                      )}
-                    </pre>
-                  </details>
-                )}
-              </div>
+                  {verificationData.steps.step5.transactionData && (
+                    <details className="mt-3">
+                      <summary className="text-white/50 cursor-pointer hover:text-white/70 text-xs sm:text-sm">
+                        View Raw Transaction Data
+                      </summary>
+                      <pre className="mt-2 bg-[#1a1a1a] p-2 sm:p-3 rounded font-mono text-[10px] sm:text-xs overflow-x-auto max-h-96">
+                        {JSON.stringify(
+                          verificationData.steps.step5.transactionData,
+                          null,
+                          2,
+                        )}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Step 6: Final Verification */}

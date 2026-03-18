@@ -188,9 +188,13 @@ export async function POST(req: NextRequest) {
       payoutMatches: payoutVerified,
     };
 
+    // Check if this is a demo bet ($0 bet)
+    const isDemoBet = bet.wagerUsd === "0" || bet.wager === "0";
+
     // STEP 5: On-chain payout transaction verification
     // NOTE: txHash should ONLY contain payout transactions (house → user for wins)
     // For losses, txHash should be null. This step verifies that.
+    // For demo bets, skip transaction verification entirely
     let transactionData = null;
     let settlementDelta = BigInt(0);
     let txBalanceDelta = BigInt(0);
@@ -207,7 +211,7 @@ export async function POST(req: NextRequest) {
     const isStarknetWallet =
       custodialWalletAddress && custodialWalletAddress.length > 42;
 
-    if (bet.txHash) {
+    if (bet.txHash && !isDemoBet) {
       try {
         if (isStarknetWallet) {
           // Fetch Starknet transaction
@@ -425,15 +429,22 @@ export async function POST(req: NextRequest) {
       txDirectionError,
       houseWalletAddress,
       userCustodialWallet,
+      isDemoBet, // Flag to indicate this is a $0 demo bet
     };
 
     // STEP 6: Final settlement verification
     // For wins: verify payout amount AND transaction direction
     // For losses: txHash should be null (no payout transaction)
+    // For demo bets: automatically mark as verified (no transactions)
     let payoutMatches = false;
     let settlementVerified = false;
 
-    if (bet.outcome === "win") {
+    if (isDemoBet) {
+      // Demo bets don't have blockchain transactions - mark as verified
+      payoutMatches = true;
+      settlementVerified = true;
+      console.log("🎮 Demo bet verified - no blockchain transactions required");
+    } else if (bet.outcome === "win") {
       if (bet.txHash) {
         // For wins with txHash: verify amount AND direction
         const amountMatches = BigInt(bet.payout) === txBalanceDelta;
@@ -469,19 +480,21 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const balanceDeltasMatch = bet.txHash ? payoutMatches : null;
+    const balanceDeltasMatch = isDemoBet ? true : bet.txHash ? payoutMatches : null;
 
     const step6 = {
       balanceDeltasMatch,
       settlementVerified,
-      verified:
-        balanceDeltasMatch !== null
+      verified: isDemoBet
+        ? "Demo bet - no blockchain transactions required"
+        : balanceDeltasMatch !== null
           ? balanceDeltasMatch
           : bet.outcome === "win"
             ? "Pending settlement - payout not yet executed"
             : "N/A (no tx hash)",
-      requiresTxHash: bet.outcome === "win",
+      requiresTxHash: !isDemoBet && bet.outcome === "win",
       hasTxHash: !!bet.txHash,
+      isDemoBet,
     };
 
     // Overall verification result (excluding SIWE validation and pending settlements)
